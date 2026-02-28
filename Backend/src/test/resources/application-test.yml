@@ -1,0 +1,23 @@
+spring:
+  # 1. On utilise une base de données en mémoire (H2) ultra-rapide au lieu de PostgreSQL
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+
+  # 2. On donne des fausses clés JumpCloud pour que Spring Security démarre sans crasher
+  security:
+    oauth2:
+      client:
+        registration:
+          jumpcloud:
+            client-id: test-client-id
+            client-secret: test-secret
+        provider:
+          jumpcloud:
+            issuer-uri: https://oauth.id.eu.jumpcloud.com/
