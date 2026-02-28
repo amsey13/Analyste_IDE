@@ -36,4 +36,5 @@ build:
 test:
   stage: test
   script:
+    - cd Backend
     - mvn test
