@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: miage_analyste_db
+    environment:
+      POSTGRES_USER: analyste_user
+      POSTGRES_PASSWORD: analyste_pass
+      POSTGRES_DB: ide_analyste
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
