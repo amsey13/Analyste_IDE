@@ -19,14 +19,17 @@
 image: maven:latest
 
 stages:
-    - build
-    - test
+  - build
+  - test
 
+default:
+  before_script:
+    - cd Backend
 
 cache:
   paths:
     - .m2/repository/
-    - target/
+    - Backend/target/
 
 build:
   stage: build
@@ -36,5 +39,4 @@ build:
 test:
   stage: test
   script:
-    - cd Backend
     - mvn test
