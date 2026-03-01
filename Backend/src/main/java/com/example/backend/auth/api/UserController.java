@@ -1,6 +1,5 @@
-package com.example.backend.api;
+package com.example.backend.auth.api;
 
-import com.example.backend.dto.UserProfileDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +9,8 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.example.backend.auth.dto.UserProfileDTO;
 
 @RestController
 @RequestMapping("/api/users")

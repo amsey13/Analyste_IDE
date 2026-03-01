@@ -1,8 +1,10 @@
-package com.example.backend.config; // Modifie si ton package est différent
+package com.example.backend.auth.config; // Modifie si ton package est différent
 
-import com.example.backend.exeption.SecurityConfigurationException;
-import com.example.backend.service.CustomOidcUserService;
+import com.example.backend.auth.exeption.SecurityConfigurationException;
+import com.example.backend.auth.service.CustomOidcUserService;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -23,11 +25,15 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOidcUserService customOidcUserService;
-    private final ClientRegistrationRepository clientRegistrationRepository;
+    @Autowired
+    private CustomOidcUserService customOidcUserService;
+
+    @Autowired
+    private ClientRegistrationRepository clientRegistrationRepository;
+
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {

@@ -1,8 +1,10 @@
-package com.example.backend.dao;
+package com.example.backend.auth.dao;
 
-import com.example.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.example.backend.auth.entity.User;
+
 import java.util.Optional;
 import java.util.UUID;
 

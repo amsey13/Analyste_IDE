@@ -1,4 +1,7 @@
 spring:
+  docker:
+    compose:
+      enabled: false
   security:
     oauth2:
       client:

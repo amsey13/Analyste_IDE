@@ -1,4 +1,4 @@
-package com.example.backend.exeption;
+package com.example.backend.auth.exeption;
 
 /**
  * Exception lancée en cas de défaut de configuration de la sécurité.

@@ -1,16 +1,20 @@
-package com.example.backend.service;
+package com.example.backend.auth.service;
 
-import com.example.backend.dao.UserRepository; // Ou ton package repository
-import com.example.backend.entity.User; // Ou ton package model
+import com.example.backend.auth.entity.User;
+import com.example.backend.auth.dao.UserRepository; // Ou ton package repository
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Transactional
     public void syncWithIdp(String email, String fullName, String externalId) {

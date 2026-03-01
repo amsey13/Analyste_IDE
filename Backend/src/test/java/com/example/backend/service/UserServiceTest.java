@@ -1,7 +1,9 @@
 package com.example.backend.service;
 
-import com.example.backend.dao.UserRepository;
-import com.example.backend.entity.User;
+import com.example.backend.auth.entity.User;
+import com.example.backend.auth.service.UserService;
+import com.example.backend.auth.dao.UserRepository;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

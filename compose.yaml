@@ -11,5 +11,23 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: miage_analyste_back
+    ports:
+      - "8080:8080" 
+    depends_on:
+      - postgres
+    environment:
+    
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ide_analyste
+      SPRING_DATASOURCE_USERNAME: analyste_user
+      SPRING_DATASOURCE_PASSWORD: analyste_pass
+      
+      JUMPCLOUD_CLIENT_ID: ${JUMPCLOUD_CLIENT_ID}
+      JUMPCLOUD_CLIENT_SECRET: ${JUMPCLOUD_CLIENT_SECRET}
+
 volumes:
   postgres_data:
