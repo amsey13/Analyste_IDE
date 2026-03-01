@@ -1,0 +1,62 @@
+/* ==========================================================================
+                                CHARTE GRAPHIQUE
+   ========================================================================== */
+
+:root {
+    /* 1. COULEURS DE MARQUE (Tes variables sources) */
+    --primary-color: #0052cc;    /* Bleu Professionnel */
+    --primary-hover: #0041a3;    /* Bleu Foncé (Actions) */
+    --secondary-color: #172b4d;  /* Texte et Sidebar */
+    --accent-color: #00b8d9;     /* Cyan (Indicateurs) */
+
+    /* 2. COULEURS DE SURFACE */
+    --bg-light: #f4f5f7;
+    --bg-white: #ffffff;
+    --border-color: #dfe1e6;
+
+    /* 3. TYPOGRAPHIE */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* 4. ESPACEMENTS (Standard MIAGE) */
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+
+    /* 5. LE PONT PRIME-VUE (Indispensable pour que le bouton soit bleu) */
+    --p-primary-color: var(--primary-color) !important;
+    --p-primary-hover-color: var(--primary-hover) !important;
+    --p-primary-500: var(--primary-color) !important;
+    --p-primary-600: var(--primary-hover) !important;
+
+    /* On harmonise aussi les focus et les sélections */
+    --p-focus-ring-color: rgba(0, 82, 204, 0.2) !important;
+}
+
+/* ==========================================================================
+   RÈGLES GLOBALES
+   ========================================================================== */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: var(--font-family);
+    background-color: var(--bg-light);
+    color: var(--secondary-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+    height: 100%;
+}
+
+/* Surcharge PrimeFlex pour correspondre à ton design */
+.surface-card {
+    background-color: var(--bg-white) !important;
+}
+
+.surface-ground {
+    background-color: var(--bg-light) !important;
+}

@@ -9,7 +9,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.example.backend"})
 public class BackendApplication {
 
     public static void main(String[] args) {

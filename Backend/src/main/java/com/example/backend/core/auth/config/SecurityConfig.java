@@ -1,4 +1,4 @@
-package com.example.backend.core.auth.config; // Modifie si ton package est différent
+package com.example.backend.core.auth.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +61,7 @@ public class SecurityConfig {
                     // 5. OAUTH2 / OIDC : Connexion et synchronisation
                     .oauth2Login(oauth2 -> oauth2
                             // Redirection vers le Front-End après une connexion réussie
-                            .successHandler(new SimpleUrlAuthenticationSuccessHandler("http://localhost:4200"))
+                            .successHandler(new SimpleUrlAuthenticationSuccessHandler("http://localhost:5173"))
                             .userInfoEndpoint(userInfo -> userInfo
                                     .oidcUserService(customOidcUserService)
                             )
@@ -69,7 +69,9 @@ public class SecurityConfig {
 
                     // 6. LOGOUT : Déconnexion locale et RP-Initiated (JumpCloud)
                     .logout(logout -> logout
-                            .logoutSuccessHandler(oidcLogoutSuccessHandler())
+                            .logoutRequestMatcher(request -> "GET".equals(request.getMethod()) && request.getRequestURI().endsWith("/logout"))
+                            //.logoutSuccessHandler(oidcLogoutSuccessHandler())
+                            .logoutSuccessUrl("http://localhost:5173")
                             .invalidateHttpSession(true)
                             .clearAuthentication(true)
                             .deleteCookies("JSESSIONID") // On nettoie la session Tomcat
@@ -77,7 +79,6 @@ public class SecurityConfig {
 
             return http.build();
         } catch (Exception e) {
-            // Respect de SonarQube et du Clean Code
             throw new SecurityConfigurationException("Impossible d'initialiser la chaîne de sécurité Spring", e);
         }
     }
@@ -87,14 +88,15 @@ public class SecurityConfig {
     /**
      * Gère la déconnexion globale auprès du fournisseur d'identité (JumpCloud).
      */
-    private LogoutSuccessHandler oidcLogoutSuccessHandler() {
+    // Fix me : Problème pour tuer la session JumpCloud
+    /* private LogoutSuccessHandler oidcLogoutSuccessHandler() {
         OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler =
                 new OidcClientInitiatedLogoutSuccessHandler(this.clientRegistrationRepository);
 
         // Redirection après la déconnexion JumpCloud (peut être l'URL du Front-End)
-        oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
+        oidcLogoutSuccessHandler.setPostLogoutRedirectUri("http://localhost:5173/");
         return oidcLogoutSuccessHandler;
-    }
+    }*/
 
     /**
      * Gère les autorisations CORS pour les requêtes inter-domaines.
@@ -102,7 +104,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true); // Indispensable pour l'envoi des cookies/jetons
