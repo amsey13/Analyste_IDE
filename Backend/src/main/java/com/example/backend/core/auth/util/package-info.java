@@ -5,4 +5,4 @@
  * - Parsing et manipulation des fichiers JSON .
  * - Méthodes statiques de formatage ou de calcul générique.
  */
-package com.example.backend.auth.util;
+package com.example.backend.core.auth.util;

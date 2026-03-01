@@ -1,4 +1,4 @@
-package com.example.backend.auth.api;
+package com.example.backend.core.auth.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.backend.auth.dto.UserProfileDTO;
+import com.example.backend.core.auth.dto.UserProfileDTO;
 
 @RestController
 @RequestMapping("/api/users")

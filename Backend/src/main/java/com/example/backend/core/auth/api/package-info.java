@@ -5,4 +5,4 @@
  * - Réception des requêtes HTTP et validation de surface des données (JSON).
  * - Orchestration des appels vers la couche Service.
  */
-package com.example.backend.auth.api;
+package com.example.backend.core.auth.api;

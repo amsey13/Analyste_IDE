@@ -1,7 +1,4 @@
-package com.example.backend.auth.config; // Modifie si ton package est différent
-
-import com.example.backend.auth.exeption.SecurityConfigurationException;
-import com.example.backend.auth.service.CustomOidcUserService;
+package com.example.backend.core.auth.config; // Modifie si ton package est différent
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +17,9 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.example.backend.core.auth.exeption.SecurityConfigurationException;
+import com.example.backend.core.auth.service.CustomOidcUserService;
 
 import java.util.List;
 

@@ -5,4 +5,4 @@
  * - Communication avec la base de données .
  * - Exécution des requêtes de récupération et de sauvegarde des projets.
  */
-package com.example.backend.auth.dao;
+package com.example.backend.core.auth.dao;

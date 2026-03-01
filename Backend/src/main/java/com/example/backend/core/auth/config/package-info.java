@@ -5,4 +5,4 @@
  * - Configuration de la sécurité OIDC avec JumpCloud.
  * - Définition des Beans globaux et de la documentation API (Swagger).
  */
-package com.example.backend.auth.config;
+package com.example.backend.core.auth.config;

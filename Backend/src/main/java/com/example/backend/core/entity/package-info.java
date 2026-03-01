@@ -5,4 +5,4 @@
  * - Définition de la structure du MCD en objets Java .
  * - Gestion des relations JPA (OneToMany, ManyToOne).
  */
-package com.example.backend.auth.entity;
+package com.example.backend.core.entity;

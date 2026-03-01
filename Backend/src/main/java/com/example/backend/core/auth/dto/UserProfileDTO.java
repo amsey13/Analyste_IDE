@@ -1,4 +1,4 @@
-package com.example.backend.auth.dto;
+package com.example.backend.core.auth.dto;
 
 /**
  * Contrat d'API définissant exactement ce que le Front-End a le droit de recevoir.

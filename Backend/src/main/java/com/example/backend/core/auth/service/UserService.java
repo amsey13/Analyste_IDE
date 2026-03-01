@@ -1,11 +1,11 @@
-package com.example.backend.auth.service;
-
-import com.example.backend.auth.entity.User;
-import com.example.backend.auth.dao.UserRepository; // Ou ton package repository
+package com.example.backend.core.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.example.backend.core.auth.dao.UserRepository;
+import com.example.backend.core.entity.User;
 
 @Service
 public class UserService {

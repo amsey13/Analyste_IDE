@@ -1,7 +1,9 @@
-package com.example.backend.auth.entity;
+package com.example.backend.core.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -24,6 +26,9 @@ public class User {
 
     @Column(name = "is_active")
     private boolean isActive = true;
+
+    @OneToMany(mappedBy = "user")
+    private List<Projet> projets;
 
     public String getEmail() {
         return email;
@@ -63,5 +68,13 @@ public class User {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public List<Projet> getProjets() {
+        return projets;
+    }
+
+    public void setProjets(List<Projet> projets) {
+        this.projets = projets;
     }
 }

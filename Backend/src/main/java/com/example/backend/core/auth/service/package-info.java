@@ -5,4 +5,4 @@
  * - Calcul des scores de cohérence .
  * - Traitement des règles de gestion spécifiques à l'analyse fonctionnelle.
  */
-package com.example.backend.auth.service;
+package com.example.backend.core.auth.service;

@@ -1,4 +1,4 @@
-package com.example.backend.auth.service;
+package com.example.backend.core.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
