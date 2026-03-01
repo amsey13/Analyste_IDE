@@ -1,6 +1,7 @@
 package com.example.backend.core.entity;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -15,11 +16,11 @@ public class Projet {
 
 
     @Column(name="Date_Creation")
-    private Date dateCreation;
+    private LocalDateTime dateCreation;
 
 
     @Column(name="Date_derniere_Modification")
-    private Date dateModifiction;
+    private LocalDateTime dateModifiction;
 
     @Column
     private String description;
@@ -33,19 +34,19 @@ public class Projet {
     private User user;
 
 
-    public Date getDateCreation() {
+    public LocalDateTime getDateCreation() {
         return dateCreation;
     }
 
-    public void setDateCreation(Date dateCreation) {
+    public void setDateCreation(LocalDateTime dateCreation) {
         this.dateCreation = dateCreation;
     }
 
-    public Date getDateModifiction() {
+    public LocalDateTime getDateModifiction() {
         return dateModifiction;
     }
 
-    public void setDateModifiction(Date dateModifiction) {
+    public void setDateModifiction(LocalDateTime dateModifiction) {
         this.dateModifiction = dateModifiction;
     }
 
