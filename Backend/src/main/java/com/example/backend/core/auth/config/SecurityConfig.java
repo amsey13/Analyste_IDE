@@ -54,7 +54,8 @@ public class SecurityConfig {
 
                     // 4. AUTORISATIONS : Règles d'accès aux routes
                     .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/api/public").permitAll()
+                            // On autorise l'API publique, la page de login par défaut et la gestion des erreurs
+                            .requestMatchers("/api/public", "/login/**", "/error").permitAll()
                             .anyRequest().authenticated()
                     )
 

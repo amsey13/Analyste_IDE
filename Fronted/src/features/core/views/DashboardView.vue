@@ -15,31 +15,8 @@ onMounted(async () => {
   } catch (e) {
     console.error("Erreur de récupération utilisateur");
   }
-
-  // 2. Configuration d'un graphique d'analyse fonctionnelle (Exemple : Flux logistiques)
-  chartData.value = setChartData();
-  chartOptions.value = setChartOptions();
 });
 
-const setChartData = () => {
-  return {
-    labels: ['Traitement', 'Transport', 'Douanes', 'Livraison'],
-    datasets: [
-      {
-        label: 'Efficacité des processus (%)',
-        data: [85, 59, 30, 81],
-        backgroundColor: ['#0052cc', '#00b8d9', '#ffab00', '#36b37e']
-      }
-    ]
-  };
-};
-
-const setChartOptions = () => {
-  return {
-    plugins: { legend: { labels: { color: '#495057' } } },
-    scales: { y: { beginAtZero: true } }
-  };
-};
 </script>
 
 <template>
