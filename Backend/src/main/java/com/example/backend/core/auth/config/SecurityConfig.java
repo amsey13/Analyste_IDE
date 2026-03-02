@@ -54,7 +54,7 @@ public class SecurityConfig {
 
                     // 4. AUTORISATIONS : Règles d'accès aux routes
                     .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/api/public").permitAll()
+                            .requestMatchers("/api/public","/login/**", "/error").permitAll()
                             .anyRequest().authenticated()
                     )
 
