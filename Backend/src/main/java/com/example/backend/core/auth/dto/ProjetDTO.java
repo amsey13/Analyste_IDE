@@ -6,7 +6,9 @@ import java.util.UUID;
 
 public class ProjetDTO {
     private UUID idProjet;
+
     private String nom;
+    
     private String description;
     private LocalDateTime creationDate;
     private LocalDateTime modificationDate;
