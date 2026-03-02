@@ -7,8 +7,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.backend.core.auth.dao.UserRepository;
+import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.service.UserService;
-import com.example.backend.core.entity.User;
 
 import java.util.Optional;
 

@@ -1,11 +1,12 @@
-package com.example.backend.core.auth.service;
+package com.example.backend.core.modules.projects.service;
 
-import com.example.backend.core.auth.dao.ProjetRepository;
 import com.example.backend.core.auth.dao.UserRepository;
-import com.example.backend.core.auth.dto.ProjetDTO;
+import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.exeption.UserNotFoundException;
-import com.example.backend.core.entity.Projet;
-import com.example.backend.core.entity.User;
+import com.example.backend.core.modules.projects.dao.ProjetRepository;
+import com.example.backend.core.modules.projects.dto.ProjetDTO;
+import com.example.backend.core.modules.projects.entity.Projet;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
 import java.util.List;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 @Service

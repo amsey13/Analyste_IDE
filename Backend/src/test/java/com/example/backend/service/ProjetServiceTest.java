@@ -1,12 +1,13 @@
 package com.example.backend.service;
 
-import com.example.backend.core.auth.dao.ProjetRepository;
 import com.example.backend.core.auth.dao.UserRepository;
-import com.example.backend.core.auth.dto.ProjetDTO;
+import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.exeption.UserNotFoundException;
-import com.example.backend.core.auth.service.ProjetService;
-import com.example.backend.core.entity.Projet;
-import com.example.backend.core.entity.User;
+import com.example.backend.core.modules.projects.dao.ProjetRepository;
+import com.example.backend.core.modules.projects.dto.ProjetDTO;
+import com.example.backend.core.modules.projects.entity.Projet;
+import com.example.backend.core.modules.projects.service.ProjetService;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

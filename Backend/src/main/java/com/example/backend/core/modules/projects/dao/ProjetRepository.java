@@ -1,7 +1,8 @@
-package com.example.backend.core.auth.dao;
+package com.example.backend.core.modules.projects.dao;
 
-import com.example.backend.core.entity.Projet;
-import com.example.backend.core.entity.User;
+import com.example.backend.core.auth.entity.User;
+import com.example.backend.core.modules.projects.entity.Projet;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.stereotype.Repository;

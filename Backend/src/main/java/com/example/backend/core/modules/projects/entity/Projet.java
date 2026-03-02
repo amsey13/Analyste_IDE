@@ -1,9 +1,10 @@
-package com.example.backend.core.entity;
+package com.example.backend.core.modules.projects.entity;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.example.backend.core.auth.entity.User;
 
 import jakarta.persistence.*;
 

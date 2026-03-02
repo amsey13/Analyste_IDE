@@ -1,4 +1,4 @@
-package com.example.backend.core.auth.dto;
+package com.example.backend.core.modules.projects.dto;
 
 import java.sql.Date;
 import java.time.LocalDateTime;

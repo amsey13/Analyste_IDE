@@ -1,10 +1,12 @@
-package com.example.backend.core.entity;
+package com.example.backend.core.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.List;
 import java.util.UUID;
+
+import com.example.backend.core.modules.projects.entity.Projet;
 
 @Entity
 @Table(name = "users")

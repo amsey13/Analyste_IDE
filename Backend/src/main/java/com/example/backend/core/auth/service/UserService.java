@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.backend.core.auth.dao.UserRepository;
-import com.example.backend.core.entity.User;
+import com.example.backend.core.auth.entity.User;
 
 @Service
 public class UserService {
