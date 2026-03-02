@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { UserService } from '../features/core/api/UserService';
 
-// 1. Imports des vues et du Layout (Ne pas oublier MainLayout !)
-import HomeView from '../features/core/views/HomeView.vue'
-import DashboardView from '../features/core/views/DashboardView.vue'
-import MainLayout from '../layouts/MainLayout.vue'
-import ProjetSelector from '../features/core/views/ProjetSelector.vue'
+const HomeView = () => import('../features/core/views/HomeView.vue')
+const MainLayout = () => import('../layouts/MainLayout.vue')
+const ProjetSelector = () => import('../features/core/views/ProjetSelector.vue')
+const DashboardView = () => import('../features/core/views/DashboardView.vue')
 
 const routes = [
     {
@@ -42,9 +41,16 @@ const router = createRouter({
     routes
 })
 
+let isUserAuthenticated = false;
+
 // 3. Le Vigile (Navigation Guard)
 router.beforeEach(async (to, from, next) => {
     if (to.meta.requiresAuth) {
+
+        if (isUserAuthenticated) {
+            return next();
+        }
+
         try {
             await UserService.getCurrentUser();
             next(); // Session valide : accès accordé

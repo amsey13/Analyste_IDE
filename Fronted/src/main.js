@@ -4,15 +4,15 @@ import router from './router';
 
 // PrimeVue et Thème
 import PrimeVue from 'primevue/config';
-import { definePreset } from '@primevue/themes'; // 👈 Indispensable
+import { definePreset } from '@primevue/themes';
 import Aura from '@primevue/themes/aura';
+import { createPinia } from 'pinia'
 
 // PrimeFlex et Styles
 import 'primeflex/primeflex.css';
 import 'primeicons/primeicons.css';
 import './assets/style.css';
 
-// 1. On définit ton propre Preset (Le bleu de la MIAGE Analyst Suite)
 const MyPreset = definePreset(Aura, {
     semantic: {
         primary: {
@@ -21,7 +21,7 @@ const MyPreset = definePreset(Aura, {
             200: '{blue.200}',
             300: '{blue.300}',
             400: '{blue.400}',
-            500: '#0052cc', // 👈 Ton bleu exact
+            500: '#0052cc',
             600: '{blue.600}',
             700: '{blue.700}',
             800: '{blue.800}',
@@ -32,10 +32,10 @@ const MyPreset = definePreset(Aura, {
 });
 
 const app = createApp(App);
+const pinia = createPinia()
 
 app.use(router);
 app.use(PrimeVue, {
-    // 2. On applique ton nouveau thème bleu ici
     theme: {
         preset: MyPreset,
         options: {
@@ -43,5 +43,6 @@ app.use(PrimeVue, {
         }
     }
 });
+app.use(pinia)
 
 app.mount('#app');
