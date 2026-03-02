@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { UserService } from '../features/core/api/UserService';
+import { UserService } from '../features/users/api/UserService';
 
-const HomeView = () => import('../features/core/views/HomeView.vue')
+const HomeView = () => import('../features/users/views/HomeView.vue')
 const MainLayout = () => import('../layouts/MainLayout.vue')
-const ProjetSelector = () => import('../features/core/views/ProjetSelector.vue')
-const DashboardView = () => import('../features/core/views/DashboardView.vue')
+const ProjetCreateView = () => import('../features/projects/views/ProjetCreateView.vue')
+const DashboardView = () => import('../features/users/views/DashboardView.vue')
 
 const routes = [
     {
@@ -19,7 +19,7 @@ const routes = [
             {
                 path: 'projets',
                 name: 'projets',
-                component: ProjetSelector,
+                component: ProjetCreateView,
                 meta: { requiresAuth: true }
             },
 

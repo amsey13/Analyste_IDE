@@ -1,4 +1,4 @@
-import apiClient from '../../../services/HttpClient';
+import apiClient from '../../../test/HttpClient';
 
 
 export const ProjetService = {

@@ -1,6 +1,5 @@
-<srcipt setup>
-
-import { ref, onMounted } from 'vue';
+<script setup>
+  import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {ProjetService} from '../api/ProjetService';
 import Button from 'primevue/button';
@@ -11,10 +10,10 @@ const router = useRouter();
 const loading = ref(false);
 const projet = ref({
     nom: '',
-    description: ''
-    dateCreation: new Date()
-    UrlTaiga: ''
-    NomTaiga: ''
+    description: '',
+    dateCreation: new Date(),
+    UrlTaiga: '',
+    NomTaiga: '',
     MotdePasseTaiga: ''
 
 });
@@ -34,8 +33,11 @@ const createProject = async () => {
         loading.value = false;
     }
 };
+</script>
 
-</srcipt>
+
+
+
 
 <template>
     <div class="card p-5">

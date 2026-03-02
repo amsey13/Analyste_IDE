@@ -1,4 +1,4 @@
-import apiClient from '../../../services/HttpClient';
+import apiClient from '../../../test/HttpClient';
 
 // Ce service a l'unique responsabilité de gérer les données Utilisateur
 export const UserService = {
