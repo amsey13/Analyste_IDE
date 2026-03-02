@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { UserService } from '../services/UserService';
+import { UserService } from '../features/core/api/UserService';
 import Button from 'primevue/button';
 
 const user = ref(null);

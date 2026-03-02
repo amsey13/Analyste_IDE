@@ -1,26 +1,35 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { UserService } from '../services/UserService'
+import { UserService } from '../features/core/api/UserService';
 
 // 1. Imports des vues et du Layout (Ne pas oublier MainLayout !)
-import HomeView from '../views/HomeView.vue'
-import DashboardView from '../views/DashboardView.vue'
-import MainLayout from '../layouts/MainLayout.vue' // 👈 Correction ici
+import HomeView from '../features/core/views/HomeView.vue'
+import DashboardView from '../features/core/views/DashboardView.vue'
+import MainLayout from '../layouts/MainLayout.vue'
+import ProjetSelector from '../features/core/views/ProjetSelector.vue'
 
 const routes = [
     {
         path: '/',
-        name: 'home', // 👈 Ajout du nom pour le guard
+        name: 'home', 
         component: HomeView
     },
     {
         path: '/app',
-        component: MainLayout, // Le conteneur avec Sidebar et Topbar
+        component: MainLayout, 
         children: [
             {
-                path: 'dashboard',
-                name: 'dashboard',
+                path: 'projets',
+                name: 'projets',
+                component: ProjetSelector,
+                meta: { requiresAuth: true }
+            },
+
+            {
+                path: 'projet/:id',
+                name: 'projet-dashboard',
                 component: DashboardView,
                 meta: { requiresAuth: true }
+
             }
             // Les futurs modules d'analyse fonctionnelle iront ici
         ]
