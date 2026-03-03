@@ -138,7 +138,7 @@ public class ProjetService {
     public void deleteProject(UUID id) throws UserNotFoundException {
 
         Projet projet = projetRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Project not found");
+                .orElseThrow(() -> new UserNotFoundException("Project not found"));
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUserId = auth.getName();
