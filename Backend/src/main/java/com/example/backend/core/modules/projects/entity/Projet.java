@@ -24,7 +24,7 @@ public class Projet {
     @Column(name="Date_derniere_Modification")
     private LocalDateTime dateModifiction;
 
-    @Column
+    @Column(length = 1000)
     private String description;
 
     @Column(nullable=false)
@@ -35,7 +35,7 @@ public class Projet {
     @JoinColumn(name="user_id")
     private User user;
 
-    @Column(name = "taiga_token")
+    @Column(name = "taiga_token", columnDefinition = "TEXT")
     @Convert(converter = AttributeEncryptor.class)
     private String taigaToken;
 
