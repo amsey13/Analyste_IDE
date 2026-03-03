@@ -1,6 +1,8 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import ConfirmationService from 'primevue/confirmationservice';
+import ToastService from 'primevue/toastservice';
 
 // PrimeVue et Thème
 import PrimeVue from 'primevue/config';
@@ -44,5 +46,7 @@ app.use(PrimeVue, {
     }
 });
 app.use(pinia)
+app.use(ConfirmationService);  
+app.use(ToastService); 
 
 app.mount('#app');
