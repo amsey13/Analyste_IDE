@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.example.backend.core.auth.entity.User;
 
+import com.example.backend.core.modules.projects.dto.AttributeEncryptor;
 import jakarta.persistence.*;
 
 @Entity
@@ -33,6 +34,10 @@ public class Projet {
     @ManyToOne(optional=false)
     @JoinColumn(name="user_id")
     private User user;
+
+    @Column(name = "taiga_token")
+    @Convert(converter = AttributeEncryptor.class)
+    private String taigaToken;
 
 
     public LocalDateTime getDateCreation() {
@@ -81,5 +86,13 @@ public class Projet {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getTaigaToken() {
+        return taigaToken;
+    }
+
+    public void setTaigaToken(String taigaToken) {
+        this.taigaToken = taigaToken;
     }
 }

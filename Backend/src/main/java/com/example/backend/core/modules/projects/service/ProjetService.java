@@ -4,9 +4,11 @@ import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.exeption.UserNotFoundException;
 import com.example.backend.core.modules.projects.dao.ProjetRepository;
-import com.example.backend.core.modules.projects.dto.ProjetDTO;
+import com.example.backend.core.modules.projects.dto.ProjetRequestDTO;
+import com.example.backend.core.modules.projects.dto.ProjetResponseDTO;
 import com.example.backend.core.modules.projects.entity.Projet;
 
+import com.example.backend.core.modules.projects.taigaAPi.TaigaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,17 @@ import java.util.stream.Collectors;
 @Service
 public class ProjetService {
 
-    @Autowired
-    private ProjetRepository projetRepository;
+    private final ProjetRepository projetRepository;
+    private final UserRepository userRepository;
+    private final TaigaService taigaService;
 
-    @Autowired
-    private UserRepository userRepository;
+    public ProjetService(ProjetRepository projetRepository,
+                         TaigaService taigaService,
+                         UserRepository userRepository) {
+        this.projetRepository = projetRepository;
+        this.taigaService = taigaService;
+        this.userRepository = userRepository;
+    }
 
 
     
@@ -37,13 +45,13 @@ public class ProjetService {
      * @return The method `mapDTO` is returning a `ProjetDTO` object after mapping the properties from
      * a `Projet` object.
      */
-    private ProjetDTO mapDTO(Projet projet){
-        ProjetDTO dto = new ProjetDTO();
+    private ProjetResponseDTO mapDTO(Projet projet){
+        ProjetResponseDTO dto = new ProjetResponseDTO();
         dto.setIdProjet(projet.getIdProjet());
         dto.setNom(projet.getNom());
         dto.setDescription(projet.getDescription());
-        dto.setDateCreation(projet.getDateCreation());
-        dto.setDateModification(projet.getDateModifiction());
+        dto.setCreationDate(projet.getDateCreation());
+        dto.setModificationDate(projet.getDateModifiction());
         return dto;
     }
 
@@ -54,7 +62,7 @@ public class ProjetService {
      * 
      * @return A list of `ProjetDTO` objects is being returned.
      */
-    public List<ProjetDTO> getProjetsFromUser(){
+    public List<ProjetResponseDTO> getProjetsFromUser(){
         String externalId = SecurityContextHolder.getContext().getAuthentication().getName();
 
         
@@ -82,7 +90,7 @@ public class ProjetService {
      * @return The `createProjet` method returns a `ProjetDTO` object after creating a new `Projet`
      * entity, saving it to the database, and mapping it to a DTO object.
      */
-    public ProjetDTO createProjet(ProjetDTO dto) throws UserNotFoundException {
+    public ProjetResponseDTO createProjet(ProjetRequestDTO dto) throws UserNotFoundException {
 
         String externalId = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -95,10 +103,34 @@ public class ProjetService {
         projet.setDateCreation(LocalDateTime.now());
         projet.setUser(user);
 
+        if(dto.getTaigaUserName() != null && !dto.getTaigaUserName().isEmpty() &&
+        dto.getTaigaPassword() != null && !dto.getTaigaPassword().isEmpty()){
+
+            String slug = extractSlug(dto.getTaigaProjectUrl());
+            String token = taigaService.authenticate(dto.getTaigaUserName(), dto.getTaigaPassword());
+            Integer projetId = taigaService.getProjectIdBySlug(slug, token);
+            if (token != null) {
+                projet.setTaigaToken(token);
+            }
+            else{
+                throw new UserNotFoundException("Echec de l'authentification Taiga");
+            }
+
+        }
+
         Projet savedProjet = projetRepository.save(projet);
         return mapDTO(savedProjet);
     }
 
+    private String extractSlug(String url) {
+        if (url == null || !url.contains("project/")) {
+            throw new IllegalArgumentException("URL Taiga invalide ");
+        }
+
+
+        return url.split("project/")[1].split("/")[0];
+
+    }
 
 
 

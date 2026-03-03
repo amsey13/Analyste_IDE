@@ -1,10 +1,9 @@
 package com.example.backend.core.modules.projects.dto;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class ProjetDTO {
+public class ProjetResponseDTO {
     private UUID idProjet;
 
     private String nom;
@@ -13,13 +12,7 @@ public class ProjetDTO {
     private LocalDateTime creationDate;
     private LocalDateTime modificationDate;
 
-    public LocalDateTime getCreationDate() {
-        return creationDate;
-    }
 
-    public void setDateCreation(LocalDateTime creationDate) {
-        this.creationDate = creationDate;
-    }
 
     public String getDescription() {
         return description;
@@ -37,13 +30,6 @@ public class ProjetDTO {
         this.idProjet = id;
     }
 
-    public LocalDateTime getDateModification() {
-        return modificationDate;
-    }
-
-    public void setDateModification(LocalDateTime modificationDate) {
-        this.modificationDate = modificationDate;
-    }
 
     public String getNom() {
         return nom;
@@ -53,5 +39,19 @@ public class ProjetDTO {
         this.nom = nom;
     }
 
+    public void setCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
 
+    public LocalDateTime getModificationDate() {
+        return modificationDate;
+    }
+
+    public void setModificationDate(LocalDateTime modificationDate) {
+        this.modificationDate = modificationDate;
+    }
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
 }

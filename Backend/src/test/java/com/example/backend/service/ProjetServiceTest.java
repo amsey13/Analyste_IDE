@@ -4,10 +4,12 @@ import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.exeption.UserNotFoundException;
 import com.example.backend.core.modules.projects.dao.ProjetRepository;
-import com.example.backend.core.modules.projects.dto.ProjetDTO;
+import com.example.backend.core.modules.projects.dto.ProjetRequestDTO;
+import com.example.backend.core.modules.projects.dto.ProjetResponseDTO;
 import com.example.backend.core.modules.projects.entity.Projet;
 import com.example.backend.core.modules.projects.service.ProjetService;
 
+import com.example.backend.core.modules.projects.taigaAPi.TaigaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,16 +33,17 @@ public class ProjetServiceTest {
 
     @Mock private ProjetRepository projetRepository;
     @Mock private UserRepository userRepository;
+    @Mock private TaigaService taigaService;
 
     @InjectMocks
     private ProjetService projetService;
 
 
     @Test
-    public void testCreateProjetSuccess() throws UserNotFoundException {
+    public void testCreateProjetSuccessWithoutTaiga() throws UserNotFoundException {
 
-        ProjetDTO test = new ProjetDTO();
-        test.setNom("Test creation Projet");
+        ProjetRequestDTO request = new ProjetRequestDTO();
+        request.setNom("Test creation Projet");
         UUID id  = UUID.randomUUID();
         User mockUser = new User();
         mockUser.setId(id);
@@ -59,20 +62,55 @@ public class ProjetServiceTest {
             when(userRepository.findByExternalId("use-external-id")).thenReturn(Optional.of(mockUser));
             when(projetRepository.save(any(Projet.class))).thenAnswer(i -> i.getArguments()[0]);
 
-            ProjetDTO projetResult = projetService.createProjet(test);
+            ProjetResponseDTO projetResult = projetService.createProjet(request);
 
             assertNotNull(projetResult);
             assertEquals("Test creation Projet", projetResult.getNom());
             verify(projetRepository, times(1)).save(any(Projet.class));
+
+            verify(taigaService, never()).authenticate(anyString(), anyString());
 
 
         }
     }
 
     @Test
+    public void testCreateProjetSuccessWithTaiga() throws UserNotFoundException {
+        ProjetRequestDTO request = new ProjetRequestDTO();
+        request.setNom("Projet Taiga");
+        request.setTaigaUserName("user-taiga");
+        request.setTaigaPassword("pass-taiga");
+        request.setTaigaProjectUrl("https://tree.taiga.io/project/mon-super-projet");
+
+        User mockUser = new User();
+
+        try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
+            Authentication auth = mock(Authentication.class);
+            SecurityContext context = mock(SecurityContext.class);
+
+            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
+            when(context.getAuthentication()).thenReturn(auth);
+            when(auth.getName()).thenReturn("user-id");
+            when(userRepository.findByExternalId("user-id")).thenReturn(Optional.of(mockUser));
+
+            // Simulation de la réponse Taiga
+            when(taigaService.authenticate("user-taiga", "pass-taiga")).thenReturn("fake-token");
+            when(taigaService.getProjectIdBySlug("mon-super-projet", "fake-token")).thenReturn(19);
+            when(projetRepository.save(any(Projet.class))).thenAnswer(i -> i.getArguments()[0]);
+
+            ProjetResponseDTO result = projetService.createProjet(request);
+
+            assertNotNull(result);
+            verify(taigaService, times(1)).authenticate("user-taiga", "pass-taiga");
+            verify(projetRepository, times(1)).save(any(Projet.class));
+        }
+    }
+
+    @Test
     public void testCreateProjectWithUserNotFoundException(){
 
-        ProjetDTO test = new ProjetDTO();
+        ProjetRequestDTO request = new ProjetRequestDTO();
+        request.setNom("Projet Test");
 
         try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)){
 
@@ -85,7 +123,7 @@ public class ProjetServiceTest {
 
             when(userRepository.findByExternalId("unknown-id")).thenReturn(Optional.empty());
 
-            assertThrows(UserNotFoundException.class, () -> projetService.createProjet(test));
+            assertThrows(UserNotFoundException.class, () -> projetService.createProjet(request));
 
 
 
@@ -120,7 +158,7 @@ public class ProjetServiceTest {
             when(userRepository.findByExternalId("user-external-id")).thenReturn(Optional.of(mockUser));
             when(projetRepository.findByUser(mockUser)).thenReturn(mockProjets);
 
-            List<ProjetDTO> results = projetService.getProjetsFromUser();
+            List<ProjetResponseDTO> results = projetService.getProjetsFromUser();
 
             assertFalse(results.isEmpty());
             assertEquals(2, results.size());
@@ -145,7 +183,7 @@ public class ProjetServiceTest {
             // On renvoie une liste vide au lieu d'une liste avec des projets
             when(projetRepository.findByUser(mockUser)).thenReturn(new ArrayList<>());
 
-            List<ProjetDTO> result = projetService.getProjetsFromUser();
+            List<ProjetResponseDTO> result = projetService.getProjetsFromUser();
 
             assertNotNull(result);
             assertTrue(result.isEmpty());

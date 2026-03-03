@@ -1,8 +1,8 @@
 package com.example.backend.core.modules.projects.api;
 
 import com.example.backend.core.auth.exeption.UserNotFoundException;
-import com.example.backend.core.modules.projects.dao.ProjetRepository;
-import com.example.backend.core.modules.projects.dto.ProjetDTO;
+import com.example.backend.core.modules.projects.dto.ProjetRequestDTO;
+import com.example.backend.core.modules.projects.dto.ProjetResponseDTO;
 import com.example.backend.core.modules.projects.service.ProjetService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ public class ProjetController {
 
 
     @GetMapping
-    public ResponseEntity<List<ProjetDTO>> getAllProjets() {
+    public ResponseEntity<List<ProjetResponseDTO>> getAllProjets() {
 
         return ResponseEntity.ok(projetService.getProjetsFromUser());
 
@@ -29,9 +29,11 @@ public class ProjetController {
 
 
     @PostMapping
-    public ResponseEntity<ProjetDTO> createProjet(@RequestBody ProjetDTO projetDTO) throws UserNotFoundException {
+    public ResponseEntity<ProjetResponseDTO> createProjet(@RequestBody ProjetRequestDTO projetDTO) throws UserNotFoundException {
         return ResponseEntity.ok(projetService.createProjet(projetDTO));
     }
+
+
 
 
 
