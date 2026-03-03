@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/projects")
@@ -31,6 +32,13 @@ public class ProjetController {
     @PostMapping
     public ResponseEntity<ProjetResponseDTO> createProjet(@RequestBody ProjetRequestDTO projetDTO) throws UserNotFoundException {
         return ResponseEntity.ok(projetService.createProjet(projetDTO));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ProjetResponseDTO> deleteProjet(@PathVariable UUID id) throws UserNotFoundException {
+        projetService.deleteProject(id);
+        return ResponseEntity.ok(new ProjetResponseDTO());
+
     }
 
 

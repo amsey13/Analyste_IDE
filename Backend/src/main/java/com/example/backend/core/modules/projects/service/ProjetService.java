@@ -10,6 +10,8 @@ import com.example.backend.core.modules.projects.entity.Projet;
 
 import com.example.backend.core.modules.projects.taigaAPi.TaigaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import java.time.LocalDateTime;
 
 import java.util.List;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -129,6 +132,25 @@ public class ProjetService {
 
 
         return url.split("project/")[1].split("/")[0];
+
+    }
+
+    public void deleteProject(UUID id) throws UserNotFoundException {
+
+        Projet projet = projetRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Projet non trouvé avec l'id : " + id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserId = auth.getName();
+        System.out.println("Le User Connecté est : "+currentUserId);
+
+        if (!projet.getUser().getExternalId().toString().equals(currentUserId)) {
+            throw new AccessDeniedException("You're not allowed to delete this project.");
+        }
+        projetRepository.delete(projet);
+
+
+
 
     }
 

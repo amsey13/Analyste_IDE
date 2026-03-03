@@ -18,6 +18,12 @@ export const ProjetService = {
     async createProjet(projetData) {
         const response = await apiClient.post('/projects', projetData);
         return response.data;
+    },
+
+
+    async deleteProjet(projetId) {
+        
+        return await apiClient.delete(`/projects/${projetId}`);
     }
 
 }

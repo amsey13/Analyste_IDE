@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,9 +32,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class ProjetServiceTest {
 
-    @Mock private ProjetRepository projetRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private TaigaService taigaService;
+    @Mock
+    private ProjetRepository projetRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private TaigaService taigaService;
 
     @InjectMocks
     private ProjetService projetService;
@@ -44,13 +48,13 @@ public class ProjetServiceTest {
 
         ProjetRequestDTO request = new ProjetRequestDTO();
         request.setNom("Test creation Projet");
-        UUID id  = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
         User mockUser = new User();
         mockUser.setId(id);
 
         //on mock la securite statique
 
-        try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
+        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
 
             Authentication auth = mock(Authentication.class);
             SecurityContext context = mock(SecurityContext.class);
@@ -84,7 +88,7 @@ public class ProjetServiceTest {
 
         User mockUser = new User();
 
-        try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
+        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
             Authentication auth = mock(Authentication.class);
             SecurityContext context = mock(SecurityContext.class);
 
@@ -107,12 +111,12 @@ public class ProjetServiceTest {
     }
 
     @Test
-    public void testCreateProjectWithUserNotFoundException(){
+    public void testCreateProjectWithUserNotFoundException() {
 
         ProjetRequestDTO request = new ProjetRequestDTO();
         request.setNom("Projet Test");
 
-        try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)){
+        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
 
             Authentication auth = mock(Authentication.class);
             SecurityContext context = mock(SecurityContext.class);
@@ -124,7 +128,6 @@ public class ProjetServiceTest {
             when(userRepository.findByExternalId("unknown-id")).thenReturn(Optional.empty());
 
             assertThrows(UserNotFoundException.class, () -> projetService.createProjet(request));
-
 
 
         }
@@ -168,7 +171,7 @@ public class ProjetServiceTest {
     }
 
     @Test
-    public void testGetProjetsForEmptyList(){
+    public void testGetProjetsForEmptyList() {
 
         User mockUser = new User();
 
@@ -180,7 +183,7 @@ public class ProjetServiceTest {
             when(auth.getName()).thenReturn("user-external-id");
 
             when(userRepository.findByExternalId("user-external-id")).thenReturn(Optional.of(mockUser));
-            // On renvoie une liste vide au lieu d'une liste avec des projets
+
             when(projetRepository.findByUser(mockUser)).thenReturn(new ArrayList<>());
 
             List<ProjetResponseDTO> result = projetService.getProjetsFromUser();
@@ -188,10 +191,72 @@ public class ProjetServiceTest {
             assertNotNull(result);
             assertTrue(result.isEmpty());
         }
+    }
 
 
+    @Test
+    void deleteProjetShouldDeleteWhenOwner() throws UserNotFoundException {
+        // 1. Arrange
+        UUID projectId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+
+        Projet projet = new Projet();
+        projet.setIdProjet(projectId);
+
+        User mockUser = new User();
+        mockUser.setId(ownerId);
+        projet.setUser(mockUser);
+
+        when(projetRepository.findById(projectId)).thenReturn(Optional.of(projet));
 
 
+        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
+            Authentication auth = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
 
+            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+
+
+            when(auth.getName()).thenReturn(ownerId.toString());
+
+
+            projetService.deleteProject(projectId);
+
+
+            verify(projetRepository, times(1)).delete(projet);
+        }
+    }
+
+    @Test
+    void deleteProjetShouldThrowExceptionWhenNotOwner() {
+        UUID projectId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        Projet projet = new Projet();
+        projet.setIdProjet(projectId);
+
+        User mockUser = new User();
+        mockUser.setId(ownerId);
+        projet.setUser(mockUser);
+
+        when(projetRepository.findById(projectId)).thenReturn(Optional.of(projet));
+
+        // On mocke la sécurité pour qu'elle renvoie un ID différent
+        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
+            Authentication auth = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+
+            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            when(auth.getName()).thenReturn("intruder-id");
+
+
+            assertThrows(AccessDeniedException.class, () -> {
+                projetService.deleteProject(projectId);
+            });
+
+
+            verify(projetRepository, never()).delete(any());
+        }
     }
 }
