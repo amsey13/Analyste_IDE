@@ -138,13 +138,14 @@ public class ProjetService {
     public void deleteProject(UUID id) throws UserNotFoundException {
 
         Projet projet = projetRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Projet non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new UserNotFoundException("Project not found");
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUserId = auth.getName();
-        System.out.println("Le User Connecté est : "+currentUserId);
+        String userKey = projet.getUser().getExternalId();
 
-        if (!projet.getUser().getExternalId().toString().equals(currentUserId)) {
+
+        if (!userKey.equals(currentUserId)) {
             throw new AccessDeniedException("You're not allowed to delete this project.");
         }
         projetRepository.delete(projet);

@@ -199,6 +199,7 @@ public class ProjetServiceTest {
         // 1. Arrange
         UUID projectId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
+        String unique_Id = "id-pout-test";
 
         Projet projet = new Projet();
         projet.setIdProjet(projectId);
@@ -206,6 +207,8 @@ public class ProjetServiceTest {
         User mockUser = new User();
         mockUser.setId(ownerId);
         projet.setUser(mockUser);
+        mockUser.setExternalId(unique_Id);
+
 
         when(projetRepository.findById(projectId)).thenReturn(Optional.of(projet));
 
@@ -214,11 +217,12 @@ public class ProjetServiceTest {
             Authentication auth = mock(Authentication.class);
             SecurityContext securityContext = mock(SecurityContext.class);
 
+
             mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(securityContext);
             when(securityContext.getAuthentication()).thenReturn(auth);
 
 
-            when(auth.getName()).thenReturn(ownerId.toString());
+            when(auth.getName()).thenReturn(unique_Id);
 
 
             projetService.deleteProject(projectId);
@@ -238,6 +242,7 @@ public class ProjetServiceTest {
         User mockUser = new User();
         mockUser.setId(ownerId);
         projet.setUser(mockUser);
+        mockUser.setExternalId("owner-id-dans-db");
 
         when(projetRepository.findById(projectId)).thenReturn(Optional.of(projet));
 
