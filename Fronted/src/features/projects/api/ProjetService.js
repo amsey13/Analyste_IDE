@@ -3,8 +3,8 @@ import apiClient from '../../../test/HttpClient';
 
 export const ProjetService = {
 
-    async getProjet(){
-        const response = await apiClient.get('/projets');
+    async getProjects(){
+        const response = await apiClient.get('/projects');
         return response.data;
     },
 
@@ -16,7 +16,7 @@ export const ProjetService = {
      * @returns 
      */
     async createProjet(projetData) {
-        const response = await apiClient.post('/projets', projetData);
+        const response = await apiClient.post('/projects', projetData);
         return response.data;
     }
 

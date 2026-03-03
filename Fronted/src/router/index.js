@@ -4,6 +4,7 @@ import { UserService } from '../features/users/api/UserService';
 const HomeView = () => import('../features/users/views/HomeView.vue')
 const MainLayout = () => import('../layouts/MainLayout.vue')
 const ProjetCreateView = () => import('../features/projects/views/ProjetCreateView.vue')
+const ProjetSelector = () => import('../features/projects/views/ProjetSelector.vue')
 const DashboardView = () => import('../features/users/views/DashboardView.vue')
 
 const routes = [
@@ -18,17 +19,22 @@ const routes = [
         children: [
             {
                 path: 'projets',
-                name: 'projets',
-                component: ProjetCreateView,
+                name: 'projets-lite',
+                component: ProjetSelector,
                 meta: { requiresAuth: true }
             },
 
+            {
+                path: 'projet/create',
+                name: 'projet-create',
+                component: ProjetCreateView,
+                meta: { requiresAuth: true }
+            },
             {
                 path: 'projet/:id',
                 name: 'projet-dashboard',
                 component: DashboardView,
                 meta: { requiresAuth: true }
-
             }
             // Les futurs modules d'analyse fonctionnelle iront ici
         ]
