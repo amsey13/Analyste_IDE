@@ -16,7 +16,7 @@ import java.util.Optional;
 public class AttributeEncryptor implements AttributeConverter<String, String> {
 
     private static final String ALGORITHM = "AES/GCM/NoPadding";
-    private static final int IV_LENGTH = 12; // recommandé pour GCM
+    private static final int IV_LENGTH = 12;
     private static final int TAG_LENGTH = 128;
 
     private static final String SECRET = Optional

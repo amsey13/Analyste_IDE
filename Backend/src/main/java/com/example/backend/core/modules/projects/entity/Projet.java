@@ -39,6 +39,9 @@ public class Projet {
     @Convert(converter = AttributeEncryptor.class)
     private String taigaToken;
 
+    @Column(name="slug_project")
+    private String slugProject;
+
 
     public LocalDateTime getDateCreation() {
         return dateCreation;
@@ -94,5 +97,13 @@ public class Projet {
 
     public void setTaigaToken(String taigaToken) {
         this.taigaToken = taigaToken;
+    }
+
+    public String getSlugProject() {
+        return slugProject;
+    }
+
+    public void setSlugProject(String slugProject) {
+        this.slugProject = slugProject;
     }
 }

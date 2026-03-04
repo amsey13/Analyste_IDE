@@ -114,6 +114,7 @@ public class ProjetService {
             Integer projetId = taigaService.getProjectIdBySlug(slug, token);
             if (token != null) {
                 projet.setTaigaToken(token);
+                projet.setSlugProject(slug);
             }
             else{
                 throw new UserNotFoundException("Echec de l'authentification Taiga");
@@ -129,8 +130,6 @@ public class ProjetService {
         if (url == null || !url.contains("project/")) {
             throw new IllegalArgumentException("URL Taiga invalide ");
         }
-
-
         return url.split("project/")[1].split("/")[0];
 
     }
