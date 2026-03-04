@@ -50,10 +50,10 @@ public class ProjectService {
     private ProjectResponseDTO mapDTO(Project projet){
         ProjectResponseDTO dto = new ProjectResponseDTO();
         dto.setIdProjet(projet.getIdProjet());
-        dto.setNom(projet.getNom());
+        dto.setName(projet.getName());
         dto.setDescription(projet.getDescription());
         dto.setCreationDate(projet.getDateCreation());
-        dto.setModificationDate(projet.getDateModifiction());
+        dto.setUpdateDateDate(projet.getUpdatedAt());
         return dto;
     }
 

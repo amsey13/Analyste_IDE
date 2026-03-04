@@ -16,12 +16,12 @@ public class ProjectRequestDTO {
         this.description = description;
     }
 
-    public String getNom() {
+    public String getName() {
         return name;
     }
 
-    public void setNom(String nom) {
-        this.name = nom;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getTaigaPassword() {

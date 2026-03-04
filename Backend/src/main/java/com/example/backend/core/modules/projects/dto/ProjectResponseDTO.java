@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ProjectResponseDTO {
-    private UUID idProjet;
+    private UUID id;
 
     private String name;
 
@@ -23,19 +23,19 @@ public class ProjectResponseDTO {
     }
 
     public UUID getIdProjet() {
-        return idProjet;
+        return id;
     }
 
     public void setIdProjet(UUID id) {
-        this.idProjet = id;
+        this.id = id;
     }
 
 
-    public String getNom() {
+    public String getName() {
         return name;
     }
 
-    public void setNom(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -47,7 +47,7 @@ public class ProjectResponseDTO {
         return updateDate;
     }
 
-    public void setModificationDate(LocalDateTime modificationDate) {
+    public void setUpdateDateDate(LocalDateTime modificationDate) {
         this.updateDate = modificationDate;
     }
 
