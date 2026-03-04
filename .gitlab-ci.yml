@@ -39,4 +39,4 @@ build:
 test:
   stage: test
   script:
-    - mvn test
+    - ./mvnw clean test
