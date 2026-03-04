@@ -17,9 +17,7 @@ public class BackendApplication {
 
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure().load();
-        System.out.println("=== DÉBUT LECTURE .ENV ===");
-        dotenv.entries().forEach(e -> System.out.println("CLÉ LUE : '" + e.getKey() + "' | VALEUR : '" + e.getValue() + "'"));
-        System.out.println("=== FIN LECTURE .ENV ===");
+
         if (dotenv.get("JUMPCLOUD_CLIENT_ID") != null) {
             System.setProperty("JUMPCLOUD_CLIENT_ID", dotenv.get("JUMPCLOUD_CLIENT_ID"));
             System.setProperty("JUMPCLOUD_CLIENT_SECRET", dotenv.get("JUMPCLOUD_CLIENT_SECRET"));
