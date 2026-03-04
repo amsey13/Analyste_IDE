@@ -8,8 +8,11 @@ import com.example.backend.core.auth.entity.User;
 
 import com.example.backend.core.modules.projects.dto.AttributeEncryptor;
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
+@Table(name = "projets")
+@Data
 public class Projet {
 
     @Id
