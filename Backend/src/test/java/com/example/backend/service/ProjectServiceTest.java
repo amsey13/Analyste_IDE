@@ -47,7 +47,7 @@ public class ProjectServiceTest {
     public void testCreateProjetSuccessWithoutTaiga() throws UserNotFoundException {
 
         ProjectRequestDTO request = new ProjectRequestDTO();
-        request.setNom("Test creation Projet");
+        request.setName("Test creation Projet");
         UUID id = UUID.randomUUID();
         User mockUser = new User();
         mockUser.setId(id);
@@ -69,7 +69,7 @@ public class ProjectServiceTest {
             ProjectResponseDTO projetResult = projectService.createProjet(request);
 
             assertNotNull(projetResult);
-            assertEquals("Test creation Projet", projetResult.getNom());
+            assertEquals("Test creation Projet", projetResult.getName());
             verify(projectRepository, times(1)).save(any(Project.class));
 
             verify(taigaService, never()).authenticate(anyString(), anyString());
@@ -81,7 +81,7 @@ public class ProjectServiceTest {
     @Test
     public void testCreateProjetSuccessWithTaiga() throws UserNotFoundException {
         ProjectRequestDTO request = new ProjectRequestDTO();
-        request.setNom("Projet Taiga");
+        request.setName("Projet Taiga");
         request.setTaigaUserName("user-taiga");
         request.setTaigaPassword("pass-taiga");
         request.setTaigaProjectUrl("https://tree.taiga.io/project/mon-super-projet");
@@ -114,7 +114,7 @@ public class ProjectServiceTest {
     public void testCreateProjectWithUserNotFoundException() {
 
         ProjectRequestDTO request = new ProjectRequestDTO();
-        request.setNom("Projet Test");
+        request.setName("Projet Test");
 
         try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
 
