@@ -74,7 +74,7 @@ public class Project {
         this.description = description;
     }
 
-    public String getNom() {
+    public String getName() {
         return name;
     }
 
