@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 import java.util.UUID;
 
-import com.example.backend.core.modules.projects.entity.Projet;
+import com.example.backend.core.modules.projects.entity.Project;
 
 @Entity
 @Table(name = "users")
@@ -30,7 +30,7 @@ public class User {
     private boolean isActive = true;
 
     @OneToMany(mappedBy = "user")
-    private List<Projet> projets;
+    private List<Project> projets;
 
     public String getEmail() {
         return email;
@@ -72,11 +72,11 @@ public class User {
         isActive = active;
     }
 
-    public List<Projet> getProjets() {
+    public List<Project> getProjets() {
         return projets;
     }
 
-    public void setProjets(List<Projet> projets) {
+    public void setProjets(List<Project> projets) {
         this.projets = projets;
     }
 }
