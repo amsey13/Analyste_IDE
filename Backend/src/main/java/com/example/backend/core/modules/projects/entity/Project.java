@@ -1,6 +1,5 @@
 package com.example.backend.core.modules.projects.entity;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,63 +10,60 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "projets")
+@Table(name = "projects")
 @Data
-public class Projet {
+public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID idProjet;
+    private UUID id;
 
-
-    @Column(name="Date_Creation")
-    private LocalDateTime dateCreation;
-
-
-    @Column(name="Date_derniere_Modification")
-    private LocalDateTime dateModifiction;
+    @Column(nullable = false)
+    private String name;
 
     @Column(length = 1000)
     private String description;
 
-    @Column(nullable=false)
-    private String nom;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    @ManyToOne(optional=false)
-    @JoinColumn(name="user_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name = "taiga_token", columnDefinition = "TEXT")
     @Convert(converter = AttributeEncryptor.class)
     private String taigaToken;
 
-    @Column(name="slug_project")
-    private String slugProject;
+    @Column(name = "project_slug")
+    private String projectSlug;
 
 
     public LocalDateTime getDateCreation() {
-        return dateCreation;
+        return createdAt;
     }
 
-    public void setDateCreation(LocalDateTime dateCreation) {
-        this.dateCreation = dateCreation;
+    public void setDateCreation(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public LocalDateTime getDateModifiction() {
-        return dateModifiction;
+        return updatedAt;
     }
 
-    public void setDateModifiction(LocalDateTime dateModifiction) {
-        this.dateModifiction = dateModifiction;
+    public void setDateModifiction(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public UUID getIdProjet() {
-        return idProjet;
+        return id;
     }
 
-    public void setIdProjet(UUID idProjet) {
-        this.idProjet = idProjet;
+    public void setIdProjet(UUID idProject) {
+        this.id = idProject;
     }
 
     public String getDescription() {
@@ -79,11 +75,11 @@ public class Projet {
     }
 
     public String getNom() {
-        return nom;
+        return name;
     }
 
-    public void setNom(String nom) {
-        this.nom = nom;
+    public void setNom(String name) {
+        this.name = name;
     }
 
     public User getUser() {
@@ -103,10 +99,10 @@ public class Projet {
     }
 
     public String getSlugProject() {
-        return slugProject;
+        return projectSlug;
     }
 
     public void setSlugProject(String slugProject) {
-        this.slugProject = slugProject;
+        this.projectSlug = slugProject;
     }
 }
