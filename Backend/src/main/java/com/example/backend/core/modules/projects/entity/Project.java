@@ -50,11 +50,11 @@ public class Project {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getDateModifiction() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setDateModifiction(LocalDateTime updatedAt) {
+    public void setUpdateAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 
