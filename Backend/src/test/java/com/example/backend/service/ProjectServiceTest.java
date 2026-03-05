@@ -143,9 +143,9 @@ public class ProjectServiceTest {
 
         List<Project> mockProjets = new ArrayList<>();
         Project mockProjet1 = new Project();
-        mockProjet1.setNom("Projet 1");
+        mockProjet1.setName("Projet 1");
         Project mockProjet2 = new Project();
-        mockProjet2.setNom("Projet 2");
+        mockProjet2.setName("Projet 2");
         mockProjets.add(mockProjet1);
         mockProjets.add(mockProjet2);
 

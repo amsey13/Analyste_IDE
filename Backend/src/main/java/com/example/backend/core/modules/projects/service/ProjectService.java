@@ -100,7 +100,7 @@ public class ProjectService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         Project projet = new Project();
-        projet.setNom(dto.getName());
+        projet.setName(dto.getName());
         projet.setDescription(dto.getDescription());
         projet.setDateCreation(LocalDateTime.now());
         projet.setUser(user);

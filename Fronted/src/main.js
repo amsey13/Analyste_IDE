@@ -8,7 +8,7 @@ import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
 import { definePreset } from '@primevue/themes';
 import Aura from '@primevue/themes/aura';
-import { createPinia } from 'pinia'
+import { createPinia } from 'pinia';
 
 // PrimeFlex et Styles
 import 'primeflex/primeflex.css';

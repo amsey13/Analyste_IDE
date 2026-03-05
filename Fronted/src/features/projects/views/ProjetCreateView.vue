@@ -10,7 +10,7 @@ import Password from 'primevue/password';
 const router = useRouter();
 const loading = ref(false);
 const projet = ref({
-   nom: '',
+    name: '',
     description: '',
     taigaUserName: '',
     taigaPassword: '',
@@ -46,7 +46,7 @@ const createProject = async () => {
     <div class="grid formgrid p-fluid">
       <div class="field col-12 md:col-6">
         <label for="nom">Nom du projet *</label>
-        <InputText id="nom" v-model="projet.nom" required />
+        <InputText id="nom" v-model="projet.name" required />
       </div>
       
       <div class="field col-12">

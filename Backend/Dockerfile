@@ -9,6 +9,8 @@ RUN mvn dependency:go-offline
 # Copie le reste du code source
 COPY src ./src
 
+COPY Backend/.env .  
+
 # Compile l'application (en ignorant les tests pour aller plus vite)
 RUN mvn clean package -DskipTests
 
