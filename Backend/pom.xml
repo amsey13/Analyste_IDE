@@ -79,6 +79,7 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+
         <dependency>
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
