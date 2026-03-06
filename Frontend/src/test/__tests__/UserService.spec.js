@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UserService } from '../UserService';
-import apiClient from '../HttpClient';
+import apiClient from '../../api/HttpClient.js';
 
 // On simule (mock) le client HTTP pour isoler le test de l'environnement physique
 vi.mock('../HttpClient');

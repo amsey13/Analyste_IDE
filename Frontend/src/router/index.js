@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { UserService } from '../features/users/api/UserService';
 
-const HomeView = () => import('../features/users/views/HomeView.vue')
+const HomeView = () => import('../views/HomeView.vue')
 const MainLayout = () => import('../layouts/MainLayout.vue')
-const ProjetCreateView = () => import('../features/projects/views/ProjetCreateView.vue')
-const ProjetSelector = () => import('../features/projects/views/ProjetSelector.vue')
-const DashboardView = () => import('../features/users/views/DashboardView.vue')
+const ProjetCreateView = () => import('../features/projects/views/ProjectCreateView.vue')
+const ProjetSelector = () => import('../features/projects/views/ProjectSelector.vue')
+const DashboardView = () => import('../views/DashboardView.vue')
 
 const routes = [
     {

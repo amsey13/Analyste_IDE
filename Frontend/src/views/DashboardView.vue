@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import Card from 'primevue/card';
 import Chart from 'primevue/chart';
-import { UserService } from '../api/UserService';
+import { UserService } from '../features/users/api/UserService.js';
 
 const user = ref(null);
 const chartData = ref();

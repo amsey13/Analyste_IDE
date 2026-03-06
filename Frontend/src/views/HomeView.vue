@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { UserService } from '../api/UserService';
+import { UserService } from '../features/users/api/UserService.js';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 
