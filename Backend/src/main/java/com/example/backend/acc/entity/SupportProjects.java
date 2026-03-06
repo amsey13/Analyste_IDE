@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("ACCOMPAGNEMENT")
-public class SupportProject extends Project {
+public class SupportProjects extends Project {
 
     // Maybe there will be something later....
 }
