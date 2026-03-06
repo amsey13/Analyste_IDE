@@ -11,6 +11,8 @@ import lombok.Data;
 
 @Entity
 @Table(name = "projects")
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name="project_type")
 @Data
 public class Project {
 
@@ -33,13 +35,6 @@ public class Project {
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Column(name = "taiga_token", columnDefinition = "TEXT")
-    @Convert(converter = AttributeEncryptor.class)
-    private String taigaToken;
-
-    @Column(name = "project_slug")
-    private String projectSlug;
 
 
     public LocalDateTime getDateCreation() {
@@ -90,19 +85,12 @@ public class Project {
         this.user = user;
     }
 
-    public String getTaigaToken() {
-        return taigaToken;
+
+    public void setBaseInfo(String name, String description, User user) {
+        this.name = name;
+        this.description = description;
+        this.user = user;
+        this.createdAt = LocalDateTime.now();
     }
 
-    public void setTaigaToken(String taigaToken) {
-        this.taigaToken = taigaToken;
-    }
-
-    public String getSlugProject() {
-        return projectSlug;
-    }
-
-    public void setSlugProject(String slugProject) {
-        this.projectSlug = slugProject;
-    }
 }

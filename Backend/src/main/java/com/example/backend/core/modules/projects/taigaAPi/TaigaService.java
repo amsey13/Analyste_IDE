@@ -2,6 +2,7 @@ package com.example.backend.core.modules.projects.taigaAPi;
 
 import com.example.backend.core.modules.projects.taigaAPi.dto.TaigaAuthResponse;
 import com.example.backend.core.modules.projects.taigaAPi.dto.TaigaUserStory;
+import com.example.backend.core.modules.projects.taigaAPi.exception.IncorrectIdentifiersException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class TaigaService {
     private final RestTemplate restTemplate = new RestTemplate();
     private static final String BASE_URL = "https://api.taiga.io/api/v1";
 
-    public String authenticate(String username, String password){
+    public String authenticate(String username, String password) throws IncorrectIdentifiersException {
 
         String url = BASE_URL + "/auth";
         Map<String, String> body = new HashMap<>();
@@ -33,7 +34,7 @@ public class TaigaService {
             return (response != null) ? response.getAuthtoken() : null;
         }
         catch (Exception e){
-            return null;
+            throw new IncorrectIdentifiersException("The provided identifiers do not match " +e.getMessage());
         }
 
 

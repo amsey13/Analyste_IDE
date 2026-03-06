@@ -1,15 +1,17 @@
 package com.example.backend.service;
 
+import com.example.backend.audit.dto.AuditProjectRequestDTO;
 import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.exeption.UserNotFoundException;
 import com.example.backend.core.modules.projects.dao.ProjectRepository;
-import com.example.backend.core.modules.projects.dto.ProjectRequestDTO;
+import com.example.backend.core.modules.projects.dto.BaseProjectRequestDTO;
 import com.example.backend.core.modules.projects.dto.ProjectResponseDTO;
 import com.example.backend.core.modules.projects.entity.Project;
 import com.example.backend.core.modules.projects.service.ProjectService;
 
 import com.example.backend.core.modules.projects.taigaAPi.TaigaService;
+import com.example.backend.core.modules.projects.taigaAPi.exception.IncorrectIdentifiersException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,22 +46,22 @@ public class ProjectServiceTest {
 
 
     @Test
-    public void testCreateProjetSuccessWithoutTaiga() throws UserNotFoundException {
+    public void testCreateProjetSuccessWithoutTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
 
-        ProjectRequestDTO request = new ProjectRequestDTO();
+        BaseProjectRequestDTO request = new BaseProjectRequestDTO();
         request.setName("Test creation Projet");
         UUID id = UUID.randomUUID();
         User mockUser = new User();
         mockUser.setId(id);
 
-        //on mock la securite statique
+        //We mock the security
 
         try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
 
             Authentication auth = mock(Authentication.class);
             SecurityContext context = mock(SecurityContext.class);
 
-            //simule les sortie des security elements de Spring
+            //simulates the output of Spring's security elements
             mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
             when(context.getAuthentication()).thenReturn(auth);
             when(auth.getName()).thenReturn("use-external-id");
@@ -79,8 +81,8 @@ public class ProjectServiceTest {
     }
 
     @Test
-    public void testCreateProjetSuccessWithTaiga() throws UserNotFoundException {
-        ProjectRequestDTO request = new ProjectRequestDTO();
+    public void testCreateProjetSuccessWithTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
+        AuditProjectRequestDTO request = new AuditProjectRequestDTO();
         request.setName("Projet Taiga");
         request.setTaigaUserName("user-taiga");
         request.setTaigaPassword("pass-taiga");
@@ -99,7 +101,6 @@ public class ProjectServiceTest {
 
             // Simulation de la réponse Taiga
             when(taigaService.authenticate("user-taiga", "pass-taiga")).thenReturn("fake-token");
-            when(taigaService.getProjectIdBySlug("mon-super-projet", "fake-token")).thenReturn(19);
             when(projectRepository.save(any(Project.class))).thenAnswer(i -> i.getArguments()[0]);
 
             ProjectResponseDTO result = projectService.createProjet(request);
@@ -111,9 +112,38 @@ public class ProjectServiceTest {
     }
 
     @Test
+    public void testCreateProjectWithInvalidTaigaIdentifiersShouldThrownAnException() throws IncorrectIdentifiersException {
+
+        AuditProjectRequestDTO request = new AuditProjectRequestDTO();
+        request.setName("Test creation Projet");
+        request.setTaigaUserName("mauvais-user");
+        request.setTaigaPassword("mauvais-pass");
+        request.setTaigaProjectUrl("https://tree.taiga.io/project/slug");
+
+        try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)){
+            Authentication auth = mock(Authentication.class);
+            SecurityContext context = mock(SecurityContext.class);
+
+            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
+            when(context.getAuthentication()).thenReturn(auth);
+            when(auth.getName()).thenReturn("user-id");
+
+            when(userRepository.findByExternalId("user-id")).thenReturn(Optional.of(new User()));
+
+            when(taigaService.authenticate(anyString(), anyString()))
+                    .thenThrow(new IncorrectIdentifiersException("Taiga Error These indentifiers are invalid"));
+
+
+            assertThrows(IncorrectIdentifiersException.class, () -> {
+                projectService.createProjet(request);
+            });
+        }
+    }
+
+    @Test
     public void testCreateProjectWithUserNotFoundException() {
 
-        ProjectRequestDTO request = new ProjectRequestDTO();
+        BaseProjectRequestDTO request = new BaseProjectRequestDTO();
         request.setName("Projet Test");
 
         try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
@@ -246,7 +276,7 @@ public class ProjectServiceTest {
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projet));
 
-        // On mocke la sécurité pour qu'elle renvoie un ID différent
+        // We mock the security so that it returns a different ID
         try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
             Authentication auth = mock(Authentication.class);
             SecurityContext securityContext = mock(SecurityContext.class);

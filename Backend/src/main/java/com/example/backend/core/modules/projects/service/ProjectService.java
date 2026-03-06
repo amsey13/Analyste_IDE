@@ -1,14 +1,18 @@
 package com.example.backend.core.modules.projects.service;
 
+
+import com.example.backend.audit.dto.AuditProjectRequestDTO;
+import com.example.backend.audit.entity.AuditProject;
 import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.exeption.UserNotFoundException;
 import com.example.backend.core.modules.projects.dao.ProjectRepository;
-import com.example.backend.core.modules.projects.dto.ProjectRequestDTO;
+import com.example.backend.core.modules.projects.dto.BaseProjectRequestDTO;
 import com.example.backend.core.modules.projects.dto.ProjectResponseDTO;
 import com.example.backend.core.modules.projects.entity.Project;
 
 import com.example.backend.core.modules.projects.taigaAPi.TaigaService;
+import com.example.backend.core.modules.projects.taigaAPi.exception.IncorrectIdentifiersException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -69,7 +73,7 @@ public class ProjectService {
 
         
         User user = userRepository.findByExternalId(externalId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         
         List<Project> projets = projectRepository.findByUser(user);
@@ -92,47 +96,34 @@ public class ProjectService {
      * @return The `createProjet` method returns a `ProjetDTO` object after creating a new `Projet`
      * entity, saving it to the database, and mapping it to a DTO object.
      */
-    public ProjectResponseDTO createProjet(ProjectRequestDTO dto) throws UserNotFoundException {
+    public ProjectResponseDTO createProjet(BaseProjectRequestDTO dto) throws UserNotFoundException, IncorrectIdentifiersException {
 
-        String externalId = SecurityContextHolder.getContext().getAuthentication().getName();
+       User user = this.getAuthenticatedUser();
 
-        User user = userRepository.findByExternalId(externalId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        Project projet = new Project();
-        projet.setName(dto.getName());
-        projet.setDescription(dto.getDescription());
-        projet.setDateCreation(LocalDateTime.now());
-        projet.setUser(user);
-
-        if(dto.getTaigaUserName() != null && !dto.getTaigaUserName().isEmpty() &&
-        dto.getTaigaPassword() != null && !dto.getTaigaPassword().isEmpty()){
-
-            String slug = extractSlug(dto.getTaigaProjectUrl());
-            String token = taigaService.authenticate(dto.getTaigaUserName(), dto.getTaigaPassword());
-            Integer projetId = taigaService.getProjectIdBySlug(slug, token);
-            if (token != null) {
-                projet.setTaigaToken(token);
-                projet.setSlugProject(slug);
-            }
-            else{
-                throw new UserNotFoundException("Echec de l'authentification Taiga");
-            }
-
+        if(dto instanceof AuditProjectRequestDTO){
+            return createAuditProject((AuditProjectRequestDTO) dto, user);
         }
-
-        Project savedProjet = projectRepository.save(projet);
-        return mapDTO(savedProjet);
+        Project projet = new Project();
+        projet.setBaseInfo(dto.getName(), dto.getDescription(),user);
+        projet.setDateCreation(LocalDateTime.now());
+        return mapDTO(projectRepository.save(projet));
     }
 
     private String extractSlug(String url) {
         if (url == null || !url.contains("project/")) {
-            throw new IllegalArgumentException("URL Taiga invalide ");
+            throw new IllegalArgumentException("Cannot extract slug from null or invalid URL");
         }
         return url.split("project/")[1].split("/")[0];
 
     }
 
+    /**
+     * This Java function deletes a project by its UUID after checking if the current user has
+     * permission to delete it.
+     * 
+     * @param id The `id` parameter in the `deleteProject` method is of type `UUID` and represents the
+     * unique identifier of the project that is to be deleted.
+     */
     public void deleteProject(UUID id) throws UserNotFoundException {
 
         Project projet = projectRepository.findById(id)
@@ -148,9 +139,44 @@ public class ProjectService {
         }
         projectRepository.delete(projet);
 
+    }
 
 
+    /**
+     * The function creates an audit project using the provided data and saves it to the repository
+     * after setting necessary attributes.
+     * 
+     * @param dto AuditProjectRequestDTO dto
+     * @param user The `user` parameter in the `createAuditProject` method is an instance of the `User`
+     * class. It is used to set the user-related information for the `AuditProject` being created. This
+     * information might include details like the user's name, email, role, or any other relevant
+     * @return The method `createAuditProject` is returning a `ProjectResponseDTO` object.
+     */
+    private ProjectResponseDTO createAuditProject(AuditProjectRequestDTO dto, User user) throws UserNotFoundException, IncorrectIdentifiersException {
 
+        AuditProject audit = new AuditProject();
+        audit.setBaseInfo(dto.getName(), dto.getDescription(), user);
+        audit.setDateCreation(LocalDateTime.now());
+        String slug = extractSlug(dto.getTaigaProjectUrl());
+        String token = taigaService.authenticate(dto.getTaigaUserName(), dto.getTaigaPassword());
+        if(token == null){
+            throw new IncorrectIdentifiersException("Invalid Taiga Identifiers");
+        }
+        audit.setProjectSlug(slug);
+        audit.setTaigaToken(token);
+        return mapDTO(projectRepository.save(audit));
+    }
+
+    /**
+     * The function `getAuthenticatedUser()` retrieves the authenticated user based on their external
+     * ID or throws a `UserNotFoundException` if the user is not found.
+     * 
+     * @return The method `getAuthenticatedUser()` is returning a `User` object.
+     */
+    private User getAuthenticatedUser() throws UserNotFoundException {
+        String externalId = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByExternalId(externalId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
 

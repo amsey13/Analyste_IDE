@@ -1,10 +1,11 @@
 package com.example.backend.core.modules.projects.api;
 
 import com.example.backend.core.auth.exeption.UserNotFoundException;
-import com.example.backend.core.modules.projects.dto.ProjectRequestDTO;
+import com.example.backend.core.modules.projects.dto.BaseProjectRequestDTO;
 import com.example.backend.core.modules.projects.dto.ProjectResponseDTO;
 import com.example.backend.core.modules.projects.service.ProjectService;
 
+import com.example.backend.core.modules.projects.taigaAPi.exception.IncorrectIdentifiersException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,7 @@ public class ProjectController {
 
 
     @PostMapping
-    public ResponseEntity<ProjectResponseDTO> createProject(@RequestBody ProjectRequestDTO projetDTO) throws UserNotFoundException {
+    public ResponseEntity<ProjectResponseDTO> createProject(@RequestBody BaseProjectRequestDTO projetDTO) throws UserNotFoundException, IncorrectIdentifiersException {
         return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProjet(projetDTO));
     }
 
