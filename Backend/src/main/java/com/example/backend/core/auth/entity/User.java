@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 import java.util.UUID;
 
-import com.example.backend.core.modules.projects.entity.Project;
+import com.example.backend.modules.projects.core.entity.Project;
 
 @Entity
 @Table(name = "users")

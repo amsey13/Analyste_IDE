@@ -1,0 +1,7 @@
+Drop table if exists support_projects cascade;
+
+
+create table support_project(
+    id UUID primary key references projects(id),
+    status VARCHAR(50) NOT NULL
+);

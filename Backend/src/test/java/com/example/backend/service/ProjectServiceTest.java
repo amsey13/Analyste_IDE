@@ -1,17 +1,17 @@
 package com.example.backend.service;
 
-import com.example.backend.audit.dto.AuditProjectRequestDTO;
+import com.example.backend.modules.projects.audit.dto.AuditProjectRequestDTO;
 import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
 import com.example.backend.core.auth.exeption.UserNotFoundException;
-import com.example.backend.core.modules.projects.dao.ProjectRepository;
-import com.example.backend.core.modules.projects.dto.BaseProjectRequestDTO;
-import com.example.backend.core.modules.projects.dto.ProjectResponseDTO;
-import com.example.backend.core.modules.projects.entity.Project;
-import com.example.backend.core.modules.projects.service.ProjectService;
+import com.example.backend.modules.projects.core.dao.ProjectRepository;
+import com.example.backend.modules.projects.core.dto.BaseProjectRequestDTO;
+import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
+import com.example.backend.modules.projects.core.entity.Project;
+import com.example.backend.modules.projects.core.service.ProjectService;
 
-import com.example.backend.core.modules.projects.taigaAPi.TaigaService;
-import com.example.backend.core.modules.projects.taigaAPi.exception.IncorrectIdentifiersException;
+import com.example.backend.modules.projects.audit.taiga.service.TaigaService;
+import com.example.backend.modules.projects.audit.taiga.exception.IncorrectIdentifiersException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
