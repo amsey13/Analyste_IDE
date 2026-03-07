@@ -9,8 +9,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 //import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 //import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -67,8 +70,16 @@ public class SecurityConfig {
 
                     // 5. OAUTH2 / OIDC : Connexion et synchronisation
                     .oauth2Login(oauth2 -> oauth2
+                            //On branche le forçage du login (prompt=login)
+                            .authorizationEndpoint(authorization -> authorization
+                                    .authorizationRequestResolver(authorizationRequestResolver())
+                            )
                             // Redirection vers le Front-End après une connexion réussie
                             .successHandler(new SimpleUrlAuthenticationSuccessHandler("http://localhost:5173"))
+
+                            // Redirection propre vers le Front-End en cas d'échec (Fini la page 404 blanche !)
+                            .failureHandler(new SimpleUrlAuthenticationFailureHandler("http://localhost:5173/?error=authentification_echouee"))
+                            // Récupération et synchronisation du profil utilisateur
                             .userInfoEndpoint(userInfo -> userInfo
                                     .oidcUserService(customOidcUserService)
                             )
@@ -119,5 +130,17 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private OAuth2AuthorizationRequestResolver authorizationRequestResolver() {
+        DefaultOAuth2AuthorizationRequestResolver resolver =
+                new DefaultOAuth2AuthorizationRequestResolver(this.clientRegistrationRepository, "/oauth2/authorization");
+
+        // NOUVEAU : On force l'ajout du paramètre prompt=login à la requête vers JumpCloud
+        resolver.setAuthorizationRequestCustomizer(customizer ->
+                customizer.additionalParameters(params -> params.put("prompt", "login"))
+        );
+
+        return resolver;
     }
 }

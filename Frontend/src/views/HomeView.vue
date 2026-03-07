@@ -4,8 +4,11 @@ import { useRouter } from 'vue-router';
 import { UserService } from '../features/users/api/UserService.js';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 
 const router = useRouter();
+const toast = useToast();
 const loading = ref(false);
 const initialCheck = ref(true); // Pour éviter un flash visuel du bouton si déjà connecté
 
@@ -19,6 +22,23 @@ onMounted(async () => {
   } catch (error) {
    
     initialCheck.value = false;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('error') && urlParams.get('error') === 'authentification_echouee') {
+
+      setTimeout(() => {
+        toast.add({
+          severity: 'error',
+          summary: 'Accès Refusé',
+          detail: 'La connexion a échoué. Vérifiez vos accès JumpCloud.',
+          life: 5000
+        });
+      }, 100);
+
+      // Nettoyage de l'URL pour éviter que l'erreur boucle en cas de rafraîchissement
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
   }
 });
 
@@ -32,6 +52,8 @@ const login = () => {
 
 <template>
   <main class="flex min-h-screen bg-blue-50">
+    <Toast />
+
     <div v-if="initialCheck" class="flex w-full align-items-center justify-content-center">
       <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
     </div>
