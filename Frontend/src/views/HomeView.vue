@@ -52,6 +52,8 @@ const login = () => {
 
 <template>
   <main class="flex min-h-screen bg-blue-50">
+    <Toast />
+
     <div v-if="initialCheck" class="flex w-full align-items-center justify-content-center">
       <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
     </div>
