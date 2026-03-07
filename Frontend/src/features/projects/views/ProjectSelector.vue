@@ -9,6 +9,7 @@ import Button  from 'primevue/button';
 import Card from 'primevue/card';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
+import ProgressBar from 'primevue/progressbar';
 
 
 const projets = ref([]);
@@ -69,41 +70,85 @@ const deleteProjet = (idProjet) => {
 
 <template>
   <Toast />
-    <ConfirmDialog />
-   <div class="card p-5">
-        <div class="flex justify-content-between align-items-center mb-5">
-            <h1>Mes Projets</h1>
-            <Button label="Créer un nouveau projet" icon="pi pi-plus" @click="goToCreate" />
-        </div>
+  <ConfirmDialog />
 
-        <div v-if="loading">Chargement...</div>
+  <div class="p-5">
 
-        <div v-else class="grid">
-
-            <div v-for="p in projets" :key="p.idProjet" class="col-12 md:col-6 lg:col-4">
-                <Card class="h-full cursor-pointer hover:shadow-4 transition-duration-200" @click="openProjet(p.idProjet)">
-                    <template #title>{{ p.nom }}</template>
-                    <template #content>
-                        <p class="m-0 text-600">{{ p.description || 'Pas de description' }}</p>
-                    </template>
-                    <template #footer>
-                      <div class="flex justify-content-end pt-3">
-                        <Button
-                            icon="pi pi-trash"
-                            severity="danger"
-                            text
-                            aria-label="Supprimer"
-                            rounded
-                            @click.stop="deleteProjet(p.idProjet)"
-                        />
-                      </div>
-                    </template>
-                </Card>
-            </div>
-             
-            <div v-if="projets.length === 0" class="col-12 text-center text-500">
-                Aucun projet trouvé. Cliquez sur "Créer" pour commencer.
-            </div>
-        </div>
+    <div class="mb-5">
+      <h1 class="text-3xl font-bold">Gestion des Projets</h1>
+      <p class="text-600">
+        Sélectionnez un projet existant ou démarrez une nouvelle analyse.
+      </p>
     </div>
+
+    <div v-if="loading">Chargement...</div>
+
+    <div v-else class="grid">
+
+      <!-- Carte Nouveau projet -->
+      <div class="col-12 md:col-6 lg:col-4">
+        <Card class="h-full cursor-pointer border-2 border-primary flex align-items-center justify-content-center"
+              @click="goToCreate">
+
+          <template #content>
+            <div class="text-center p-5">
+              <i class="pi pi-plus text-4xl text-primary mb-3"></i>
+              <h3>Nouveau Projet</h3>
+              <p class="text-600">Créer une nouvelle analyse fonctionnelle</p>
+            </div>
+          </template>
+
+        </Card>
+      </div>
+
+      <!-- Liste projets -->
+      <div
+          v-for="p in projets"
+          :key="p.idProjet"
+          class="col-12 md:col-6 lg:col-4"
+      >
+        <Card
+            class="h-full cursor-pointer hover:shadow-4 transition-duration-200"
+            @click="openProjet(p.idProjet)"
+        >
+
+          <template #title>
+            {{ p.nom }}
+          </template>
+
+          <template #content>
+
+            <p class="text-600 mb-3">
+              {{ p.description || 'Pas de description' }}
+            </p>
+
+            <div class="mb-2 text-sm text-500">
+              En cours
+            </div>
+
+            <ProgressBar :value="p.progress || 50"></ProgressBar>
+
+          </template>
+
+          <template #footer>
+            <div class="flex justify-content-end">
+              <Button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  text
+                  rounded
+                  @click.stop="deleteProjet(p.idProjet)"
+              />
+            </div>
+          </template>
+
+        </Card>
+      </div>
+
+      <div v-if="projets.length === 0" class="col-12 text-center text-500">
+        Aucun projet trouvé.
+      </div>
+
+    </div>
+  </div>
 </template>
