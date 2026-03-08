@@ -6,6 +6,7 @@ const MainLayout = () => import('../layouts/MainLayout.vue')
 const ProjetCreateView = () => import('../features/projects/views/ProjectCreateView.vue')
 const ProjetSelector = () => import('../features/projects/views/ProjectSelector.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
+const AccompagnementView = () => import('../views/AccompagnementView.vue')
 
 const routes = [
     {
@@ -35,8 +36,14 @@ const routes = [
                 name: 'projet-dashboard',
                 component: DashboardView,
                 meta: { requiresAuth: true }
-            }
+            },
             // Les futurs modules d'analyse fonctionnelle iront ici
+            {
+            path: 'accompagnement',
+            name: 'accompagnement',
+            component: AccompagnementView,
+            meta: { requiresAuth: true }
+            }
         ]
     }
 ]
