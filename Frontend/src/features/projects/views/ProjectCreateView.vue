@@ -43,10 +43,11 @@ const createProject = async () => {
 
 <template>
   <div class="flex justify-content-center px-3">
-    <div class="card p-4 w-full md:w-9 lg:w-7">
+    <div class="w-full md:w-10 lg:w-8">
+      <div class="mt-4">
 
-
-    <div class="card p-5">
+   <!--<div class="card p-4 w-full md:w-9 lg:w-7">-->
+   <!-- <div class="card p-5">-->
     <h1 class="text-900 font-bold mb-4">Créer un nouveau projet</h1>
     
     <div class="grid formgrid p-fluid">
@@ -109,10 +110,22 @@ const createProject = async () => {
       </div>
     </div>
 
-    <div class="flex justify-content-end gap-2 mt-4">
+      <div class="col-12 lg:col-4">
+        <div class="border-1 surface-border p-3 border-round bg-gray-50">
+          <h3 class="mt-0">Résumé</h3>
+          <p><strong>Nom :</strong> {{ projet.name || 'Non renseigné' }}</p>
+          <p><strong>Description :</strong> {{ projet.description.length }} caractères</p>
+          <p><strong>Taiga :</strong> {{ taigaEnabled ? 'Activé' : 'Désactivé' }}</p>
+        </div>
+      </div>
+
+
+      <div class="flex justify-content-end gap-2 mt-4">
       <Button label="Annuler" severity="secondary" @click="router.back()" />
       <Button label="Créer et Ouvrir" icon="pi pi-check" :loading="loading" @click="createProject" />
-  </div></div>
   </div>
-
+    </div>
+  </div>
+  <!--</div>
+  </div>-->
 </template>
