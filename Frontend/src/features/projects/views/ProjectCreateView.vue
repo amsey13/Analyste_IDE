@@ -13,9 +13,11 @@ const router = useRouter();
 const loading = ref(false);
 const taigaEnabled = ref(false);
 const nameTouched = ref(false);
+const featureTouched = ref(false);
 const projet = ref({
     name: '',
     description: '',
+    featureType:'',
     taigaUserName: '',
     taigaPassword: '',
     taigaProjectUrl: ''
@@ -23,7 +25,8 @@ const projet = ref({
 
 const createProject = async () => {
     nameTouched.value = true;
-
+    featureTouched.value = true;
+    if(projet.value.featureType === '') return;
     if(projet.value.name.trim() === ''){
       return;
     }
@@ -47,7 +50,7 @@ const createProject = async () => {
 
 
 <template>
-  <div class="flex justify-content-center px-3">
+  <div class="card p-5"> <!--flex justify-content-center px-3 in case we all aggree to center it-->
     <div class="w-full md:w-10 lg:w-8">
       <div class="mt-4">
 
@@ -71,6 +74,36 @@ const createProject = async () => {
               Le nom du projet est obligatoire
             </small>
           </div>
+
+          <div class="field col-12 md:col-6">
+            <h3 class="mt-0 mb-2">Fonctionnalité</h3>
+
+            <div class="flex flex-column gap-2">
+              <div class="flex align-items-center gap-2">
+                <input
+                    type="radio"
+                    id="audit"
+                    value="audit"
+                    v-model="projet.featureType"
+                />
+                <label for="audit" class="cursor-pointer">Audit</label>
+              </div>
+
+              <div class="flex align-items-center gap-2">
+                <input
+                    type="radio"
+                    id="accompanement"
+                    value="accompanement"
+                    v-model="projet.featureType"
+                />
+                <label for="accompanement" class="cursor-pointer">Accompanement</label>
+              </div>
+            </div>
+
+            <small v-if="featureTouched && projet.featureType === ''" class="p-error">
+              Merci de choisir la fonctionnalité que vous voulez utiliser s'il vous plait !
+            </small>
+          </div>
       
           <div class="field col-12">
             <!--<label for="desc">
@@ -85,9 +118,10 @@ const createProject = async () => {
                 class="w-full"
             />
           </div>
+          <br>
 
       <!-- toggle to enable Taiga-->
-          <div class="col-12 mt-4">
+          <div class="col-12">
             <div class="flex align-items-center justify-content-between mb-3">
               <h3 class="mt-0 mb-0">Intégration Taiga (Facultatif)</h3>
 
@@ -147,7 +181,6 @@ const createProject = async () => {
           </div>
         </div>
 
-        <!--  <div class="col-12 mt-4">-->
             <div class="border-1 surface-border p-4 border-round bg-gray-50">
               <div class="flex align-items-center gap-2 mb-3">
                 <i class="pi pi-info-circle text-primary text-lg"></i>
@@ -176,8 +209,13 @@ const createProject = async () => {
                       {{ taigaEnabled ? 'Activé' : 'Désactivé' }}
                   </span>
                 </p>
-              </div>
 
+                <p class="mb-2">
+                  <strong>Mode :</strong>
+                  <span class="ml-1">{{ projet.featureType || 'Non sélectionné' }}</span>
+                </p>
+
+              </div>
             </div>
           </div>
 
@@ -192,7 +230,7 @@ const createProject = async () => {
                 label="Créer et Ouvrir"
                 icon="pi pi-check"
                 :loading="loading"
-                :disabled="projet.name.trim() === ''"
+                :disabled="projet.name.trim() === '' || projet.featureType === ''"
                 class="p-button-primary w-full md:w-auto"
                 @click="createProject"
             />
