@@ -82,7 +82,7 @@ const deleteProjet = (idProjet) => {
 
             <div v-for="p in projets" :key="p.idProjet" class="col-12 md:col-6 lg:col-4">
                 <Card class="h-full cursor-pointer hover:shadow-4 transition-duration-200" @click="openProjet(p.idProjet)">
-                    <template #title>{{ p.nom }}</template>
+                    <template #title>{{ p.name }}</template>
                     <template #content>
                         <p class="m-0 text-600">{{ p.description || 'Pas de description' }}</p>
                     </template>

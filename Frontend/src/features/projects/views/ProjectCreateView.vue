@@ -22,6 +22,11 @@ const projet = ref({
 });
 
 const createProject = async () => {
+    nameTouched.value = true;
+
+    if(projet.value.name.trim() === ''){
+      return;
+    }
     loading.value = true;
     try {
         const response = await ProjectService.createProjet(projet.value);
@@ -187,6 +192,7 @@ const createProject = async () => {
                 label="Créer et Ouvrir"
                 icon="pi pi-check"
                 :loading="loading"
+                :disabled="projet.name.trim() === ''"
                 class="p-button-primary w-full md:w-auto"
                 @click="createProject"
             />
