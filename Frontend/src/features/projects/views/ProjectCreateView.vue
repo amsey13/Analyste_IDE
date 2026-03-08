@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {ProjectService} from '../api/ProjectService.js';
 import Button from 'primevue/button';
@@ -8,9 +8,11 @@ import Textarea from 'primevue/textarea';
 import Password from 'primevue/password';
 import ToggleSwitch from 'primevue/toggleswitch';
 
+
 const router = useRouter();
 const loading = ref(false);
 const taigaEnabled = ref(false);
+const nameTouched = ref(false);
 const projet = ref({
     name: '',
     description: '',
@@ -39,19 +41,29 @@ const createProject = async () => {
 
 
 
-
-
 <template>
+  <div class="flex justify-content-center px-3">
+    <div class="card p-4 w-full md:w-9 lg:w-7">
 
 
-
-   <div class="card p-5">
+    <div class="card p-5">
     <h1 class="text-900 font-bold mb-4">Créer un nouveau projet</h1>
     
     <div class="grid formgrid p-fluid">
       <div class="field col-12 md:col-6">
         <label for="nom">Nom du projet *</label>
-        <InputText id="nom" v-model="projet.name" required />
+
+        <InputText
+            id="nom"
+            v-model="projet.name"
+            @blur="nameTouched = true"
+            :class="{'p-invalid': nameTouched && projet.name.trim() === ''}"
+            required
+        />
+
+        <small v-if="nameTouched && projet.name.trim() === ''" class="p-error">
+          Le nom du projet est obligatoire
+        </small>
       </div>
       
       <div class="field col-12">
@@ -62,8 +74,7 @@ const createProject = async () => {
       <!-- toggle to enable Taiga-->
       <div class="col-12 mt-4">
         <div class="flex align-items-center mb-3">
-          <h3 class="mt-0 mr-3">Intégration Taiga</h3>
-          <ToggleSwitch v-model="taigaEnabled" />
+          <h3 class="mt-0 mr-3">Intégration Taiga</h3> <ToggleSwitch v-model="taigaEnabled" />
         </div>
 
         <Transition name="fade">
@@ -101,5 +112,7 @@ const createProject = async () => {
     <div class="flex justify-content-end gap-2 mt-4">
       <Button label="Annuler" severity="secondary" @click="router.back()" />
       <Button label="Créer et Ouvrir" icon="pi pi-check" :loading="loading" @click="createProject" />
+  </div></div>
   </div>
+
 </template>
