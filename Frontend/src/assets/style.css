@@ -60,3 +60,14 @@ html, body {
 .surface-ground {
     background-color: var(--bg-light) !important;
 }
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
