@@ -6,6 +6,9 @@ import com.example.backend.modules.projects.core.entity.Project;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "support_project")
 @Getter
