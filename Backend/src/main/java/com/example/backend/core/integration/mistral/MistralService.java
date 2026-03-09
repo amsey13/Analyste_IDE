@@ -1,4 +1,4 @@
-package com.example.backend.core;
+package com.example.backend.core.integration.mistral;
 
 public class MistralService {
 }
