@@ -30,14 +30,44 @@ const logout = () => {
         <span class="text-xl font-bold">AFHelper</span>
       </div>
 
-      <nav class="flex-grow-1 p-3">
+     <!--  <nav class="flex-grow-1 p-3">
         <router-link to="/dashboard" class="no-underline">
           <div class="flex align-items-center p-3 border-round text-blue-100 hover:bg-blue-800 cursor-pointer">
             <i class="pi pi-home mr-2"></i>
             <span class="font-medium">Tableau de bord</span>
           </div>
         </router-link>
-      </nav>
+      </nav>-->
+
+  <nav class="flex-grow-1 p-3">
+    <!-- Accueil -->
+    <router-link to="/app/projets" class="no-underline">
+      <div class="flex align-items-center p-3 border-round text-blue-100 hover:bg-blue-800 cursor-pointer">
+        <i class="pi pi-home mr-2"></i>
+        <span class="font-medium">Accueil</span>
+      </div>
+    </router-link>
+    <!-- titre de section -->
+      <div class="menu-section">
+        Modes
+      </div>
+    <!-- Accompagnement -->
+    <router-link to="/app/accompagnement" class="no-underline">
+      <div class="flex align-items-center p-3 border-round text-blue-100 hover:bg-blue-800 cursor-pointer">
+        <i class="pi pi-users mr-2"></i>
+        <span class="font-medium">Accompagnement</span>
+      </div>
+    </router-link>
+
+    <!-- Audit Qualité -->
+    <router-link to="/app/audit" class="no-underline">
+      <div class="flex align-items-center p-3 border-round text-blue-100 hover:bg-blue-800 cursor-pointer">
+        <i class="pi pi-check-circle mr-2"></i>
+        <span class="font-medium">Audit Qualité</span>
+      </div>
+    </router-link>
+
+  </nav>
 
       <div class="p-3 border-top-1 border-blue-800">
         <Button
