@@ -1,10 +1,5 @@
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type VARCHAR(50);
-
-
-ALTER TABLE support_project
-    ADD COLUMN bpmn_xml TEXT,
-ADD COLUMN data_dictionary TEXT;
-
+ALTER TABLE support_project ADD COLUMN bpmn_xml TEXT;
+ALTER TABLE support_project ADD COLUMN data_dictionary TEXT;
 
 CREATE TABLE actor (
                        id UUID PRIMARY KEY,
@@ -12,7 +7,6 @@ CREATE TABLE actor (
                        support_project_id UUID NOT NULL,
                        CONSTRAINT fk_actor_project FOREIGN KEY (support_project_id) REFERENCES support_project(id) ON DELETE CASCADE
 );
-
 CREATE TABLE user_story (
                             id UUID PRIMARY KEY,
                             identifier VARCHAR(50) NOT NULL,
