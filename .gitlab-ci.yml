@@ -39,5 +39,4 @@ build:
 test:
   stage: test
   script:
-    - chmod +x mvnw
-    - ./mvnw clean test
+  - mvn clean test
