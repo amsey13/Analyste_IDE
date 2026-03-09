@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {ProjectService} from '../api/ProjectService.js';
 import Button from 'primevue/button';
@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Password from 'primevue/password';
 import ToggleSwitch from 'primevue/toggleswitch';
+import RadioButton from 'primevue/radiobutton';
 
 
 const router = useRouter();
@@ -14,6 +15,7 @@ const loading = ref(false);
 const taigaEnabled = ref(false);
 const nameTouched = ref(false);
 const featureTouched = ref(false);
+
 const projet = ref({
     name: '',
     description: '',
@@ -22,6 +24,15 @@ const projet = ref({
     taigaPassword: '',
     taigaProjectUrl: ''
 });
+
+watch(
+    () => projet.value.featureType,
+    (newValue) => {
+      if (newValue !== 'audit') {
+        taigaEnabled.value = false;
+      }
+    }
+);
 
 const createProject = async () => {
     nameTouched.value = true;
@@ -44,15 +55,24 @@ const createProject = async () => {
     } finally {
         loading.value = false;
     }
+
+    const payload = {
+      ...projet.value,
+      ...(projet.value.featureType !== 'audit' && {
+        taigaUserName: null,
+        taigaPassword: null,
+        taigaProjectUrl: null,
+      })
+    }
 };
 </script>
 
 
 
 <template>
-  <div class="card p-5"> <!--flex justify-content-center px-3 in case we all aggree to center it-->
+  <div class="flex justify-content-center px-3"> <!-- in case we all aggree to center it-->
     <div class="w-full md:w-10 lg:w-8">
-      <div class="mt-4">
+      <div class="card-container p-4 md:p-5 border-round shadow-2 surface-card">
 
 
         <h1 class="text-900 font-bold mb-4">Créer un nouveau projet</h1>
@@ -75,35 +95,37 @@ const createProject = async () => {
             </small>
           </div>
 
-          <div class="field col-12 md:col-6">
-            <h3 class="mt-0 mb-2">Fonctionnalité</h3>
+          <div class="field col-12">
+            <h3 class="mt-0 mb-3"> Fonctionnalité </h3>
 
-            <div class="flex flex-column gap-2">
-              <div class="flex align-items-center gap-2">
-                <input
-                    type="radio"
-                    id="audit"
+            <div class="flex gap-3 flex-wrap">
+
+              <div class="feature-card flex-1 flex-align-items-center gap-2">
+                <RadioButton
+                    v-model="projet.featureType"
+                    inputId="audit"
+                    name="featureType"
                     value="audit"
-                    v-model="projet.featureType"
                 />
-                <label for="audit" class="cursor-pointer">Audit</label>
+                <label for="audit" class="cursor-pointer">Audit </label>
               </div>
 
-              <div class="flex align-items-center gap-2">
-                <input
-                    type="radio"
-                    id="accompanement"
-                    value="accompanement"
-                    v-model="projet.featureType"
-                />
-                <label for="accompanement" class="cursor-pointer">Accompanement</label>
-              </div>
+            <div class="feature-card flex-1 flex-align-items-center gap-2">
+            <RadioButton
+                v-model="projet.featureType"
+                inputId="accompagnement"
+                name="featureType"
+                value="accompagnement"
+            />
+            <label for="accompagnement" class="cursor-pointer">Accompagnement </label>
             </div>
+        </div>
 
             <small v-if="featureTouched && projet.featureType === ''" class="p-error">
               Merci de choisir la fonctionnalité que vous voulez utiliser s'il vous plait !
             </small>
           </div>
+
       
           <div class="field col-12">
             <!--<label for="desc">
@@ -122,16 +144,19 @@ const createProject = async () => {
 
       <!-- toggle to enable Taiga-->
           <div class="col-12">
-            <div class="flex align-items-center justify-content-between mb-3">
-              <h3 class="mt-0 mb-0">Intégration Taiga (Facultatif)</h3>
+            <div
+                v-if="projet.featureType === 'audit'"
+                class="flex align-items-center justify-content-between mb-3"
+            >
+              <h3 class="mt-0 mb-0">Intégration Taiga (optionnelle)</h3>
 
               <ToggleSwitch v-model="taigaEnabled" />
             </div>
 
             <Transition name="fade">
               <div
-                  v-if="taigaEnabled"
-                  class="border-1 surface-border p-4 border-round mt-2"
+                  v-if="projet.featureType === 'audit' && taigaEnabled"
+                  class="border-1 surface-border p-4 border-round mt-3 mb-5"
               >
                 <p class="text-sm text-600 mb-4 line-height-3">
                   Vous pouvez lier votre projet Taiga maintenant à ce projet.
@@ -204,9 +229,9 @@ const createProject = async () => {
                   <strong>Taiga :</strong>
                   <span
                       class="ml-1"
-                      :class="taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
+                      :class="projet.featureType === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
                       >
-                      {{ taigaEnabled ? 'Activé' : 'Désactivé' }}
+                      {{ projet.featureType === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
                   </span>
                 </p>
 
@@ -235,7 +260,6 @@ const createProject = async () => {
                 @click="createProject"
             />
           </div>
-
         </div>
       </div>
 </template>
