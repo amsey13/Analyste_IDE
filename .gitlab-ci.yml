@@ -34,7 +34,7 @@ cache:
 build:
   stage: build
   script:
-    - mvn compile
+    - mvn compile -U
 
 test:
   stage: test
