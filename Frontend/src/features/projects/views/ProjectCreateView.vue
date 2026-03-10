@@ -7,7 +7,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Password from 'primevue/password';
 import ToggleSwitch from 'primevue/toggleswitch';
-import RadioButton from 'primevue/radiobutton';
+import RadioButton from 'primevue/radiobutton';name
 
 
 const router = useRouter();
@@ -19,14 +19,14 @@ const featureTouched = ref(false);
 const projet = ref({
     name: '',
     description: '',
-    featureType:'',
+    project_type:'',
     taigaUserName: '',
     taigaPassword: '',
     taigaProjectUrl: ''
 });
 
 watch(
-    () => projet.value.featureType,
+    () => projet.value.project_type,
     (newValue) => {
       if (newValue !== 'audit') {
         taigaEnabled.value = false;
@@ -37,7 +37,7 @@ watch(
 const createProject = async () => {
     nameTouched.value = true;
     featureTouched.value = true;
-    if(projet.value.featureType === '') return;
+    if(projet.value.project_type === '') return;
     if(projet.value.name.trim() === ''){
       return;
     }
@@ -58,7 +58,7 @@ const createProject = async () => {
 
     const payload = {
       ...projet.value,
-      ...(projet.value.featureType !== 'audit' && {
+      ...(projet.value.project_type !== 'audit' && {
         taigaUserName: null,
         taigaPassword: null,
         taigaProjectUrl: null,
@@ -102,9 +102,9 @@ const createProject = async () => {
 
               <div class="feature-card flex-1 flex-align-items-center gap-2">
                 <RadioButton
-                    v-model="projet.featureType"
+                    v-model="projet.project_type"
                     inputId="audit"
-                    name="featureType"
+                    name="project_type"
                     value="audit"
                 />
                 <label for="audit" class="cursor-pointer">Audit </label>
@@ -112,16 +112,16 @@ const createProject = async () => {
 
             <div class="feature-card flex-1 flex-align-items-center gap-2">
             <RadioButton
-                v-model="projet.featureType"
+                v-model="projet.project_type"
                 inputId="accompagnement"
-                name="featureType"
+                name="project_type"
                 value="accompagnement"
             />
             <label for="accompagnement" class="cursor-pointer">Accompagnement </label>
             </div>
         </div>
 
-            <small v-if="featureTouched && projet.featureType === ''" class="p-error">
+            <small v-if="featureTouched && projet.project_type === ''" class="p-error">
               Merci de choisir la fonctionnalité que vous voulez utiliser s'il vous plait !
             </small>
           </div>
@@ -145,7 +145,7 @@ const createProject = async () => {
       <!-- toggle to enable Taiga-->
           <div class="col-12">
             <div
-                v-if="projet.featureType === 'audit'"
+                v-if="projet.project_type === 'audit'"
                 class="flex align-items-center justify-content-between mb-3"
             >
               <h3 class="mt-0 mb-0">Intégration Taiga (optionnelle)</h3>
@@ -155,7 +155,7 @@ const createProject = async () => {
 
             <Transition name="fade">
               <div
-                  v-if="projet.featureType === 'audit' && taigaEnabled"
+                  v-if="projet.project_type === 'audit' && taigaEnabled"
                   class="border-1 surface-border p-4 border-round mt-3 mb-5"
               >
                 <p class="text-sm text-600 mb-4 line-height-3">
@@ -229,15 +229,15 @@ const createProject = async () => {
                   <strong>Taiga :</strong>
                   <span
                       class="ml-1"
-                      :class="projet.featureType === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
+                      :class="projet.project_type === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
                       >
-                      {{ projet.featureType === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
+                      {{ projet.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
                   </span>
                 </p>
 
                 <p class="mb-2">
                   <strong>Mode :</strong>
-                  <span class="ml-1">{{ projet.featureType || 'Non sélectionné' }}</span>
+                  <span class="ml-1">{{ projet.project_type || 'Non sélectionné' }}</span>
                 </p>
 
               </div>
@@ -255,7 +255,7 @@ const createProject = async () => {
                 label="Créer et Ouvrir"
                 icon="pi pi-check"
                 :loading="loading"
-                :disabled="projet.name.trim() === '' || projet.featureType === ''"
+                :disabled="projet.name.trim() === '' || projet.project_type === ''"
                 class="p-button-primary w-full md:w-auto"
                 @click="createProject"
             />
