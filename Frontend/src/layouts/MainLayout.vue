@@ -27,7 +27,7 @@ const logout = () => {
 
       <div class="p-4 flex align-items-center gap-2 border-bottom-1 border-blue-800">
         <i class="pi pi-chart-bar text-2xl" style="color: var(--accent-color)"></i>
-        <span class="text-xl font-bold">AFHelper</span>
+        <span class="text-xl font-bold">AnalytiQ</span>
       </div>
 
      <!--  <nav class="flex-grow-1 p-3">
