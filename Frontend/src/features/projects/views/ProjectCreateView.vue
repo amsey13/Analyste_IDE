@@ -43,8 +43,9 @@ const createProject = async () => {
     }
   const payload = {
     ...projet.value,
-    ...(projet.value.project_type !== 'audit' && {
+    ...(projet.value.project_type !== 'AUDIT' && {
       taigaUserName: null,
+
       taigaPassword: null,
       taigaProjectUrl: null,
     })
