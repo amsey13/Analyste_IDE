@@ -18,13 +18,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BpmnParser implements ModelParserStrategy {
+public class BpmnParserStrategy implements ModelParserStrategy {
 
     private final Document document;
     private final XPath xpath;
 
 
-    public BpmnParser(InputStream input) throws ParserConfigurationException, IOException, SAXException {
+    public BpmnParserStrategy(InputStream input) throws ParserConfigurationException, IOException, SAXException {
         this.document = DocumentBuilderFactory
                 .newInstance()
                 .newDocumentBuilder()

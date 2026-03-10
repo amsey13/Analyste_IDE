@@ -11,11 +11,11 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class McdParser implements ModelParserStrategy {
+public class McdParserStrategy implements ModelParserStrategy {
 
     private final InputStream in;
 
-    public McdParser(InputStream in) {
+    public McdParserStrategy(InputStream in) {
         this.in = in;
     }
 

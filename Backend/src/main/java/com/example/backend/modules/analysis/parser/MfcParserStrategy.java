@@ -4,8 +4,6 @@ import com.example.backend.modules.analysis.model.Actor;
 import com.example.backend.modules.analysis.model.Flux;
 import flux.ActeurExterne;
 import flux.ActeurInterne;
-import flux.Composant;
-import flux.Lien;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -13,7 +11,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 
-public class MfcParser implements ModelParserStrategy {
+public class MfcParserStrategy implements ModelParserStrategy {
 
     private static final Pattern FLUX_PATTERN =
             Pattern.compile("^FLUX\\s+(.+?)\\s*->\\s*(.+?)\\s*:\\s*(.*)$");
@@ -21,7 +19,7 @@ public class MfcParser implements ModelParserStrategy {
     private final InputStream in;
     private List<String> lines;
 
-    public MfcParser(InputStream in) {
+    public MfcParserStrategy(InputStream in) {
         this.in = in;
     }
 
