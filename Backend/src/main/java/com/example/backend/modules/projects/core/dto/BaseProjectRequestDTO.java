@@ -11,9 +11,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "project_type" // Le nom du champ dans ton JSON
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = AuditProjectRequestDTO.class, name = "AUDIT"),
+        @JsonSubTypes.Type(value = AuditProjectRequestDTO.class, name = "audit"),
         @JsonSubTypes.Type(value = SupportProjectRequestDTO.class, name = "ACCOMPAGNEMENT")
 })
+
 public class BaseProjectRequestDTO {
 
     private String name;
