@@ -41,6 +41,14 @@ const createProject = async () => {
     if(projet.value.name.trim() === ''){
       return;
     }
+  const payload = {
+    ...projet.value,
+    ...(projet.value.project_type !== 'audit' && {
+      taigaUserName: null,
+      taigaPassword: null,
+      taigaProjectUrl: null,
+    })
+  }
     loading.value = true;
     try {
         const response = await ProjectService.createProjet(projet.value);
@@ -56,14 +64,7 @@ const createProject = async () => {
         loading.value = false;
     }
 
-    const payload = {
-      ...projet.value,
-      ...(projet.value.project_type !== 'audit' && {
-        taigaUserName: null,
-        taigaPassword: null,
-        taigaProjectUrl: null,
-      })
-    }
+
 };
 </script>
 
