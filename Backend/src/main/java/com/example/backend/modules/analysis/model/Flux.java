@@ -36,4 +36,9 @@ public class Flux {
     public void setSender(String sender) {
         this.sender = sender;
     }
+
+    @Override
+    public String toString() {
+        return "Flux '" + name + "' : " + sender + " -> " + recipient;
+    }
 }

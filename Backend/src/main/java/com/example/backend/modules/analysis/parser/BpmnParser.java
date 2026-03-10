@@ -1,5 +1,7 @@
 package com.example.backend.modules.analysis.parser;
 
+import com.example.backend.modules.analysis.model.Actor;
+import com.example.backend.modules.analysis.model.Flux;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
@@ -11,33 +13,55 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BpmnParser {
+public class BpmnParser implements ModelParserStrategy {
 
-    
-    /**
-     * The function `loadDocument` takes an InputStream as input and returns a parsed Document object
-     * using a DocumentBuilder.
-     * 
-     * @param in The `loadDocument` method takes an `InputStream` as a parameter. This `InputStream` is
-     * used to read the XML content that will be parsed into a `Document` object.
-     * @return The method `loadDocument` returns a `Document` object parsed from the input
-     * `InputStream`.
-     */
-    public static Document loadDocument(InputStream in) throws ParserConfigurationException, IOException, SAXException {
+    private final Document document;
+    private final XPath xpath;
 
-        return DocumentBuilderFactory
+
+    public BpmnParser(InputStream input) throws ParserConfigurationException, IOException, SAXException {
+        this.document = DocumentBuilderFactory
                 .newInstance()
                 .newDocumentBuilder()
-                .parse(in);
+                .parse(input);
+        this.xpath = XPathFactory.newInstance().newXPath();
 
     }
 
+    // Strategy methods implementation
+
+
+    @Override
+    public List<Actor> findActors() {
+       try{
+           return findBpmnActors(document,xpath);
+       } catch (XPathExpressionException e) {
+           throw new RuntimeException(e);
+       }
+    }
+
+    @Override
+    public List<Flux> findFluxs() {
+        try{
+
+            return findBpmnFlux(document,xpath);
+        }catch (XPathExpressionException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public XPath getXpath() {
+        return xpath;
+    }
 
     /**
      * The `findActors` function extracts the names of actors from a given XML document using XPath.
@@ -50,9 +74,9 @@ public class BpmnParser {
      * @return This method returns a List of Strings containing the names of actors found in the given
      * Document object using the provided XPath expression.
      */
-    public static List<String> findActors(Document doc, XPath xpath) throws XPathExpressionException {
+    private static List<Actor> findBpmnActors(Document doc, XPath xpath) throws XPathExpressionException {
 
-        List<String> actors = new ArrayList<>();
+        List<Actor> actors = new ArrayList<>();
         NodeList participants = (NodeList) xpath.evaluate("//*[local-name()='participant']", doc, XPathConstants.NODESET);
 
         for (int i = 0; i < participants.getLength(); i++) {
@@ -61,7 +85,7 @@ public class BpmnParser {
                     .getNamedItem("name")
                     .getNodeValue();
 
-            actors.add(name);
+            actors.add(new Actor(name));
 
         }
         return actors;
@@ -144,7 +168,7 @@ public class BpmnParser {
      * @return The method `findFlux` returns a list of `Flux` objects. Each `Flux` object represents a
      * message flow with attributes such as name, sender, and recipient.
      */
-    public static List<Flux> findFlux(Document doc, XPath xpath) throws XPathExpressionException {
+    private static List<Flux> findBpmnFlux(Document doc, XPath xpath) throws XPathExpressionException {
         List<Flux> fluxList = new ArrayList<>();
 
         NodeList fluxs = (NodeList) xpath.evaluate("//*[local-name()='messageFlow']", doc, XPathConstants.NODESET);
@@ -183,7 +207,7 @@ public class BpmnParser {
      * attribute matching the id of the process element is returned. If no such participant element is
      * found, then "Inconnu" (French for "Unknown") is returned.
      */
-    public static String findFluxActors(Document doc, XPath xpath, String elementId) throws XPathExpressionException {
+    private static String findFluxActors(Document doc, XPath xpath, String elementId) throws XPathExpressionException {
 
         String processes = "//*[@id='" + elementId + "']/parent::*[local-name()='process']";
         Element process = (Element) xpath.evaluate(processes, doc, XPathConstants.NODE);
@@ -199,6 +223,8 @@ public class BpmnParser {
         }
         return "Inconnu";
     }
+
+
 }
 
 
@@ -211,19 +237,6 @@ public class BpmnParser {
     
 
 
-    /*
-    les noms des acteurs sont : bpmn:participant
-    les noms des flux sont : bpmn:messageFlow
-    les noms des taches sont : bpmn:ServiceTask
-
-    balise d'un acteur:
-     <bpmn:participant id="Participant_0rv15bx" name="Utilisateur" processRef="Process_0g20b3u" />
-
-    balise d'un flux :
-      <bpmn:messageFlow id="Flow_09mnlnz" name="f01 Envoi des identifiants" sourceRef="Event_0wj96ph" targetRef="Event_00cz0ze" />
-
-
-     */
 
 
 
