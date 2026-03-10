@@ -19,7 +19,7 @@ public class MfcParserTest {
     public void setUp() {
         InputStream in = getClass().getResourceAsStream("/resourcesparser/test-mfc.flu");
         if (in == null) {
-            throw new RuntimeException("Fichier MFC introuvable");
+            throw new RuntimeException("MFC file not found");
         }
         parser = new MfcParserStrategy(in);
     }
@@ -28,7 +28,7 @@ public class MfcParserTest {
     public void testLoadLines() {
         List<Object> lines = parser.loadObjects();
         assertNotNull(lines);
-        assertFalse(lines.isEmpty(), "Le fichier MFC ne doit pas être vide");
+        assertFalse(lines.isEmpty(), "MFC object cannot be empty");
     }
 
     @Test
@@ -36,22 +36,22 @@ public class MfcParserTest {
         List<Actor> actors = parser.findActors();
 
         assertNotNull(actors);
-        assertFalse(actors.isEmpty(), "Il doit y avoir au moins un acteur");
+        assertFalse(actors.isEmpty(), "There's at least one actor");
 
-        // Vérification avec l'accesseur du record 'name()'
+
         assertTrue(actors.stream().anyMatch(a -> a.getName().equals("Utilisateur")),
-                "Le fichier doit contenir l’acteur 'Utilisateur'");
+                "the first actor should be the actor name");
     }
 
     @Test
     public void testFindFluxs(){
         List<Flux> fluxs = parser.findFluxs();
         assertNotNull(fluxs);
-        assertFalse(fluxs.isEmpty(), "Il doit y avoir au moins un flux");
+        assertFalse(fluxs.isEmpty(), "There's at least one flux");
 
-        // Vérification avec les accesseurs 'source()' et 'target()' de ton record Flux
+
         assertTrue(fluxs.stream().anyMatch(f -> "Utilisateur".equals(f.getSender())),
-                "Le flux 'Utilisateur -> Système' doit être présent");
+                "The flux with the sender should be the utilisateur");
 
     }
 

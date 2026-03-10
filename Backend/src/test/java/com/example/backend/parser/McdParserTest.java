@@ -41,7 +41,7 @@ public class McdParserTest {
         assertNotNull(actors);
         assertEquals(4, actors.size());
         assertTrue(actors.stream().anyMatch(a -> "Connexion".equals(a.getName())),
-                "L'acteur 'Connexion' devrait être présent");
+                "The actor 'Connexion' should be present");
 
 
     }
