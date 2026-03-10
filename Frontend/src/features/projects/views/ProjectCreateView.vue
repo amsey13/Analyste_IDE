@@ -28,7 +28,7 @@ const projet = ref({
 watch(
     () => projet.value.project_type,
     (newValue) => {
-      if (newValue !== 'audit') {
+      if (newValue !== 'AUDIT') {
         taigaEnabled.value = false;
       }
     }
@@ -41,6 +41,15 @@ const createProject = async () => {
     if(projet.value.name.trim() === ''){
       return;
     }
+  const payload = {
+    ...projet.value,
+    ...(projet.value.project_type !== 'AUDIT' && {
+      taigaUserName: null,
+
+      taigaPassword: null,
+      taigaProjectUrl: null,
+    })
+  }
     loading.value = true;
     try {
         const response = await ProjectService.createProjet(projet.value);
@@ -56,6 +65,7 @@ const createProject = async () => {
         loading.value = false;
     }
 
+
     const payload = {
       ...projet.value,
       ...(projet.value.project_type !== 'audit' && {
@@ -64,6 +74,7 @@ const createProject = async () => {
         taigaProjectUrl: null,
       })
     }
+
 };
 </script>
 
@@ -109,6 +120,7 @@ const createProject = async () => {
                 />
                 <label for="audit" class="cursor-pointer">Audit </label>
               </div>
+
 
             <div class="feature-card flex-1 flex-align-items-center gap-2">
             <RadioButton
