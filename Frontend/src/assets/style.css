@@ -71,3 +71,13 @@ html, body {
     opacity: 0;
     transform: translateY(-6px);
 }
+
+.p-radiobutton {
+    margin-right: 0.75rem; /* espace propre */
+}
+
+.card-container {
+    background: var(--surface-card);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
