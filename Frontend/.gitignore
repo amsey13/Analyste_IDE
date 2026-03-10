@@ -26,3 +26,10 @@ dist-ssr
 .env
 
 .idea/
+
+node_modules/
+.idea/
+.vite/
+dist/
+.DS_Store
+*.log
