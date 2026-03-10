@@ -1,4 +1,4 @@
-package com.example.backend.modules.analysis.parser;
+package com.example.backend.modules.analysis.model;
 
 public class Flux {
 
