@@ -157,13 +157,16 @@ public class ProjectService {
         AuditProject audit = new AuditProject();
         audit.setBaseInfo(dto.getName(), dto.getDescription(), user);
         audit.setDateCreation(LocalDateTime.now());
-        String slug = extractSlug(dto.getTaigaProjectUrl());
+
+        /*String slug = extractSlug(dto.getTaigaProjectUrl());
         String token = taigaService.authenticate(dto.getTaigaUserName(), dto.getTaigaPassword());
         if(token == null){
             throw new IncorrectIdentifiersException("Invalid Taiga Identifiers");
         }
         audit.setProjectSlug(slug);
         audit.setTaigaToken(token);
+
+         */
         return mapDTO(projectRepository.save(audit));
     }
 

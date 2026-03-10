@@ -28,7 +28,7 @@ const projet = ref({
 watch(
     () => projet.value.project_type,
     (newValue) => {
-      if (newValue !== 'audit') {
+      if (newValue !== 'AUDIT') {
         taigaEnabled.value = false;
       }
     }
@@ -107,7 +107,7 @@ const createProject = async () => {
                     v-model="projet.project_type"
                     inputId="audit"
                     name="project_type"
-                    value="audit"
+                    value="AUDIT"
                 />
                 <label for="audit" class="cursor-pointer">Audit </label>
               </div>
