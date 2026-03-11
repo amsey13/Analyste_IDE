@@ -63,7 +63,7 @@ public class SupportFeatureService {
                 .orElseThrow(() -> new ProjectNotFoundException("Acteur introuvable"));
 
         // Vérification de sécurité via le projet rattaché à l'acteur
-        getProjectAndCheckOwnership(actor.getProject().getIdProjet());
+        getProjectAndCheckOwnership(actor.getProject().getIdProject());
 
         actor.setName(newName);
         return actorRepository.save(actor);
@@ -74,7 +74,7 @@ public class SupportFeatureService {
         Actor actor = actorRepository.findById(actorId)
                 .orElseThrow(() -> new ProjectNotFoundException("Acteur introuvable"));
 
-        getProjectAndCheckOwnership(actor.getProject().getIdProjet());
+        getProjectAndCheckOwnership(actor.getProject().getIdProject());
 
         actorRepository.delete(actor);
     }
@@ -89,7 +89,7 @@ public class SupportFeatureService {
                 .orElseThrow(() -> new ProjectNotFoundException("Acteur introuvable"));
 
         // Sécurité supplémentaire : on vérifie que l'acteur appartient bien au bon projet
-        if (!actor.getProject().getIdProjet().equals(projectId)) {
+        if (!actor.getProject().getIdProject().equals(projectId)) {
             throw new UnauthorizedAccessException("L'acteur spécifié n'appartient pas à ce projet.");
         }
 
@@ -106,7 +106,7 @@ public class SupportFeatureService {
         UserStory us = userStoryRepository.findById(usId)
                 .orElseThrow(() -> new ProjectNotFoundException("User Story introuvable"));
 
-        getProjectAndCheckOwnership(us.getProject().getIdProjet());
+        getProjectAndCheckOwnership(us.getProject().getIdProject());
 
         us.setIdentifier(identifier);
         us.setDescription(description);
@@ -118,7 +118,7 @@ public class SupportFeatureService {
         UserStory us = userStoryRepository.findById(usId)
                 .orElseThrow(() -> new ProjectNotFoundException("User Story introuvable"));
 
-        getProjectAndCheckOwnership(us.getProject().getIdProjet());
+        getProjectAndCheckOwnership(us.getProject().getIdProject());
 
         userStoryRepository.delete(us);
     }

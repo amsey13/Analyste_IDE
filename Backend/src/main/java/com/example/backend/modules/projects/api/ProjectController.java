@@ -32,10 +32,7 @@ public class ProjectController {
     }
 
 
-    @PostMapping
-    public ResponseEntity<ProjectResponseDTO> createProject(@RequestBody BaseProjectRequestDTO projetDTO) throws UserNotFoundException, IncorrectIdentifiersException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProject(projetDTO));
-    }
+
 
     @PostMapping("/audit")
     public ResponseEntity<ProjectResponseDTO> createAuditProject(@RequestBody AuditProjectRequestDTO auditDTO) throws UserNotFoundException, IncorrectIdentifiersException {

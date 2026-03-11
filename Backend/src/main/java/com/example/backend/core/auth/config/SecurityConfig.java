@@ -47,10 +47,9 @@ public class SecurityConfig {
                     .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                     // 2. CSRF : Sécuriser les requêtes d'altération de données (POST, PUT, DELETE)
-                    .csrf(csrf -> csrf
-                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                            .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                    )
+                    // 2. CSRF : Désactivé pour faciliter le développement (Solution 1)
+                    .csrf(csrf -> csrf.disable())
+
 
                     // 3. EXCEPTION HANDLING : Comportement API REST (401 au lieu de 302)
                     .exceptionHandling(customizer -> customizer
@@ -64,7 +63,6 @@ public class SecurityConfig {
 
                             // On autorise l'API publique, la page de login par défaut et la gestion des erreurs
                             .requestMatchers("/api/public", "/login/**", "/error").permitAll()
-
                             .anyRequest().authenticated()
                     )
 
