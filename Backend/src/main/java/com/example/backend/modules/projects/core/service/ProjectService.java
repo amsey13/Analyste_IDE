@@ -16,6 +16,8 @@ import com.example.backend.modules.projects.acc.entity.StatusProject;
 
 import com.example.backend.modules.projects.audit.taiga.service.TaigaService;
 import com.example.backend.modules.projects.audit.taiga.exception.IncorrectIdentifiersException;
+import com.example.backend.modules.projects.core.mapper.ProjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,33 +37,32 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final TaigaService taigaService;
-
-    public ProjectService(ProjectRepository projetRepository,
+    private final List<ProjectMapper> mappers;
+    public ProjectService(ProjectRepository projectRepository,
                           TaigaService taigaService,
-                          UserRepository userRepository) {
-        this.projectRepository = projetRepository;
+                          UserRepository userRepository,
+                          List<ProjectMapper> mappers) {
+        this.projectRepository = projectRepository;
         this.taigaService = taigaService;
         this.userRepository = userRepository;
+        this.mappers = mappers;
     }
 
-
-    
     /**
      * The `mapDTO` function takes a `Projet` object and maps its attributes to a `ProjetDTO` object.
-     * 
+     *
      * @param projet The `mapDTO` method takes a `Projet` object as a parameter and maps its attributes
      * to a `ProjetDTO` object. The `Projet` class seems to have the following attributes:
      * @return The method `mapDTO` is returning a `ProjetDTO` object after mapping the properties from
      * a `Projet` object.
      */
-    private ProjectResponseDTO mapDTO(Project projet){
-        ProjectResponseDTO dto = new ProjectResponseDTO();
-        dto.setIdProjet(projet.getIdProjet());
-        dto.setName(projet.getName());
-        dto.setDescription(projet.getDescription());
-        dto.setCreationDate(projet.getDateCreation());
-        dto.setUpdateDateDate(projet.getUpdatedAt());
-        return dto;
+
+    private ProjectResponseDTO mapDTO(Project projet) {
+        return mappers.stream()
+                .filter(mapper -> mapper.supports(projet))
+                .findFirst()
+                .map(mapper -> mapper.map(projet))
+                .orElseThrow(() -> new RuntimeException("Erreur critique : Aucun mapper trouvé pour " + projet.getClass().getName()));
     }
 
 
