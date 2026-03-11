@@ -33,6 +33,12 @@ const routes = [
                 meta: { requiresAuth: true }
             },
             {
+                path: 'projets/all',
+                name: 'all-projects',
+                component: AllProjectsView,
+                meta: { requiresAuth: true }
+            },
+            {
                 path: 'project/create',
                 name: 'project-create',
                 component: ProjetCreateView,

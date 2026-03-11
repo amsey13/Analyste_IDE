@@ -46,19 +46,19 @@ onMounted(async () => {
 
 const openProjet = (idProjet) =>{
   router.push({
-    name: 'project-dashboard',
+    name: 'projet-dashboard',
     params: { id: idProjet }
   });
 };
 
 
 const goToCreate = () => {
-  router.push({ name: 'project-create' });
+  router.push({ name: 'projet-create' });
 };
 
 const deleteProjet = (idProjet) => {
   confirm.require({
-    message: 'Êtes-vous sûr de vouloir supprimer ce project ?',
+    message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
@@ -67,8 +67,8 @@ const deleteProjet = (idProjet) => {
         projets.value = projets.value.filter(p => p.idProjet !== idProjet);
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Projet supprimé' });
       } catch (e) {
-        console.error("Erreur lors de la suppression du project", e);
-        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le project' });
+        console.error("Erreur lors de la suppression du projet", e);
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le projet' });
       }
     }
   });
