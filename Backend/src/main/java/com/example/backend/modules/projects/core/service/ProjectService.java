@@ -10,6 +10,9 @@ import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.dto.BaseProjectRequestDTO;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
 import com.example.backend.modules.projects.core.entity.Project;
+import com.example.backend.modules.projects.acc.dto.SupportProjectRequestDTO;
+import com.example.backend.modules.projects.acc.entity.SupportProject;
+import com.example.backend.modules.projects.acc.entity.StatusProject;
 
 import com.example.backend.modules.projects.audit.taiga.service.TaigaService;
 import com.example.backend.modules.projects.audit.taiga.exception.IncorrectIdentifiersException;
@@ -96,7 +99,7 @@ public class ProjectService {
      * @return The `createProjet` method returns a `ProjetDTO` object after creating a new `Projet`
      * entity, saving it to the database, and mapping it to a DTO object.
      */
-    public ProjectResponseDTO createProjet(BaseProjectRequestDTO dto) throws UserNotFoundException, IncorrectIdentifiersException {
+    public ProjectResponseDTO createProject(BaseProjectRequestDTO dto) throws UserNotFoundException, IncorrectIdentifiersException {
 
        User user = this.getAuthenticatedUser();
         Project projet = new Project();
@@ -135,6 +138,18 @@ public class ProjectService {
         }
         return url.split("project/")[1].split("/")[0];
 
+    }
+
+
+    public ProjectResponseDTO createSupportProject(SupportProjectRequestDTO dto) throws UserNotFoundException {
+        User user = this.getAuthenticatedUser();
+        SupportProject supportProject = new SupportProject();
+
+        supportProject.setBaseInfo(dto.getName(), dto.getDescription(), user);
+        supportProject.setDateCreation(LocalDateTime.now());
+        supportProject.setStatus(StatusProject.INITIALISE);
+
+        return mapDTO(projectRepository.save(supportProject));
     }
 
     /**

@@ -46,7 +46,7 @@ public class ProjectServiceTest {
 
 
     @Test
-    public void testCreateProjetSuccessWithoutTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
+    public void testCreateProjectSuccessWithoutTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
 
         BaseProjectRequestDTO request = new BaseProjectRequestDTO();
         request.setName("Test creation Projet");
@@ -68,7 +68,7 @@ public class ProjectServiceTest {
             when(userRepository.findByExternalId("use-external-id")).thenReturn(Optional.of(mockUser));
             when(projectRepository.save(any(Project.class))).thenAnswer(i -> i.getArguments()[0]);
 
-            ProjectResponseDTO projetResult = projectService.createProjet(request);
+            ProjectResponseDTO projetResult = projectService.createProject(request);
 
             assertNotNull(projetResult);
             assertEquals("Test creation Projet", projetResult.getName());
@@ -81,7 +81,7 @@ public class ProjectServiceTest {
     }
 
     @Test
-    public void testCreateProjetSuccessWithTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
+    public void testCreateProjectSuccessWithTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
         AuditProjectRequestDTO request = new AuditProjectRequestDTO();
         request.setName("Projet Taiga");
         request.setTaigaUserName("user-taiga");
@@ -163,7 +163,7 @@ public class ProjectServiceTest {
 
             when(userRepository.findByExternalId("unknown-id")).thenReturn(Optional.empty());
 
-            assertThrows(UserNotFoundException.class, () -> projectService.createProjet(request));
+            assertThrows(UserNotFoundException.class, () -> projectService.createProject(request));
 
 
         }

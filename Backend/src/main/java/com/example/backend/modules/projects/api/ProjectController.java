@@ -5,7 +5,7 @@ import com.example.backend.modules.projects.audit.dto.AuditProjectRequestDTO;
 import com.example.backend.modules.projects.core.dto.BaseProjectRequestDTO;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
 import com.example.backend.modules.projects.core.service.ProjectService;
-
+import com.example.backend.modules.projects.acc.dto.SupportProjectRequestDTO;
 import com.example.backend.modules.projects.audit.taiga.exception.IncorrectIdentifiersException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,13 +34,19 @@ public class ProjectController {
 
     @PostMapping
     public ResponseEntity<ProjectResponseDTO> createProject(@RequestBody BaseProjectRequestDTO projetDTO) throws UserNotFoundException, IncorrectIdentifiersException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProjet(projetDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProject(projetDTO));
     }
 
     @PostMapping("/audit")
     public ResponseEntity<ProjectResponseDTO> createAuditProject(@RequestBody AuditProjectRequestDTO auditDTO) throws UserNotFoundException, IncorrectIdentifiersException {
         return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createAuditProject(auditDTO));
     }
+
+    @PostMapping("/support")
+    public ResponseEntity<ProjectResponseDTO> createSupportProject(@RequestBody SupportProjectRequestDTO dto) throws UserNotFoundException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createSupportProject(dto));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ProjectResponseDTO> deleteProject(@PathVariable UUID id) throws UserNotFoundException {
         projectService.deleteProject(id);
