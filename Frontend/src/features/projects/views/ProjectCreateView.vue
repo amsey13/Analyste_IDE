@@ -1,72 +1,73 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import {ProjectService} from '../api/ProjectService.js';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import Password from 'primevue/password';
-import ToggleSwitch from 'primevue/toggleswitch';
-import RadioButton from 'primevue/radiobutton';name
+  import { ref,watch } from 'vue';
+  import { useRouter } from 'vue-router';
+  import {ProjectService} from '../api/ProjectService.js';
+  import Button from 'primevue/button';
+  import InputText from 'primevue/inputtext';
+  import Textarea from 'primevue/textarea';
+  import Password from 'primevue/password';
+  import ToggleSwitch from 'primevue/toggleswitch';
+  import RadioButton from 'primevue/radiobutton';
 
 
-const router = useRouter();
-const loading = ref(false);
-const taigaEnabled = ref(false);
-const nameTouched = ref(false);
-const featureTouched = ref(false);
+  const router = useRouter();
+  const loading = ref(false);
+  const taigaEnabled = ref(false);
+  const nameTouched = ref(false);
+  const featureTouched = ref(false);
 
-const projet = ref({
+  const projet = ref({
     name: '',
     description: '',
     project_type:'',
     taigaUserName: '',
     taigaPassword: '',
     taigaProjectUrl: ''
-});
+  });
 
-watch(
-    () => projet.value.project_type,
-    (newValue) => {
-      if (newValue !== 'AUDIT') {
-        taigaEnabled.value = false;
+  watch(
+      () => projet.value.project_type,
+      (newValue) => {
+        if (newValue !== 'audit' && newValue !== 'AUDIT') {
+          taigaEnabled.value = false;
+        }
       }
-    }
-);
+  );
 
-const createProject = async () => {
+  const createProject = async () => {
     nameTouched.value = true;
     featureTouched.value = true;
     if(projet.value.project_type === '') return;
-    if(projet.value.name.trim() === ''){
-      return;
-    }
-  const payload = {
-    ...projet.value,
-    ...(projet.value.project_type !== 'AUDIT' && {
-      taigaUserName: null,
+    if(projet.value.name.trim() === '') return;
 
-      taigaPassword: null,
-      taigaProjectUrl: null,
-    })
-  }
+    const payload = { ...projet.value };
+
+
+    const isAudit = payload.project_type === 'audit' || payload.project_type === 'AUDIT';
+    const isTaigaActivated = taigaEnabled.value;
+
+    if (!isAudit || !isTaigaActivated) {
+      delete payload.taigaUserName;
+      delete payload.taigaPassword;
+      delete payload.taigaProjectUrl;
+    }
     loading.value = true;
     try {
-        const response = await ProjectService.createProjet(projet.value);
-        const newProjectId = response.idProjet;
-        router.push({
-            name: 'projet-dashboard',
-            params: { id: newProjectId }
-        });
-        console.log("Projet créé avec succès", response.data);
+      const response = await ProjectService.createProjet(payload);
+      const newProjectId = response.idProjet;
+      router.push({
+        name: 'projet-dashboard',
+        params: { id: newProjectId }
+      });
+      console.log("Projet créé avec succès", response);
     } catch (e) {
-        console.error("Erreur lors de la création du projet", e);
+      console.error("Erreur lors de la création du projet", e);
     } finally {
-        loading.value = false;
+      loading.value = false;
     }
 
 
-};
+  };
 </script>
 
 
@@ -107,28 +108,28 @@ const createProject = async () => {
                     v-model="projet.project_type"
                     inputId="audit"
                     name="project_type"
-                    value="AUDIT"
+                    value="audit"
                 />
                 <label for="audit" class="cursor-pointer">Audit </label>
               </div>
 
-            <div class="feature-card flex-1 flex-align-items-center gap-2">
-            <RadioButton
-                v-model="projet.project_type"
-                inputId="accompagnement"
-                name="project_type"
-                value="accompagnement"
-            />
-            <label for="accompagnement" class="cursor-pointer">Accompagnement </label>
+              <div class="feature-card flex-1 flex-align-items-center gap-2">
+                <RadioButton
+                    v-model="projet.project_type"
+                    inputId="accompagnement"
+                    name="project_type"
+                    value="accompagnement"
+                />
+                <label for="accompagnement" class="cursor-pointer">Accompagnement </label>
+              </div>
             </div>
-        </div>
 
             <small v-if="featureTouched && projet.project_type === ''" class="p-error">
               Merci de choisir la fonctionnalité que vous voulez utiliser s'il vous plait !
             </small>
           </div>
 
-      
+
           <div class="field col-12">
             <!--<label for="desc">
               Description détaillée
@@ -144,7 +145,7 @@ const createProject = async () => {
           </div>
           <br>
 
-      <!-- toggle to enable Taiga-->
+          <!-- toggle to enable Taiga-->
           <div class="col-12">
             <div
                 v-if="projet.project_type === 'audit'"
@@ -200,7 +201,7 @@ const createProject = async () => {
                         v-model="projet.taigaProjectUrl"
                         placeholder="Lien de votre projet Taiga"
                         class="w-full"
-                        />
+                    />
                   </div>
                 </div>
               </div>
@@ -208,60 +209,60 @@ const createProject = async () => {
           </div>
         </div>
 
-            <div class="border-1 surface-border p-4 border-round bg-gray-50">
-              <div class="flex align-items-center gap-2 mb-3">
-                <i class="pi pi-info-circle text-primary text-lg"></i>
-                <h3 class="mt-0 mb-0 text-lg font-semibold">
-                Résumé
-                </h3>
-              </div>
-
-              <div class="line-height-3 text-700">
-                <p class="mb-2">
-                  <strong>Nom :</strong>
-                  <span class="ml-1">{{ projet.name || 'Non renseigné' }}</span>
-                </p>
-
-                <p class="mb-2">
-                  <strong>Description :</strong>
-                  <span class="ml-1">{{ projet.description.length }} caractères </span>
-                </p>
-
-                <p class="mb-0">
-                  <strong>Taiga :</strong>
-                  <span
-                      class="ml-1"
-                      :class="projet.project_type === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
-                      >
-                      {{ projet.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
-                  </span>
-                </p>
-
-                <p class="mb-2">
-                  <strong>Mode :</strong>
-                  <span class="ml-1">{{ projet.project_type || 'Non sélectionné' }}</span>
-                </p>
-
-              </div>
-            </div>
+        <div class="border-1 surface-border p-4 border-round bg-gray-50">
+          <div class="flex align-items-center gap-2 mb-3">
+            <i class="pi pi-info-circle text-primary text-lg"></i>
+            <h3 class="mt-0 mb-0 text-lg font-semibold">
+              Résumé
+            </h3>
           </div>
 
-          <div class="flex flex-column md:flex-row justify-content-end gap-3 mt-5">
-            <Button
-                label="Annuler"
-                severity="secondary"
-                class="p-button-outlined w-full md:w-auto"
-                @click="router.back()"
-            />
-            <Button
-                label="Créer et Ouvrir"
-                icon="pi pi-check"
-                :loading="loading"
-                :disabled="projet.name.trim() === '' || projet.project_type === ''"
-                class="p-button-primary w-full md:w-auto"
-                @click="createProject"
-            />
+          <div class="line-height-3 text-700">
+            <p class="mb-2">
+              <strong>Nom :</strong>
+              <span class="ml-1">{{ projet.name || 'Non renseigné' }}</span>
+            </p>
+
+            <p class="mb-2">
+              <strong>Description :</strong>
+              <span class="ml-1">{{ projet.description.length }} caractères </span>
+            </p>
+
+            <p class="mb-0">
+              <strong>Taiga :</strong>
+              <span
+                  class="ml-1"
+                  :class="projet.project_type === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
+              >
+                      {{ projet.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
+                  </span>
+            </p>
+
+            <p class="mb-2">
+              <strong>Mode :</strong>
+              <span class="ml-1">{{ projet.project_type || 'Non sélectionné' }}</span>
+            </p>
+
           </div>
         </div>
       </div>
+
+      <div class="flex flex-column md:flex-row justify-content-end gap-3 mt-5">
+        <Button
+            label="Annuler"
+            severity="secondary"
+            class="p-button-outlined w-full md:w-auto"
+            @click="router.back()"
+        />
+        <Button
+            label="Créer et Ouvrir"
+            icon="pi pi-check"
+            :loading="loading"
+            :disabled="projet.name.trim() === '' || projet.project_type === ''"
+            class="p-button-primary w-full md:w-auto"
+            @click="createProject"
+        />
+      </div>
+    </div>
+  </div>
 </template>

@@ -18,8 +18,13 @@ export const ProjectService = {
      * @returns 
      */
     async createProjet(projetData) {
-        const response = await apiClient.post('/projects', projetData);
-        return response.data;
+        if (projetData.project_type === 'audit' || projetData.project_type === 'AUDIT') {
+            const response = await apiClient.post('/projects/audit', projetData);
+            return response.data;
+        } else {
+            const response = await apiClient.post('/projects', projetData);
+            return response.data;
+        }
     },
 
 
