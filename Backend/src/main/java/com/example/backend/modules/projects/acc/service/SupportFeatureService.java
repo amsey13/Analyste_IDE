@@ -122,4 +122,12 @@ public class SupportFeatureService {
 
         userStoryRepository.delete(us);
     }
+
+    @Transactional
+    public SupportProject saveBpmnDiagram(UUID projectId, String bpmnXml) {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        project.setBpmnXml(bpmnXml);
+        return projectRepository.save(project);
+    }
 }

@@ -89,4 +89,12 @@ public class SupportFeatureController {
         supportService.deleteUserStory(usId);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/projects/{projectId}/bpmn")
+    public ResponseEntity<Void> saveBpmn(
+            @PathVariable UUID projectId,
+            @RequestBody String bpmnXml) {
+        supportService.saveBpmnDiagram(projectId, bpmnXml);
+        return ResponseEntity.ok().build();
+    }
 }
