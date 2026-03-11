@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { UserService } from '../features/users/api/UserService'
+import { UserService } from '../features/users/api/UserService';
 
 const HomeView = () => import('../views/HomeView.vue')
 const MainLayout = () => import('../layouts/MainLayout.vue')
@@ -7,17 +7,17 @@ const ProjetCreateView = () => import('../features/projects/views/ProjectCreateV
 const ProjetSelector = () => import('../features/projects/views/ProjectSelector.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
 const AccompagnementView = () => import('../views/AccompagnementView.vue')
-const AllProjectsView = () => import('../features/projects/views/AllProjectsView.vue')
+const AuditView = () => import('../views/AuditView.vue')
 
 const routes = [
     {
         path: '/',
-        name: 'home',
+        name: 'home', 
         component: HomeView
     },
     {
         path: '/app',
-        component: MainLayout,
+        component: MainLayout, 
         children: [
             {
                 path: 'projets',
@@ -25,12 +25,7 @@ const routes = [
                 component: ProjetSelector,
                 meta: { requiresAuth: true }
             },
-            {
-                path: 'projets/all',
-                name: 'all-projects',
-                component: AllProjectsView,
-                meta: { requiresAuth: true }
-            },
+
             {
                 path: 'projet/create',
                 name: 'projet-create',
@@ -43,39 +38,48 @@ const routes = [
                 component: DashboardView,
                 meta: { requiresAuth: true }
             },
+            // Les futurs modules d'analyse fonctionnelle iront ici
             {
-                path: 'accompagnement',
-                name: 'accompagnement',
-                component: AccompagnementView,
-                meta: { requiresAuth: true }
+            path: 'accompagnement',
+            name: 'accompagnement',
+            component: AccompagnementView,
+            meta: { requiresAuth: true }
+            },
+            {
+            path: 'audit',
+            name: 'audit',
+            component: AuditView,
+            meta: { requiresAuth: true }
             }
         ]
     }
 ]
 
+// 2. Initialisation de l'instance router (Crucial !)
 const router = createRouter({
     history: createWebHistory(),
     routes
 })
 
-let isUserAuthenticated = false
+let isUserAuthenticated = false;
 
+// 3. Le Vigile (Navigation Guard)
 router.beforeEach(async (to, from, next) => {
     if (to.meta.requiresAuth) {
+
         if (isUserAuthenticated) {
-            return next()
+            return next();
         }
 
         try {
-            await UserService.getCurrentUser()
-            isUserAuthenticated = true
-            next()
+            await UserService.getCurrentUser();
+            next(); // Session valide : accès accordé
         } catch (error) {
-            console.error("Accès refusé, redirection vers l'accueil")
-            next({ name: 'home' })
+            console.error("Accès refusé, redirection vers l'accueil");
+            next({ name: 'home' }); // Retour sécurisé vers la page de login
         }
     } else {
-        next()
+        next(); // Page publique
     }
 })
 

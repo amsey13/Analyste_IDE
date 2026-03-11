@@ -10,14 +10,21 @@ export const ProjectService = {
 
 
 
+
+
     /**
      * 
      * @param {Object} projetData data to send to the backend to create a new projet
      * @returns 
      */
     async createProjet(projetData) {
-        const response = await apiClient.post('/projects', projetData);
-        return response.data;
+        if (projetData.project_type === 'audit' || projetData.project_type === 'AUDIT') {
+            const response = await apiClient.post('/projects/audit', projetData);
+            return response.data;
+        } else {
+            const response = await apiClient.post('/projects', projetData);
+            return response.data;
+        }
     },
 
 

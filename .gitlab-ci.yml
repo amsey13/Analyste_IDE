@@ -34,10 +34,9 @@ cache:
 build:
   stage: build
   script:
-    - mvn compile
+    - mvn compile -U
 
 test:
   stage: test
   script:
-    - chmod +x mvnw
-    - ./mvnw clean test
+  - mvn clean test
