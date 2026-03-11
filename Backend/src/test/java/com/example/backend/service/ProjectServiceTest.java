@@ -89,6 +89,7 @@ public class ProjectServiceTest {
         request.setTaigaProjectUrl("https://tree.taiga.io/project/mon-super-projet");
 
         User mockUser = new User();
+        mockUser.setId(UUID.randomUUID());
 
         try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
             Authentication auth = mock(Authentication.class);
@@ -101,24 +102,28 @@ public class ProjectServiceTest {
 
             // Simulation de la réponse Taiga
             when(taigaService.authenticate("user-taiga", "pass-taiga")).thenReturn("fake-token");
-            when(projectRepository.save(any(Project.class))).thenAnswer(i -> i.getArguments()[0]);
+
+            // Correction clé : any() à la place de any(Project.class) pour bien capter l'AuditProject enfant
+            when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
             ProjectResponseDTO result = projectService.createProjet(request);
 
             assertNotNull(result);
             verify(taigaService, times(1)).authenticate("user-taiga", "pass-taiga");
-            verify(projectRepository, times(1)).save(any(Project.class));
+            verify(projectRepository, times(1)).save(any());
         }
     }
 
     @Test
     public void testCreateProjectWithInvalidTaigaIdentifiersShouldThrownAnException() throws IncorrectIdentifiersException {
-
         AuditProjectRequestDTO request = new AuditProjectRequestDTO();
         request.setName("Test creation Projet");
         request.setTaigaUserName("mauvais-user");
         request.setTaigaPassword("mauvais-pass");
         request.setTaigaProjectUrl("https://tree.taiga.io/project/slug");
+
+        User mockUser = new User();
+        mockUser.setId(UUID.randomUUID());
 
         try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)){
             Authentication auth = mock(Authentication.class);
@@ -127,12 +132,11 @@ public class ProjectServiceTest {
             mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
             when(context.getAuthentication()).thenReturn(auth);
             when(auth.getName()).thenReturn("user-id");
+            when(userRepository.findByExternalId("user-id")).thenReturn(Optional.of(mockUser));
 
-            when(userRepository.findByExternalId("user-id")).thenReturn(Optional.of(new User()));
-
-            when(taigaService.authenticate(anyString(), anyString()))
-                    .thenThrow(new IncorrectIdentifiersException("Taiga Error These indentifiers are invalid"));
-
+            // Correction clé : On retourne null au lieu de forcer l'exception dans le mock
+            // C'est ton code de production qui va se charger de jeter IncorrectIdentifiersException
+            when(taigaService.authenticate(anyString(), anyString())).thenReturn(null);
 
             assertThrows(IncorrectIdentifiersException.class, () -> {
                 projectService.createProjet(request);
