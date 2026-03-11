@@ -1,6 +1,5 @@
 <script setup>
-
-import {ref, onMounted} from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import {ProjectService} from '../api/ProjectService.js';
 import {useRouter} from 'vue-router';
 import { useConfirm } from "primevue/useconfirm";
@@ -18,6 +17,18 @@ const loading = ref(false);
 const confirm = useConfirm();
 const toast = useToast();
 
+const hasMoreThanFiveProjects = computed(() => projets.value.length > 5);
+
+const displayedProjects = computed(() => {
+  return hasMoreThanFiveProjects.value
+      ? projets.value.slice(0, 4)
+      : projets.value;
+});
+
+const goToAllProjects = () => {
+  router.push({ name: 'all-projects' });
+};
+
 onMounted(async () => {
   loading.value = true;
   try {
@@ -29,38 +40,38 @@ onMounted(async () => {
     console.error("Erreur de récupération des projets", e);
 
   }finally {
-      loading.value = false;
-    }
+    loading.value = false;
+  }
 });
 
 const openProjet = (idProjet) =>{
-    router.push({
-        name: 'projet-dashboard',
-        params: { id: idProjet }
-    });
+  router.push({
+    name: 'projet-dashboard',
+    params: { id: idProjet }
+  });
 };
 
 
 const goToCreate = () => {
-    router.push({ name: 'projet-create' });
+  router.push({ name: 'projet-create' });
 };
 
 const deleteProjet = (idProjet) => {
-    confirm.require({
-        message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
-        header: 'Confirmation de suppression',
-        icon: 'pi pi-exclamation-triangle',
-        accept: async () => {
-            try {
-                await ProjectService.deleteProjet(idProjet);
-                projets.value = projets.value.filter(p => p.idProjet !== idProjet);
-                toast.add({ severity: 'success', summary: 'Succès', detail: 'Projet supprimé' });
-            } catch (e) {
-                console.error("Erreur lors de la suppression du projet", e);
-                toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le projet' });
-            }
-        }
-    });
+  confirm.require({
+    message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
+    header: 'Confirmation de suppression',
+    icon: 'pi pi-exclamation-triangle',
+    accept: async () => {
+      try {
+        await ProjectService.deleteProjet(idProjet);
+        projets.value = projets.value.filter(p => p.idProjet !== idProjet);
+        toast.add({ severity: 'success', summary: 'Succès', detail: 'Projet supprimé' });
+      } catch (e) {
+        console.error("Erreur lors de la suppression du projet", e);
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le projet' });
+      }
+    }
+  });
 };
 
 
@@ -103,7 +114,7 @@ const deleteProjet = (idProjet) => {
 
       <!-- Liste projets -->
       <div
-          v-for="p in projets"
+          v-for="p in displayedProjects"
           :key="p.idProjet"
           class="col-12 md:col-6 lg:col-4"
       >
@@ -142,6 +153,24 @@ const deleteProjet = (idProjet) => {
             </div>
           </template>
 
+        </Card>
+      </div>
+      <!-- Carte Voir plus -->
+      <div
+          v-if="hasMoreThanFiveProjects"
+          class="col-12 md:col-6 lg:col-4"
+      >
+        <Card
+            class="h-full cursor-pointer border-2 border-300 flex align-items-center justify-content-center hover:shadow-4 transition-duration-200"
+            @click="goToAllProjects"
+        >
+          <template #content>
+            <div class="text-center p-5">
+              <i class="pi pi-eye text-4xl text-primary mb-3"></i>
+              <h3>Voir plus</h3>
+              <p class="text-600">Afficher tous les projets</p>
+            </div>
+          </template>
         </Card>
       </div>
 
