@@ -21,15 +21,15 @@ const fetchProjects = async () => {
 }
 
 const goBack = () => {
-  router.push('/app/projets')
+  router.push('/app/projects')
 }
 
 const goToCreateProject = () => {
-  router.push('/app/projet/create')
+  router.push('/app/project/create')
 }
 
 const goToProject = (projectId) => {
-  router.push(`/app/projet/${projectId}`)
+  router.push(`/app/project/${projectId}`)
 }
 
 const deleteProject = async (projectId) => {

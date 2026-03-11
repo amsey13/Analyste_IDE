@@ -46,14 +46,14 @@ onMounted(async () => {
 
 const openProjet = (idProjet) =>{
   router.push({
-    name: 'projet-dashboard',
+    name: 'project-dashboard',
     params: { id: idProjet }
   });
 };
 
 
 const goToCreate = () => {
-  router.push({ name: 'projet-create' });
+  router.push({ name: 'project-create' });
 };
 
 const deleteProjet = (idProjet) => {

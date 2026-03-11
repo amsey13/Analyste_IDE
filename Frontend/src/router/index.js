@@ -21,19 +21,13 @@ const routes = [
         component: MainLayout,
         children: [
             {
-                path: 'projets',
-                name: 'projets-lite',
+                path: 'projects',
+                name: 'projects-lite',
                 component: ProjetSelector,
                 meta: { requiresAuth: true }
             },
             {
-                path: 'projets/all',
-                name: 'all-projects',
-                component: AllProjectsView,
-                meta: { requiresAuth: true }
-            },
-            {
-                path: 'projets/all',
+                path: 'projects/all',
                 name: 'all-projects',
                 component: AllProjectsView,
                 meta: { requiresAuth: true }

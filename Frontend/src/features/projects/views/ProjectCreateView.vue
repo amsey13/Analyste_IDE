@@ -28,7 +28,7 @@
   watch(
       () => project.value.project_type,
       (newValue) => {
-        if (newValue !== 'audit' && newValue !== 'AUDIT') {
+        if (newValue !== 'audit') {
           taigaEnabled.value = false;
         }
       }
@@ -43,7 +43,7 @@
     const payload = { ...project.value };
 
 
-    const isAudit = payload.project_type === 'audit' || payload.project_type === 'AUDIT';
+    const isAudit = payload.project_type === 'audit';
     const isTaigaActivated = taigaEnabled.value;
 
     if (!isAudit || !isTaigaActivated) {
@@ -54,7 +54,7 @@
     loading.value = true;
     try {
       const response = await ProjectService.createProject(payload);
-      const newProjectId = response.idProjet;
+      const newProjectId = response.id;
       router.push({
         name: 'project-dashboard',
         params: { id: newProjectId }
