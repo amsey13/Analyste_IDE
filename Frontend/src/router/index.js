@@ -8,6 +8,7 @@ const ProjetSelector = () => import('../features/projects/views/ProjectSelector.
 const DashboardView = () => import('../views/DashboardView.vue')
 const AccompagnementView = () => import('../views/AccompagnementView.vue')
 const AllProjectsView = () => import('../features/projects/views/AllProjectsView.vue')
+const AuditView = () => import('../views/AuditView.vue')
 
 const routes = [
     {
@@ -44,10 +45,16 @@ const routes = [
                 meta: { requiresAuth: true }
             },
             {
-                path: 'accompagnement',
-                name: 'accompagnement',
-                component: AccompagnementView,
-                meta: { requiresAuth: true }
+            path: 'accompagnement',
+            name: 'accompagnement',
+            component: AccompagnementView,
+            meta: { requiresAuth: true }
+            },
+            {
+            path: 'audit',
+            name: 'audit',
+            component: AuditView,
+            meta: { requiresAuth: true }
             }
         ]
     }

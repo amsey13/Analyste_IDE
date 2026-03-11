@@ -87,6 +87,23 @@
         </dependency>
 
         <dependency>
+            <groupId>com.jflux</groupId>
+            <artifactId>jflux-ihm</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/JFlux.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jmerise</groupId>
+            <artifactId>jmerise-lib</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/JMerise.jar</systemPath>
+        </dependency>
+
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-docker-compose</artifactId>
             <scope>runtime</scope>
