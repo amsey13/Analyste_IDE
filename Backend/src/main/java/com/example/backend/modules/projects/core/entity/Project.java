@@ -56,11 +56,11 @@ public class Project {
         this.updatedAt = updatedAt;
     }
 
-    public UUID getIdProjet() {
+    public UUID getIdProject() {
         return id;
     }
 
-    public void setIdProjet(UUID idProject) {
+    public void setIdProject(UUID idProject) {
         this.id = idProject;
     }
 
