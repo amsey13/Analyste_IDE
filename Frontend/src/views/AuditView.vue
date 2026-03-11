@@ -1,6 +1,12 @@
 <script setup>
 import Card from 'primevue/card'
 import Button from 'primevue/button'
+import FileUpload from 'primevue/fileupload'
+import { ref } from 'vue'
+
+const bpmnFile = ref(null)
+const mcdFile = ref(null)
+const mfcFile = ref(null)
 </script>
 
 <template>
@@ -16,15 +22,19 @@ import Button from 'primevue/button'
     <div class="grid">
 
       <div class="col-12 md:col-4">
-        <Card>
-          <template #title>
-            <i class="pi pi-cog mr-2"></i>
-            1. Processus (BPMN)
-          </template>
+        <Card class="text-center">
 
           <template #content>
-            <p class="text-600">Le "Qui fait quoi".</p>
-            <p class="text-500">En attente...</p>
+            <i class="pi pi-cog text-4xl mb-3"></i>
+            <h3>1. Processus (BPMN)</h3>
+            <FileUpload
+                mode="basic"
+                name="bpmn"
+                accept=".bpm"
+                chooseLabel="Importer fichier BPMN"
+                @select="(e) => bpmnFile.value = e.files[0]"
+            />
+
           </template>
         </Card>
       </div>
