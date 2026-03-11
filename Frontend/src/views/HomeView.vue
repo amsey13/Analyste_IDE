@@ -14,13 +14,13 @@ const initialCheck = ref(true); // Pour éviter un flash visuel du bouton si dé
 
 onMounted(async () => {
   try {
-    
+
     await UserService.getCurrentUser();
 
-    
+
     router.push('/app/projets');
   } catch (error) {
-   
+
     initialCheck.value = false;
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -39,6 +39,8 @@ onMounted(async () => {
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
+  } finally {
+    loading.value = false
   }
 });
 
