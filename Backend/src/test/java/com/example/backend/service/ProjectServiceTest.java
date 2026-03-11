@@ -31,6 +31,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,14 +64,18 @@ public class ProjectServiceTest {
 
     @Test
     void testCreateProjectSuccess() throws Exception {
-        BaseProjectRequestDTO req = new BaseProjectRequestDTO();
-        req.setName("Base");
+       SupportProjectRequestDTO req = new SupportProjectRequestDTO();
+        req.setName("Projet Accompagnement");
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "u1");
             when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(new User()));
             when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-            setupMapper("Base");
-            assertNotNull(projectService.createProject(req));
+            setupMapper("Projet Accompagnement");
+
+            ProjectResponseDTO res = projectService.createSupportProject(req);
+            assertNotNull(res);
+            assertEquals("Projet Accompagnement", res.getName());
+
         }
     }
 
@@ -88,31 +94,16 @@ public class ProjectServiceTest {
         }
     }
 
+    
     @Test
-    void testCreateSupportProjectSuccess() throws Exception {
-        SupportProjectRequestDTO req = new SupportProjectRequestDTO();
-        req.setName("Accompagnement");
-        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
-            mockAuth(ms, "u1");
-            when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(new User()));
-            when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-            setupMapper("Accompagnement");
-            ProjectResponseDTO res = projectService.createSupportProject(req);
-            assertEquals("Accompagnement", res.getName());
-        }
-    }
-
-    @Test
-    void testCreateAuditInvalidIdentifiers() {
+    void testCreateAuditInvalidIdentifiers() throws IncorrectIdentifiersException {
         AuditProjectRequestDTO req = new AuditProjectRequestDTO();
         req.setTaigaUserName("b"); req.setTaigaPassword("b"); req.setTaigaProjectUrl("https://taiga.io/project/s");
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "u1");
             when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(new User()));
-            when(taigaService.authenticate(anyString(), anyString())).thenReturn(null);
+            when(taigaService.authenticate(anyString(), anyString())).thenReturn(null); //The first thrown exception is for the method authenticate, so we return null to simulate a failed authentication
             assertThrows(IncorrectIdentifiersException.class, () -> projectService.createAuditProject(req));
-        } catch (IncorrectIdentifiersException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -121,7 +112,7 @@ public class ProjectServiceTest {
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "unknown");
             when(userRepository.findByExternalId("unknown")).thenReturn(Optional.empty());
-            assertThrows(UserNotFoundException.class, () -> projectService.createProject(new BaseProjectRequestDTO()));
+            assertThrows(UserNotFoundException.class, () -> projectService.createSupportProject(new SupportProjectRequestDTO()));
         }
     }
 
