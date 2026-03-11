@@ -106,7 +106,7 @@ public class ProjectServiceTest {
             // Correction : any() au lieu de any(Project.class) pour bien capter l'instance AuditProject
             when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-            ProjectResponseDTO result = projectService.createProjet(request);
+            ProjectResponseDTO result = projectService.createAuditProject(request);
 
             assertNotNull(result);
             verify(taigaService, times(1)).authenticate(anyString(), anyString());
@@ -138,11 +138,8 @@ public class ProjectServiceTest {
             // Correction : On renvoie null pour forcer TON code métier (if token == null) à jeter l'exception
             when(taigaService.authenticate(anyString(), anyString())).thenReturn(null);
 
-            // Correction : On sécurise le mock du repository pour éviter le NullPointerException si le flux continue
-            when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
             assertThrows(IncorrectIdentifiersException.class, () -> {
-                projectService.createProjet(request);
+                projectService.createAuditProject(request);
             });
         } catch (IncorrectIdentifiersException e) {
             throw new RuntimeException(e);
