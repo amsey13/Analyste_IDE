@@ -3,7 +3,7 @@ package com.example.backend.service;
 import com.example.backend.modules.projects.audit.dto.AuditProjectRequestDTO;
 import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
-import com.example.backend.core.auth.exeption.UserNotFoundException;
+import com.example.backend.core.auth.exception.UserNotFoundException;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.dto.BaseProjectRequestDTO;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;

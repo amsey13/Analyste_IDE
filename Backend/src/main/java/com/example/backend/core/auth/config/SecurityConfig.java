@@ -22,7 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
-import com.example.backend.core.auth.exeption.SecurityConfigurationException;
+import com.example.backend.core.auth.exception.SecurityConfigurationException;
 import com.example.backend.core.auth.service.CustomOidcUserService;
 
 import java.util.List;
