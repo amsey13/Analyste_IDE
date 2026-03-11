@@ -33,14 +33,14 @@ const routes = [
                 meta: { requiresAuth: true }
             },
             {
-                path: 'projet/create',
-                name: 'projet-create',
+                path: 'project/create',
+                name: 'project-create',
                 component: ProjetCreateView,
                 meta: { requiresAuth: true }
             },
             {
-                path: 'projet/:id',
-                name: 'projet-dashboard',
+                path: 'project/:id',
+                name: 'project-dashboard',
                 component: DashboardView,
                 meta: { requiresAuth: true }
             },

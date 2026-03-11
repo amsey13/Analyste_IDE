@@ -46,19 +46,19 @@ onMounted(async () => {
 
 const openProjet = (idProjet) =>{
   router.push({
-    name: 'projet-dashboard',
+    name: 'project-dashboard',
     params: { id: idProjet }
   });
 };
 
 
 const goToCreate = () => {
-  router.push({ name: 'projet-create' });
+  router.push({ name: 'project-create' });
 };
 
 const deleteProjet = (idProjet) => {
   confirm.require({
-    message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
+    message: 'Êtes-vous sûr de vouloir supprimer ce project ?',
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
@@ -67,8 +67,8 @@ const deleteProjet = (idProjet) => {
         projets.value = projets.value.filter(p => p.idProjet !== idProjet);
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Projet supprimé' });
       } catch (e) {
-        console.error("Erreur lors de la suppression du projet", e);
-        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le projet' });
+        console.error("Erreur lors de la suppression du project", e);
+        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le project' });
       }
     }
   });
@@ -96,7 +96,7 @@ const deleteProjet = (idProjet) => {
 
     <div v-else class="grid">
 
-      <!-- Carte Nouveau projet -->
+      <!-- Carte Nouveau project -->
       <div class="col-12 md:col-6 lg:col-4">
         <Card class="h-full cursor-pointer border-2 border-primary flex align-items-center justify-content-center"
               @click="goToCreate">

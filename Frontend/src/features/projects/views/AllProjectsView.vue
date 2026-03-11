@@ -25,7 +25,7 @@ const goBack = () => {
 }
 
 const goToCreateProject = () => {
-  router.push('/app/projet/create')
+  router.push('/app/project/create')
 }
 
 const goToProject = (projectId) => {
@@ -37,7 +37,7 @@ const deleteProject = async (projectId) => {
     await ProjectService.deleteProject(projectId)
     projects.value = projects.value.filter((p) => p.id !== projectId)
   } catch (error) {
-    console.error('Erreur lors de la suppression du projet :', error)
+    console.error('Erreur lors de la suppression du project :', error)
   }
 }
 

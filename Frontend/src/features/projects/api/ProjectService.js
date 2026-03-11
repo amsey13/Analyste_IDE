@@ -20,10 +20,10 @@ export const ProjectService = {
 
     /**
      * 
-     * @param {Object} projetData data to send to the backend to create a new projet
+     * @param {Object} projectData data to send to the backend to create a new project
      * @returns 
      */
-    async createProjet(projetData) {
+    async createProject(projectData) {
         const type = projectData.project_type?.toLowerCase();
         const endpoint = ENDPOINTS_BY_TYPE[type] || DEFAULT_ENDPOINT;
         const response = await apiClient.post(endpoint, projectData);

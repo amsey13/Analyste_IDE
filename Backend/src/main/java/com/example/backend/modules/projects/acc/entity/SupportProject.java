@@ -26,10 +26,19 @@ public class SupportProject extends Project {
     @Column(name = "data_dictionary", columnDefinition = "TEXT")
     private String dataDictionary;
 
+
     // Design Pattern "Composition" : Le projet gère le cycle de vie de ses dépendances (CascadeType.ALL)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Actor> actors = new ArrayList<>();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserStory> userStories = new ArrayList<>();
+
+    public StatusProject getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusProject status) {
+        this.status = status;
+    }
 }
