@@ -3,7 +3,6 @@ import apiClient from '../../../api/HttpClient.js';
 const ENDPOINTS_BY_TYPE = {
     'audit': '/projects/audit',
     'accompagnement': '/projects/support',
-    'support': '/projects/support'
 };
 
 const DEFAULT_ENDPOINT = '/projects';

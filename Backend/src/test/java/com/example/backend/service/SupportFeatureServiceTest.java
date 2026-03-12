@@ -38,7 +38,7 @@ public class SupportFeatureServiceTest {
     // Helper pour créer un projet cohérent
     private SupportProject createMockProject(String ownerId) {
         SupportProject project = new SupportProject();
-        project.setIdProjet(UUID.randomUUID()); // Génère un ID
+        project.setIdProject(UUID.randomUUID()); // Génère un ID
         User owner = new User();
         owner.setExternalId(ownerId);
         project.setUser(owner);
@@ -48,7 +48,7 @@ public class SupportFeatureServiceTest {
     @Test
     void testAddActorSuccess() {
         SupportProject project = createMockProject("user1");
-        UUID pid = project.getIdProjet(); // On utilise l'ID réel du projet mocké
+        UUID pid = project.getIdProject(); // On utilise l'ID réel du projet mocké
 
         when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
 
@@ -62,7 +62,7 @@ public class SupportFeatureServiceTest {
     @Test
     void testAddUserStorySuccess() {
         SupportProject project = createMockProject("user1");
-        UUID pid = project.getIdProjet(); // L'ID doit matcher
+        UUID pid = project.getIdProject(); // L'ID doit matcher
         UUID aid = UUID.randomUUID();
 
         Actor actor = new Actor();
@@ -81,7 +81,7 @@ public class SupportFeatureServiceTest {
     @Test
     void testAddUserStoryActorProjectMismatch() {
         SupportProject p1 = createMockProject("user1");
-        UUID p1Id = p1.getIdProjet();
+        UUID p1Id = p1.getIdProject();
 
         SupportProject p2 = createMockProject("user1"); // Un autre projet
         UUID aid = UUID.randomUUID();
@@ -104,7 +104,7 @@ public class SupportFeatureServiceTest {
     @Test
     void testSaveBpmnDiagram() {
         SupportProject project = createMockProject("user1");
-        UUID pid = project.getIdProjet();
+        UUID pid = project.getIdProject();
 
         when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
 
