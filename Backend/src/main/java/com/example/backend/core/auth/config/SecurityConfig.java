@@ -48,7 +48,11 @@ public class SecurityConfig {
 
                     // 2. CSRF : Sécuriser les requêtes d'altération de données (POST, PUT, DELETE)
                     // 2. CSRF : Désactivé pour faciliter le développement (Solution 1)
-                    .csrf(csrf -> csrf.disable())
+                    .csrf(csrf -> csrf
+                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                            .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                    )
+
 
 
                     // 3. EXCEPTION HANDLING : Comportement API REST (401 au lieu de 302)
