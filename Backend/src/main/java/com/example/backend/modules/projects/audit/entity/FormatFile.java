@@ -2,13 +2,15 @@ package com.example.backend.modules.projects.audit.entity;
 
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name="format_fichier")
 public class FormatFile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private int id;
+    private UUID id;
 
     @Column(unique=true,nullable=false)
     private String libelle;
@@ -23,11 +25,11 @@ public class FormatFile {
         this.extension = extension;
     }
 
-    public int getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
