@@ -12,7 +12,7 @@ public interface ProjectMapper {
 
     // Méthode par défaut pour éviter de réécrire le mapping des champs communs (DRY)
     default void mapBaseFields(Project source, ProjectResponseDTO target) {
-        target.setIdProjet(source.getIdProjet());
+        target.setIdProject(source.getIdProject());
         target.setName(source.getName());
         target.setDescription(source.getDescription());
         target.setCreationDate(source.getDateCreation());
