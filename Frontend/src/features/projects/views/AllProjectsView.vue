@@ -24,7 +24,7 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-}
+});
 
 const goBack = () => {
   router.push('/app/projects')

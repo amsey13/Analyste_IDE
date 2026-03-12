@@ -54,7 +54,7 @@
     loading.value = true;
     try {
       const response = await ProjectService.createProject(payload);
-      const newProjectId = response.id;
+      const newProjectId = response.idProject;
       router.push({
         name: 'project-dashboard',
         params: { id: newProjectId }
