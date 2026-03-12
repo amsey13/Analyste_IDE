@@ -18,7 +18,7 @@ onMounted(async () => {
     await UserService.getCurrentUser();
 
 
-    router.push('/app/projets');
+    router.push('/app/projects');
   } catch (error) {
 
     initialCheck.value = false;

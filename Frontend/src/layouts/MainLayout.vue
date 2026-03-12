@@ -41,7 +41,7 @@ const logout = () => {
 
   <nav class="flex-grow-1 p-3">
     <!-- Accueil -->
-    <router-link to="/app/projets" class="no-underline">
+    <router-link to="/app/projects" class="no-underline">
       <div class="flex align-items-center p-3 border-round text-blue-100 hover:bg-blue-800 cursor-pointer">
         <i class="pi pi-home mr-2"></i>
         <span class="font-medium">Accueil</span>

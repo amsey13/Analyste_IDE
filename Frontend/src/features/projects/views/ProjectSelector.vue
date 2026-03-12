@@ -46,14 +46,14 @@ onMounted(async () => {
 
 const openProjet = (idProjet) =>{
   router.push({
-    name: 'projet-dashboard',
+    name: 'project-dashboard',
     params: { id: idProjet }
   });
 };
 
 
 const goToCreate = () => {
-  router.push({ name: 'projet-create' });
+  router.push({ name: 'project-create' });
 };
 
 const deleteProjet = (idProjet) => {
@@ -96,7 +96,7 @@ const deleteProjet = (idProjet) => {
 
     <div v-else class="grid">
 
-      <!-- Carte Nouveau projet -->
+      <!-- Carte Nouveau project -->
       <div class="col-12 md:col-6 lg:col-4">
         <Card class="h-full cursor-pointer border-2 border-primary flex align-items-center justify-content-center"
               @click="goToCreate">

@@ -20,4 +20,28 @@ public class Actor {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "support_project_id", nullable = false)
     private SupportProject project;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public SupportProject getProject() {
+        return project;
+    }
+
+    public void setProject(SupportProject project) {
+        this.project = project;
+    }
 }

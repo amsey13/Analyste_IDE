@@ -24,6 +24,31 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
+});
+
+const goBack = () => {
+  router.push('/app/projects')
+}
+
+const goToCreateProject = () => {
+  router.push('/app/project/create')
+}
+
+const goToProject = (projectId) => {
+  router.push(`/app/project/${projectId}`)
+}
+
+const deleteProject = async (projectId) => {
+  try {
+    await ProjectService.deleteProject(projectId)
+    projects.value = projects.value.filter((p) => p.id !== projectId)
+  } catch (error) {
+    console.error('Erreur lors de la suppression du projet :', error)
+  }
+}
+
+onMounted(() => {
+  fetchProjects()
 })
 
 const paginatedProjects = computed(() => {
