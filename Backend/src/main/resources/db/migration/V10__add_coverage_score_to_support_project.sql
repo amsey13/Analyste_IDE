@@ -1,0 +1,1 @@
+ALTER TABLE support_project ADD COLUMN coverage_score DOUBLE PRECISION DEFAULT 0;

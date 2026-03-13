@@ -1,6 +1,6 @@
 package com.example.backend.modules.projects.acc.service;
 
-import com.example.backend.core.auth.dao.UserRepository;
+import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
 import com.example.backend.modules.projects.acc.entity.Actor;
@@ -14,19 +14,24 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class SupportFeatureService {
 
-    @Autowired
-    private ActorRepository actorRepository;
+    private final ActorRepository actorRepository;
+    private final UserStoryRepository userStoryRepository;
+    private final ProjectRepository projectRepository;
 
-    @Autowired
-    private UserStoryRepository userStoryRepository;
-
-    @Autowired
-    private ProjectRepository projectRepository;
+    public SupportFeatureService(ActorRepository actorRepository,
+                                 UserStoryRepository userStoryRepository,
+                                 ProjectRepository projectRepository) {
+        this.actorRepository = actorRepository;
+        this.userStoryRepository = userStoryRepository;
+        this.projectRepository = projectRepository;
+    }
 
     /**
      * Méthode de sécurité interne pour vérifier que l'utilisateur connecté
@@ -128,6 +133,30 @@ public class SupportFeatureService {
         SupportProject project = getProjectAndCheckOwnership(projectId);
 
         project.setBpmnXml(bpmnXml);
+
+        updateCoverageScoreInternal(project);
+
         return projectRepository.save(project);
+    }
+
+    private void updateCoverageScoreInternal(SupportProject project) {
+        List<UserStory> allStories = project.getUserStories();
+
+        if (allStories == null || allStories.isEmpty()) {
+            project.setCoverageScore(0.0);
+            return;
+        }
+
+        // On appelle la méthode de manière STATIQUE (voir étape 2)
+        Set<String> linkedUsIdsInBpmn = BpmnParserStrategy.extractLinkedUserStories(project.getBpmnXml());
+
+        long coveredCount = allStories.stream()
+                .filter(us -> linkedUsIdsInBpmn.contains(us.getId().toString()))
+                .count();
+
+        double percentage = (double) coveredCount / allStories.size() * 100;
+        double roundedPercentage = Math.round(percentage * 100.0) / 100.0;
+
+        project.setCoverageScore(roundedPercentage);
     }
 }

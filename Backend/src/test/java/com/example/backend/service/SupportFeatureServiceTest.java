@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.core.auth.entity.User;
+import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
 import com.example.backend.modules.projects.acc.entity.Actor;
@@ -19,7 +20,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -112,6 +115,37 @@ public class SupportFeatureServiceTest {
             mockAuth(ms, "user1");
             supportService.saveBpmnDiagram(pid, "<xml/>");
             assertEquals("<xml/>", project.getBpmnXml());
+            verify(projectRepository).save(project);
+        }
+    }
+
+    @Test
+    void testSaveBpmnDiagramWithCoverageCalculation() {
+        SupportProject project = createMockProject("user1");
+        UUID pid = project.getIdProject();
+
+        UserStory us1 = new UserStory(); us1.setId(UUID.randomUUID());
+        UserStory us2 = new UserStory(); us2.setId(UUID.randomUUID());
+        project.setUserStories(List.of(us1, us2));
+
+        when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
+        when(projectRepository.save(any(SupportProject.class))).thenAnswer(i -> i.getArgument(0));
+
+        try (MockedStatic<SecurityContextHolder> msAuth = mockStatic(SecurityContextHolder.class);
+             MockedStatic<BpmnParserStrategy> msBpmn = mockStatic(BpmnParserStrategy.class)) {
+
+            mockAuth(msAuth, "user1");
+
+
+            msBpmn.when(() -> BpmnParserStrategy.extractLinkedUserStories(anyString()))
+                    .thenReturn(Set.of(us1.getId().toString()));
+
+            // Act
+            supportService.saveBpmnDiagram(pid, "<bpmn>test</bpmn>");
+
+            // Assert
+            assertEquals("<bpmn>test</bpmn>", project.getBpmnXml(), "Le XML doit être sauvegardé");
+            assertEquals(50.0, project.getCoverageScore(), "Le score doit être de 50.0% (1 US sur 2)");
             verify(projectRepository).save(project);
         }
     }

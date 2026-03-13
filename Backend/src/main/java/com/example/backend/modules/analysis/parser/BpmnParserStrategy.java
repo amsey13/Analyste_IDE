@@ -7,16 +7,20 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BpmnParserStrategy implements ModelParserStrategy {
 
@@ -224,6 +228,37 @@ public class BpmnParserStrategy implements ModelParserStrategy {
         return "Inconnu";
     }
 
+    public static java.util.Set<String> extractLinkedUserStories(String bpmnXml) {
+        java.util.Set<String> linkedUsIds = new java.util.HashSet<>();
+
+        if (bpmnXml == null || bpmnXml.trim().isEmpty()) {
+            return linkedUsIds;
+        }
+
+        try {
+            javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new java.io.ByteArrayInputStream(bpmnXml.getBytes("UTF-8")));
+
+            NodeList nodeList = doc.getElementsByTagName("*");
+
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Element element = (Element) nodeList.item(i);
+                String linkedAttr = element.getAttribute("custom:linkedUserStories");
+
+                if (linkedAttr != null && !linkedAttr.isEmpty()) {
+                    String[] ids = linkedAttr.split(",");
+                    for (String id : ids) {
+                        linkedUsIds.add(id.trim());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur de parsing BPMN pour les User Stories : " + e.getMessage());
+        }
+
+        return linkedUsIds;
+    }
 
 }
 
