@@ -1,10 +1,13 @@
 package com.example.backend.modules.projects.core.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.example.backend.core.auth.entity.User;
 
+import com.example.backend.modules.projects.audit.entity.Report;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -38,6 +41,10 @@ public class Project {
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "project")
+    private List<Report> reports = new ArrayList<>();
+
 
 
     public LocalDateTime getDateCreation() {
