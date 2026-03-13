@@ -5,13 +5,12 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name="type_anomalie")
 public class AnomalyType {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column
+    @Column(unique=true, nullable=false)
     private String wording;
 
     public UUID getId() {

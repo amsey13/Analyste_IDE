@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name="format_fichier")
 public class FormatFile {
 
     @Id
@@ -16,6 +15,7 @@ public class FormatFile {
     private String libelle;
 
     private String extension;
+
 
     public String getExtension() {
         return extension;
