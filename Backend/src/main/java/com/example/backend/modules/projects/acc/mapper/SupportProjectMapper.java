@@ -32,7 +32,7 @@ public class SupportProjectMapper implements ProjectMapper {
         dto.setDataDictionary(support.getDataDictionary());
         dto.setActors(support.getActors());
         dto.setUserStories(support.getUserStories());
-
+        dto.setCoverageScore(support.getCoverageScore());
         return dto;
     }
 }

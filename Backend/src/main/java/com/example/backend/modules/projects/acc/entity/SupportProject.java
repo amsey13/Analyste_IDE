@@ -26,6 +26,16 @@ public class SupportProject extends Project {
     @Column(name = "data_dictionary", columnDefinition = "TEXT")
     private String dataDictionary;
 
+    @Column(name = "coverage_score")
+    private Double coverageScore = 0.0;
+
+    public Double getCoverageScore() {
+        return coverageScore;
+    }
+
+    public void setCoverageScore(Double coverageScore) {
+        this.coverageScore = coverageScore;
+    }
 
     // Design Pattern "Composition" : Le projet gère le cycle de vie de ses dépendances (CascadeType.ALL)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -33,6 +43,8 @@ public class SupportProject extends Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserStory> userStories = new ArrayList<>();
+
+
 
     public StatusProject getStatus() {
         return status;

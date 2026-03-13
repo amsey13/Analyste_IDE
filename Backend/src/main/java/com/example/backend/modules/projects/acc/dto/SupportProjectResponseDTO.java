@@ -10,6 +10,16 @@ public class SupportProjectResponseDTO extends ProjectResponseDTO {
     private String status;
     private String bpmnXml;
     private String dataDictionary;
+    private Double coverageScore;
+
+    public Double getCoverageScore() {
+        return coverageScore;
+    }
+
+    public void setCoverageScore(Double coverageScore) {
+        this.coverageScore = coverageScore;
+    }
+
     private List<Actor> actors;
     private List<UserStory> userStories;
 
