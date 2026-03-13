@@ -22,11 +22,32 @@ const mfcFile = ref(null)
     <div class="grid">
 
       <div class="col-12 md:col-4">
+        <Card>
+          <template #content>
+            <i class="pi pi-database text-4xl mb-3"></i>
+            2. Données (MCD)
+            <p class="text-600 mb-3">
+              Fait par JMerise !!
+            </p>
+            <FileUpload
+                mode="basic"
+                name="mcd"
+                accept=".mcd"
+                chooseLabel="Importer fichier MCD"
+                @select="(e) => mcdFile = e.files[0]"
+            />
+
+          </template>
+        </Card>
+      </div>
+
+
+      <div class="col-12 md:col-4">
         <Card class="text-center">
 
           <template #content>
             <i class="pi pi-cog text-4xl mb-3"></i>
-            <h3>1. Processus (BPMN)</h3>
+             1. Processus (BPMN)
             <FileUpload
                 mode="basic"
                 name="bpmn"
@@ -39,30 +60,23 @@ const mfcFile = ref(null)
         </Card>
       </div>
 
-      <div class="col-12 md:col-4">
-        <Card>
-          <template #title>
-            <i class="pi pi-database mr-2"></i>
-            2. Données (MCD)
-          </template>
 
-          <template #content>
-            <p class="text-600">La structure statique (JMerise).</p>
-            <p class="text-500">En attente...</p>
-          </template>
-        </Card>
-      </div>
 
       <div class="col-12 md:col-4">
         <Card>
-          <template #title>
-            <i class="pi pi-sync mr-2"></i>
-            3. Flux (MFC)
-          </template>
-
           <template #content>
-            <p class="text-600">La vue macroscopique (PlantUML).</p>
-            <p class="text-500">En attente...</p>
+            <i class="pi pi-sync text-4xl mb-3"></i>
+             3. Flux (MFC)
+            <p class="text-600 mb-3">
+              Fait par JFlux !!
+            </p>
+            <FileUpload
+                mode="basic"
+                name="mfc"
+                accept=".flu"
+                chooseLabel="Importer fichier MFC"
+                @select="(e) => mfcFile = e.files[0]"
+            />
           </template>
         </Card>
       </div>
