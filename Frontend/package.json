@@ -11,6 +11,7 @@
   "dependencies": {
     "@primevue/themes": "^4.5.4",
     "axios": "^1.13.6",
+    "bpmn-js": "^18.13.1",
     "chart.js": "^4.5.1",
     "pinia": "^3.0.4",
     "primeflex": "^4.0.0",

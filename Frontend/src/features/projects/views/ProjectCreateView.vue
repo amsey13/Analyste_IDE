@@ -25,6 +25,11 @@
     taigaProjectUrl: ''
   });
 
+  const ROUTES_BY_TYPE = {
+    'accompagnement': 'accompagnement',
+    'audit': 'audit'
+  };
+
   watch(
       () => project.value.project_type,
       (newValue) => {
@@ -55,11 +60,19 @@
     try {
       const response = await ProjectService.createProject(payload);
       const newProjectId = response.idProject;
-      router.push({
-        name: 'project-dashboard',
-        params: { id: newProjectId }
-      });
-      console.log("Projet créé avec succès", response);
+      const targetRouteName = ROUTES_BY_TYPE[payload.project_type];
+
+      if (targetRouteName) {
+        router.push({
+          name: targetRouteName,
+          params: { id: newProjectId }
+        });
+      } else {
+        router.push({
+          name: 'project-dashboard',
+          params: { id: newProjectId }
+        });
+      }
     } catch (e) {
       console.error("Erreur lors de la création du project", e);
     } finally {
