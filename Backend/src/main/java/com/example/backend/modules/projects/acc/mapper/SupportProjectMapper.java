@@ -1,7 +1,9 @@
 package com.example.backend.modules.projects.acc.mapper;
 
+import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
 import com.example.backend.modules.projects.acc.dto.SupportProjectResponseDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
+import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.entity.UserStory;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
@@ -32,7 +34,12 @@ public class SupportProjectMapper implements ProjectMapper {
         dto.setStatus(support.getStatus() != null ? support.getStatus().name() : null);
         dto.setBpmnXml(support.getBpmnXml());
         dto.setDataDictionary(support.getDataDictionary());
-        dto.setActors(support.getActors());
+
+        if (support.getActors() != null) {
+            dto.setActors(support.getActors().stream()
+                    .map(this::mapToActorDTO)
+                    .collect(java.util.stream.Collectors.toList()));
+        }
 
         // MAPPING DES USER STORIES (La partie cruciale)
         if (support.getUserStories() != null) {
@@ -55,6 +62,13 @@ public class SupportProjectMapper implements ProjectMapper {
             dto.setActorId(us.getActor().getId());
             dto.setActorName(us.getActor().getName());
         }
+        return dto;
+    }
+
+    private ActorResponseDTO mapToActorDTO(Actor actor) {
+        ActorResponseDTO dto = new ActorResponseDTO();
+        dto.setId(actor.getId());
+        dto.setName(actor.getName());
         return dto;
     }
 }

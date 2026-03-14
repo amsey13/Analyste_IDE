@@ -1,6 +1,7 @@
 package com.example.backend.modules.projects.acc.api;
 
 import com.example.backend.modules.projects.acc.dto.ActorDTO;
+import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
@@ -31,7 +32,7 @@ public class SupportFeatureController {
      * Vérifie la propriété du projet dans le service.
      */
     @PostMapping("/projects/{projectId}/actors")
-    public ResponseEntity<Actor> addActor(
+    public ResponseEntity<ActorResponseDTO> addActor(
             @PathVariable UUID projectId,
             @RequestBody ActorDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -42,7 +43,7 @@ public class SupportFeatureController {
      * Modifie un acteur.
      */
     @PutMapping("/actors/{actorId}")
-    public ResponseEntity<Actor> updateActor(
+    public ResponseEntity<ActorResponseDTO> updateActor(
             @PathVariable UUID actorId,
             @RequestBody ActorDTO dto) {
         return ResponseEntity.ok(supportService.updateActor(actorId, dto.getName()));

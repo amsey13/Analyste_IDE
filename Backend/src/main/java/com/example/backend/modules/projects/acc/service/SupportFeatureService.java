@@ -3,6 +3,7 @@ package com.example.backend.modules.projects.acc.service;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
+import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
@@ -46,6 +47,13 @@ public class SupportFeatureService {
         }
         return dto;
     }
+
+    private ActorResponseDTO mapToActorDTO(Actor actor) {
+        ActorResponseDTO dto = new ActorResponseDTO();
+        dto.setId(actor.getId());
+        dto.setName(actor.getName());
+        return dto;
+    }
     /**
      * Méthode de sécurité interne pour vérifier que l'utilisateur connecté
      * est bien le propriétaire du projet qu'il tente de modifier.
@@ -66,17 +74,17 @@ public class SupportFeatureService {
     // --- Gestion des Acteurs ---
 
     @Transactional
-    public Actor addActor(UUID projectId, String name) {
+    public ActorResponseDTO addActor(UUID projectId, String name) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
 
         Actor actor = new Actor();
         actor.setName(name);
         actor.setProject(project); //
-        return actorRepository.save(actor);
+        return mapToActorDTO(actorRepository.save(actor));
     }
 
     @Transactional
-    public Actor updateActor(UUID actorId, String newName) {
+    public ActorResponseDTO updateActor(UUID actorId, String newName) {
         Actor actor = actorRepository.findById(actorId)
                 .orElseThrow(() -> new ProjectNotFoundException("Acteur introuvable"));
 
@@ -84,7 +92,7 @@ public class SupportFeatureService {
         getProjectAndCheckOwnership(actor.getProject().getIdProject());
 
         actor.setName(newName);
-        return actorRepository.save(actor);
+        return mapToActorDTO(actorRepository.save(actor));
     }
 
     @Transactional

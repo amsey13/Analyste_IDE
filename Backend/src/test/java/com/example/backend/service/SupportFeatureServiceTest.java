@@ -4,6 +4,7 @@ import com.example.backend.core.auth.entity.User;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
+import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
@@ -53,12 +54,23 @@ public class SupportFeatureServiceTest {
     void testAddActorSuccess() {
         SupportProject project = createMockProject("user1");
         UUID pid = project.getIdProject(); // On utilise l'ID réel du projet mocké
-
+        String actorName = "Client";
         when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
+
+        when(actorRepository.save(any(Actor.class))).thenAnswer(invocation -> {
+            Actor actorToSave = invocation.getArgument(0);
+            if (actorToSave.getId() == null) {
+                actorToSave.setId(UUID.randomUUID()); // Simule l'ID généré
+            }
+            return actorToSave;
+        });
 
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "user1");
-            supportService.addActor(pid, "Client");
+            ActorResponseDTO result = supportService.addActor(pid, actorName);
+            assertNotNull(result);
+            assertEquals(actorName, result.getName());
+            assertNotNull(result.getId());
             verify(actorRepository).save(any(Actor.class));
         }
     }

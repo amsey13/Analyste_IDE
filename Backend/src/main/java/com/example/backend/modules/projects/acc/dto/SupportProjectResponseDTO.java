@@ -20,7 +20,7 @@ public class SupportProjectResponseDTO extends ProjectResponseDTO {
         this.coverageScore = coverageScore;
     }
 
-    private List<Actor> actors;
+    private List<ActorResponseDTO> actors;
     private List<UserStoryResponseDTO> userStories;
 
     public String getStatus() {
@@ -47,11 +47,11 @@ public class SupportProjectResponseDTO extends ProjectResponseDTO {
         this.dataDictionary = dataDictionary;
     }
 
-    public List<Actor> getActors() {
+    public List<ActorResponseDTO> getActors() {
         return actors;
     }
 
-    public void setActors(List<Actor> actors) {
+    public void setActors(List<ActorResponseDTO> actors) {
         this.actors = actors;
     }
 
