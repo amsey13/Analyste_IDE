@@ -85,7 +85,7 @@ public class SupportFeatureServiceTest {
 
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "user1");
-            UserStoryResponseDTO result = supportService.addUserStory(pid, aid, "US-1","Desc", "Benefit", "Acceptance");
+            UserStoryResponseDTO result = supportService.addUserStory(pid, aid,"Desc", "Benefit", "Acceptance");
             assertNotNull(result);
             assertNotNull(result.getId());
             verify(userStoryRepository).save(any(UserStory.class));
@@ -110,7 +110,7 @@ public class SupportFeatureServiceTest {
             mockAuth(ms, "user1");
             // Doit lever l'exception car aid appartient à p2 et on essaie d'ajouter dans p1
             assertThrows(UnauthorizedAccessException.class, () ->
-                    supportService.addUserStory(p1Id, aid, "US1", "X","Y","Z")
+                    supportService.addUserStory(p1Id, aid, "X","Y","Z")
             );
         }
     }

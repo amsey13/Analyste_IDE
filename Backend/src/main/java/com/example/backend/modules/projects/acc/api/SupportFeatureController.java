@@ -69,7 +69,7 @@ public class SupportFeatureController {
             @PathVariable UUID actorId,
             @RequestBody UserStoryDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(supportService.addUserStory(projectId, actorId, dto.getIdentifier(), dto.getDescription(), dto.getBenefit(), dto.getAcceptanceCriteria()));
+                .body(supportService.addUserStory(projectId, actorId, dto.getDescription(), dto.getBenefit(), dto.getAcceptanceCriteria()));
     }
 
     /**

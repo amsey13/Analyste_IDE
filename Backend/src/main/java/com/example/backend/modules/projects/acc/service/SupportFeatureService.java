@@ -100,7 +100,7 @@ public class SupportFeatureService {
     // --- Gestion des User Stories ---
 
     @Transactional
-    public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String identifier, String description, String benefit, String acceptanceCriteria) {
+    public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String description, String benefit, String acceptanceCriteria) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
 
         Actor actor = actorRepository.findById(actorId)
@@ -112,7 +112,6 @@ public class SupportFeatureService {
         }
 
         UserStory us = new UserStory();
-        us.setIdentifier(identifier);
         us.setDescription(description);
         us.setAcceptanceCriteria(acceptanceCriteria);
         us.setBenefit(benefit);
