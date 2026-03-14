@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { ProjectService } from '../features/projects/api/ProjectService.js';
 import Skeleton from 'primevue/skeleton';
 import ActorManager from '../features/projects/components/ActorManager.vue';
+import UserStoryManager from '../features/projects/components/UserStoryManager.vue';
 
 // Nouveaux imports PrimeVue v4
 import Tabs from 'primevue/tabs';
@@ -82,8 +83,12 @@ onMounted(async () => {
                 />
               </div>
               <div class="flex-1 border-left-1 surface-border pl-4">
-                <h3 class="mt-0">User Stories</h3>
-                <p class="text-500">Le composant UserStoryManager viendra ici.</p>
+                <UserStoryManager
+                    :projectId="projectId"
+                    :userStories="project.userStories"
+                    :actors="project.actors"
+                    @update:userStories="project.userStories = $event"
+                />
               </div>
             </div>
           </TabPanel>

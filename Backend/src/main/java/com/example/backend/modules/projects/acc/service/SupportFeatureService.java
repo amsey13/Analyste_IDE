@@ -3,13 +3,14 @@ package com.example.backend.modules.projects.acc.service;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
+import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.entity.UserStory;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.exception.ProjectNotFoundException;
 import com.example.backend.modules.projects.core.exception.UnauthorizedAccessException;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,19 @@ public class SupportFeatureService {
         this.userStoryRepository = userStoryRepository;
         this.projectRepository = projectRepository;
     }
-
+    private UserStoryResponseDTO mapToDTO(UserStory us) {
+        UserStoryResponseDTO dto = new UserStoryResponseDTO();
+        dto.setId(us.getId());
+        dto.setIdentifier(us.getIdentifier());
+        dto.setDescription(us.getDescription());
+        dto.setBenefit(us.getBenefit());
+        dto.setAcceptanceCriteria(us.getAcceptanceCriteria());
+        if (us.getActor() != null) {
+            dto.setActorId(us.getActor().getId());
+            dto.setActorName(us.getActor().getName());
+        }
+        return dto;
+    }
     /**
      * Méthode de sécurité interne pour vérifier que l'utilisateur connecté
      * est bien le propriétaire du projet qu'il tente de modifier.
@@ -87,7 +100,7 @@ public class SupportFeatureService {
     // --- Gestion des User Stories ---
 
     @Transactional
-    public UserStory addUserStory(UUID projectId, UUID actorId, String identifier, String description) {
+    public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String identifier, String description, String benefit, String acceptanceCriteria) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
 
         Actor actor = actorRepository.findById(actorId)
@@ -101,21 +114,29 @@ public class SupportFeatureService {
         UserStory us = new UserStory();
         us.setIdentifier(identifier);
         us.setDescription(description);
+        us.setAcceptanceCriteria(acceptanceCriteria);
+        us.setBenefit(benefit);
         us.setActor(actor); //
         us.setProject(project); //
-        return userStoryRepository.save(us);
+        UserStory saved = userStoryRepository.save(us);
+        return mapToDTO(saved);
     }
 
     @Transactional
-    public UserStory updateUserStory(UUID usId, String identifier, String description) {
+    public UserStoryResponseDTO updateUserStory(UUID usId, String description , String benefit, String acceptanceCriteria, UUID actorId) {
         UserStory us = userStoryRepository.findById(usId)
                 .orElseThrow(() -> new ProjectNotFoundException("User Story introuvable"));
+        Actor actor = actorRepository.findById(actorId)
+                .orElseThrow(() -> new EntityNotFoundException("Acteur non trouvé"));
 
         getProjectAndCheckOwnership(us.getProject().getIdProject());
 
-        us.setIdentifier(identifier);
+        us.setAcceptanceCriteria(acceptanceCriteria);
+        us.setBenefit(benefit);
         us.setDescription(description);
-        return userStoryRepository.save(us);
+        us.setActor(actor);
+        UserStory saved = userStoryRepository.save(us);
+        return mapToDTO(saved);
     }
 
     @Transactional

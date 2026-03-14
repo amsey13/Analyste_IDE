@@ -21,7 +21,7 @@ public class SupportProjectResponseDTO extends ProjectResponseDTO {
     }
 
     private List<Actor> actors;
-    private List<UserStory> userStories;
+    private List<UserStoryResponseDTO> userStories;
 
     public String getStatus() {
         return status;
@@ -55,11 +55,11 @@ public class SupportProjectResponseDTO extends ProjectResponseDTO {
         this.actors = actors;
     }
 
-    public List<UserStory> getUserStories() {
+    public List<UserStoryResponseDTO> getUserStories() {
         return userStories;
     }
 
-    public void setUserStories(List<UserStory> userStories) {
+    public void setUserStories(List<UserStoryResponseDTO> userStories) {
         this.userStories = userStories;
     }
 }

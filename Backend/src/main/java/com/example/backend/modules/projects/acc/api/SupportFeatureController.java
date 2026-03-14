@@ -2,6 +2,7 @@ package com.example.backend.modules.projects.acc.api;
 
 import com.example.backend.modules.projects.acc.dto.ActorDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryDTO;
+import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.UserStory;
 import com.example.backend.modules.projects.acc.service.SupportFeatureService;
@@ -63,22 +64,22 @@ public class SupportFeatureController {
      * Vérifie la propriété du projet et le lien acteur-projet dans le service.
      */
     @PostMapping("/projects/{projectId}/actors/{actorId}/user-stories")
-    public ResponseEntity<UserStory> addUserStory(
+    public ResponseEntity<UserStoryResponseDTO> addUserStory(
             @PathVariable UUID projectId,
             @PathVariable UUID actorId,
             @RequestBody UserStoryDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(supportService.addUserStory(projectId, actorId, dto.getIdentifier(), dto.getDescription()));
+                .body(supportService.addUserStory(projectId, actorId, dto.getIdentifier(), dto.getDescription(), dto.getBenefit(), dto.getAcceptanceCriteria()));
     }
 
     /**
      * Met à jour une User Story.
      */
     @PutMapping("/user-stories/{usId}")
-    public ResponseEntity<UserStory> updateUserStory(
+    public ResponseEntity<UserStoryResponseDTO> updateUserStory(
             @PathVariable UUID usId,
             @RequestBody UserStoryDTO dto) {
-        return ResponseEntity.ok(supportService.updateUserStory(usId, dto.getIdentifier(), dto.getDescription()));
+        return ResponseEntity.ok(supportService.updateUserStory(usId, dto.getDescription(), dto.getBenefit(), dto.getAcceptanceCriteria(), dto.getActorId()));
     }
 
     /**
