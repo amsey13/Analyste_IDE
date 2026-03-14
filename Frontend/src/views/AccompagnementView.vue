@@ -1,8 +1,109 @@
 <script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { ProjectService } from '../features/projects/api/ProjectService.js';
+import Skeleton from 'primevue/skeleton';
+import ActorManager from '../features/projects/components/ActorManager.vue';
+
+// Nouveaux imports PrimeVue v4
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
+
+const route = useRoute();
+const projectId = route.params.id;
+
+const project = ref(null);
+const isLoading = ref(true);
+const coverageBadgeClass = computed(() => {
+  if (!project.value) return 'bg-gray-100 text-gray-800';
+
+  const score = project.value.coverageScore || 0;
+
+  const thresholds = [
+    { max: 40, classes: 'bg-red-100 text-red-800' },
+    { max: 70, classes: 'bg-orange-100 text-orange-800' },
+    { max: 100, classes: 'bg-green-100 text-green-800' }
+  ];
+  const matchedThreshold = thresholds.find(t => score <= t.max);
+  return matchedThreshold ? matchedThreshold.classes : thresholds[2].classes;
+});
+
+onMounted(async () => {
+  try {
+    project.value = await ProjectService.getProjectById(projectId);
+
+    // Sécurité réactivité
+    if (!project.value.actors) project.value.actors = [];
+    if (!project.value.userStories) project.value.userStories = [];
+
+  } catch (error) {
+    console.error("Erreur lors du chargement du projet", error);
+  } finally {
+    isLoading.value = false;
+  }
+});
 </script>
 
 <template>
-  <div class="p-5">
-    <h1>Mode Accompagnement</h1>
+  <div class="flex flex-column h-screen p-4 surface-ground">
+
+    <div v-if="project" class="flex justify-content-between align-items-center mb-4 surface-0 p-4 border-round-xl shadow-1">
+      <div>
+        <h1 class="m-0 text-2xl text-900">{{ project.name }}</h1>
+        <p class="m-0 mt-1 text-500">Espace de modélisation</p>
+      </div>
+      <div class="text-right">
+        <span :class="['inline-block px-4 py-2 border-round-3xl font-bold text-lg', coverageBadgeClass]">
+          Couverture : {{ project.coverageScore }}%
+        </span>
+      </div>
+    </div>
+
+    <div v-if="project" class="flex-1 flex flex-column surface-0 border-round-xl shadow-1 overflow-hidden">
+      <Tabs value="0" class="flex-1 flex flex-column h-full">
+
+        <TabList>
+          <Tab value="0">1. Acteurs & User Stories</Tab>
+          <Tab value="1">2. Modélisation BPMN</Tab>
+        </TabList>
+
+        <TabPanels class="flex-1 p-0 overflow-y-auto">
+
+          <TabPanel value="0" class="h-full">
+            <div class="flex gap-4 p-4 h-full">
+              <div class="flex-1">
+                <ActorManager
+                    :projectId="projectId"
+                    :actors="project.actors"
+                    @update:actors="project.actors = $event"
+                />
+              </div>
+              <div class="flex-1 border-left-1 surface-border pl-4">
+                <h3 class="mt-0">User Stories</h3>
+                <p class="text-500">Le composant UserStoryManager viendra ici.</p>
+              </div>
+            </div>
+          </TabPanel>
+
+          <TabPanel value="1" class="h-full">
+            <div class="h-full flex align-items-center justify-content-center border-2 border-dashed surface-border border-round-lg m-4">
+              <h3 class="text-500">Le diagramme bpmn.io géant sera ici</h3>
+            </div>
+          </TabPanel>
+
+        </TabPanels>
+      </Tabs>
+    </div>
+
+    <div v-else-if="isLoading" class="flex-1 flex align-items-center justify-content-center">
+      <Skeleton width="100%" height="100%" borderRadius="16px"></Skeleton>
+    </div>
+    <div v-else class="flex-1 flex align-items-center justify-content-center">
+      <h2 class="text-red-500">Impossible de charger le projet.</h2>
+    </div>
+
   </div>
 </template>
