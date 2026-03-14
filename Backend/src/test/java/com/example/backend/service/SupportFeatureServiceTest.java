@@ -4,6 +4,7 @@ import com.example.backend.core.auth.entity.User;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
+import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.entity.UserStory;
@@ -65,18 +66,28 @@ public class SupportFeatureServiceTest {
     @Test
     void testAddUserStorySuccess() {
         SupportProject project = createMockProject("user1");
-        UUID pid = project.getIdProject(); // L'ID doit matcher
+        UUID pid = project.getIdProject();
         UUID aid = UUID.randomUUID();
 
         Actor actor = new Actor();
-        actor.setProject(project); // L'acteur appartient bien à ce projet
-
+        actor.setProject(project);
+        actor.setId(aid);
         when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
         when(actorRepository.findById(aid)).thenReturn(Optional.of(actor));
 
+        when(userStoryRepository.save(any(UserStory.class))).thenAnswer(invocation -> {
+            UserStory usToSave = invocation.getArgument(0);
+            if (usToSave.getId() == null) {
+                usToSave.setId(UUID.randomUUID()); // On simule la génération de l'ID
+            }
+            return usToSave;
+        });
+
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "user1");
-            supportService.addUserStory(pid, aid, "US1", "Desc" ,"Benefit","Acceptance");
+            UserStoryResponseDTO result = supportService.addUserStory(pid, aid, "US-1","Desc", "Benefit", "Acceptance");
+            assertNotNull(result);
+            assertNotNull(result.getId());
             verify(userStoryRepository).save(any(UserStory.class));
         }
     }
