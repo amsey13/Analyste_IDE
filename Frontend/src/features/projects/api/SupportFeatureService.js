@@ -48,5 +48,10 @@ export const SupportFeatureService = {
     async deleteUserStory(userStoryId) {
         const response = await apiClient.delete(`${BASE_URL}/user-stories/${userStoryId}`);
         return response.data;
-    }
+    },
+
+    async getBpmnSkeleton(projectId) {
+        const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/bpmn-skeleton`);
+        return response.data;
+    },
 };
