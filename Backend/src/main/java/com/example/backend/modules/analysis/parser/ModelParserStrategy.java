@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface ModelParserStrategy {
 
-    public List<Actor> findActors();
 
-    public List<Flux> findFluxs();
+    public String parse();
 }

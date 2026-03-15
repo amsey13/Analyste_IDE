@@ -24,7 +24,7 @@ public class McdParserStrategy implements ModelParserStrategy {
     public List<Object> loadObjects() {
 
         List<Object> allObjects = new ArrayList<>();
-        try(ObjectInputStream ois = new ObjectInputStream(in);) {
+        try (ObjectInputStream ois = new ObjectInputStream(in);) {
 
             while (true) {
                 try {
@@ -48,36 +48,43 @@ public class McdParserStrategy implements ModelParserStrategy {
         return allObjects;
     }
 
-    //Method for the strategy implementation
+
 
     @Override
-    public List<Actor> findActors() {
-        List<Object> allObjects = loadObjects();
-        List<Actor> actors = new ArrayList<>();
-        for (Object o : allObjects) {
-            if (o instanceof IhmEntite2 entity) {
+    public String parse() {
 
-                actors.add(new Actor(entity.getEntite().getNom()));
+        List<Object> allObjects = loadObjects();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("--- DÉTAILS DU MODÈLE MCD (Données) ---\n");
+
+
+        sb.append("[ENTITÉS]\n");
+        List<IhmEntite2> entities = findEntities(allObjects);
+        if (entities.isEmpty()) {
+            sb.append("- Aucune entité détectée.\n");
+        } else {
+            for (IhmEntite2 ent : entities) {
+                sb.append("- ").append(ent.getEntite().getNom());
+                sb.append("\n");
             }
         }
-        return actors;
-    }
 
-    @Override
-    public List<Flux> findFluxs() {
-        List<Object> allObjects = loadObjects();
-        List<Flux> fluxs = new ArrayList<>();
-        for (Object o : allObjects) {
-            if (o instanceof IhmLien2 link) {
-                // Dans un MCD, un lien unit une Entité et une Relation
-                String source = link.getEntite().getEntite().getNom();
-                String target = link.getRelation().getRelation().getNom();
-                String label = "Cardinalité: " + link.getCardinalite();
 
-                fluxs.add(new Flux(label, source, target));
+        sb.append("\n[RELATIONS ET CARDINALITÉS]\n");
+        List<McdLink> links = findLinks(allObjects);
+        if (links.isEmpty()) {
+            sb.append("- Aucune relation détectée.\n");
+        } else {
+            for (McdLink link : links) {
+                sb.append(String.format("- L'entité [%s] est liée à la relation [%s] avec la cardinalité (%s)\n",
+                        link.getEntity(),
+                        link.getRelationship(),
+                        link.getCardinality()));
             }
         }
-        return fluxs;
+
+        return sb.toString();
     }
 
     //specific methods to mcd objects

@@ -36,23 +36,54 @@ public class BpmnParserStrategy implements ModelParserStrategy {
     // Strategy methods implementation
 
 
-    @Override
-    public List<Actor> findActors() {
-       try{
-           return findBpmnActors(document,xpath);
-       } catch (XPathExpressionException e) {
-           throw new RuntimeException(e);
-       }
-    }
+
+
 
     @Override
-    public List<Flux> findFluxs() {
-        try{
+    public String parse() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- DÉTAILS DU MODÈLE BPMN (Processus Métier) ---\n");
 
-            return findBpmnFlux(document,xpath);
-        }catch (XPathExpressionException e){
-            throw new RuntimeException(e);
+        try {
+
+            sb.append("[ACTEURS / POOLS]\n");
+            List<Actor> actors = findBpmnActors(document, xpath);
+            if (actors.isEmpty()) {
+                sb.append("- Aucun participant défini (Processus global)\n");
+            } else {
+                for (Actor a : actors) {
+                    sb.append("- ").append(a.getName()).append("\n");
+                }
+            }
+
+
+            sb.append("\n[ACTIVITÉS ET TÂCHES]\n");
+            List<String> tasks = findTasks(document, xpath);
+            if (tasks.isEmpty()) {
+                sb.append("- Aucune tâche détectée.\n");
+            } else {
+                for (String t : tasks) {
+                    sb.append("- Tâche : ").append(t).append("\n");
+                }
+            }
+
+
+            sb.append("\n[INTERACTIONS / FLUX DE MESSAGES]\n");
+            List<Flux> messageFlows = findBpmnFlux(document, xpath);
+            if (messageFlows.isEmpty()) {
+                sb.append("- Aucun flux de message entre pools.\n");
+            } else {
+                for (Flux f : messageFlows) {
+                    sb.append(String.format("- Message \"%s\" envoyé par [%s] à [%s]\n",
+                            f.getName(), f.getSender(), f.getRecipient()));
+                }
+            }
+
+        } catch (XPathExpressionException e) {
+            sb.append("Erreur lors de l'extraction des données BPMN : ").append(e.getMessage());
         }
+
+        return sb.toString();
     }
 
     public Document getDocument() {
