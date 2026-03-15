@@ -5,6 +5,7 @@ import { ProjectService } from '../features/projects/api/ProjectService.js';
 import Skeleton from 'primevue/skeleton';
 import ActorManager from '../features/projects/components/ActorManager.vue';
 import UserStoryManager from '../features/projects/components/UserStoryManager.vue';
+import BpmnModeler from '../features/projects/components/BpmnModeler.vue';
 
 // Nouveaux imports PrimeVue v4
 import Tabs from 'primevue/tabs';
@@ -79,7 +80,9 @@ onMounted(async () => {
                 <ActorManager
                     :projectId="projectId"
                     :actors="project.actors"
+                    :userStories="project.userStories"
                     @update:actors="project.actors = $event"
+                    @update:userStories="project.userStories = $event"
                 />
               </div>
               <div class="flex-1 border-left-1 surface-border pl-4">
@@ -94,8 +97,20 @@ onMounted(async () => {
           </TabPanel>
 
           <TabPanel value="1" class="h-full">
-            <div class="h-full flex align-items-center justify-content-center border-2 border-dashed surface-border border-round-lg m-4">
-              <h3 class="text-500">Le diagramme bpmn.io géant sera ici</h3>
+            <div v-if="project.actors.length === 0" class="flex flex-column align-items-center justify-content-center h-full surface-50 border-round-xl m-4 border-1 surface-border">
+              <i class="pi pi-exclamation-triangle text-orange-500 text-6xl mb-4"></i>
+              <h2 class="text-900 font-bold mb-2">Modélisation bloquée</h2>
+              <p class="text-600 text-center max-w-20rem">
+                Il est impossible de dessiner un processus sans savoir qui l'exécute. Veuillez ajouter au moins un acteur dans l'onglet "Acteurs & User Stories".
+              </p>
+            </div>
+
+            <div v-else class="h-full p-4">
+              <BpmnModeler
+                  :projectId="projectId"
+                  :initialXml="project.bpmnXml"
+                  :actors="project.actors"
+              />
             </div>
           </TabPanel>
 

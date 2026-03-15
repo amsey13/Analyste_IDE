@@ -4,10 +4,12 @@ import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
 import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
+import com.example.backend.modules.projects.acc.dto.SupportProjectResponseDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.entity.UserStory;
+import com.example.backend.modules.projects.acc.mapper.SupportProjectMapper;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.exception.ProjectNotFoundException;
 import com.example.backend.modules.projects.core.exception.UnauthorizedAccessException;
@@ -26,13 +28,16 @@ public class SupportFeatureService {
     private final ActorRepository actorRepository;
     private final UserStoryRepository userStoryRepository;
     private final ProjectRepository projectRepository;
+    private final SupportProjectMapper supportProjectMapper;
 
     public SupportFeatureService(ActorRepository actorRepository,
                                  UserStoryRepository userStoryRepository,
-                                 ProjectRepository projectRepository) {
+                                 ProjectRepository projectRepository,
+                                 SupportProjectMapper supportProjectMapper) {
         this.actorRepository = actorRepository;
         this.userStoryRepository = userStoryRepository;
         this.projectRepository = projectRepository;
+        this.supportProjectMapper = supportProjectMapper;
     }
     private UserStoryResponseDTO mapToDTO(UserStory us) {
         UserStoryResponseDTO dto = new UserStoryResponseDTO();
@@ -97,12 +102,8 @@ public class SupportFeatureService {
 
     @Transactional
     public void deleteActor(UUID actorId) {
-        Actor actor = actorRepository.findById(actorId)
-                .orElseThrow(() -> new ProjectNotFoundException("Acteur introuvable"));
-
-        getProjectAndCheckOwnership(actor.getProject().getIdProject());
-
-        actorRepository.delete(actor);
+        userStoryRepository.deleteByActorId(actorId);
+        actorRepository.deleteById(actorId);
     }
 
     // --- Gestion des User Stories ---
@@ -186,5 +187,11 @@ public class SupportFeatureService {
         double roundedPercentage = Math.round(percentage * 100.0) / 100.0;
 
         project.setCoverageScore(roundedPercentage);
+    }
+
+    @Transactional(readOnly = true)
+    public SupportProjectResponseDTO getProjectDetails(UUID projectId) {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+        return (SupportProjectResponseDTO) supportProjectMapper.map(project);
     }
 }

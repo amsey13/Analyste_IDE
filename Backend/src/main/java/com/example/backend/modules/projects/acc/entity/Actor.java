@@ -18,7 +18,7 @@ public class Actor {
     @Column(nullable = false)
     private String name;
 
-    @JsonIgnore
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "support_project_id", nullable = false)
     private SupportProject project;

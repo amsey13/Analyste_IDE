@@ -11,9 +11,10 @@ import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
   projectId: { type: String, required: true },
-  actors: { type: Array, default: () => [] }
+  actors: { type: Array, default: () => [] },
+  userStories:  {type: Array, default: () => [] }
 });
-const emit = defineEmits(['update:actors']);
+const emit = defineEmits(['update:actors','update:userStories']);
 
 const newActorName = ref('');
 const isAdding = ref(false);
@@ -76,7 +77,7 @@ const saveEdit = async () => {
 // --- SUPPRESSION ---
 const confirmRemove = (actorId) => {
   confirm.require({
-    message: 'Êtes-vous sûr de vouloir supprimer cet acteur ?',
+    message: 'En supprimant cet acteur vous supprimez toutes les US qui lui sont associées.\nÊtes-vous sûr de vouloir supprimer cet acteur ?',
     header: 'Confirmation',
     icon: 'pi pi-exclamation-triangle',
     rejectProps: { label: 'Annuler', severity: 'secondary', outlined: true },
@@ -85,6 +86,7 @@ const confirmRemove = (actorId) => {
       try {
         await SupportFeatureService.deleteActor(actorId);
         emit('update:actors', props.actors.filter(a => a.id !== actorId));
+        emit('update:userStories', props.userStories.filter(us => us.actorId !== actorId));
 
         // Toast de Succès
         toast.add({ severity: 'info', summary: 'Supprimé', detail: 'Acteur retiré du projet', life: 3000 });
