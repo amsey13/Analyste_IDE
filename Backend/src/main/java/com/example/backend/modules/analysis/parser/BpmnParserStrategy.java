@@ -39,6 +39,15 @@ public class BpmnParserStrategy implements ModelParserStrategy {
 
 
 
+   /**
+    * This Java function parses BPMN model details including actors, tasks, and message flows and
+    * generates a summary report.
+    * 
+    * @return The `parse()` method returns a formatted string containing details about the BPMN
+    * (Business Process Model and Notation) model. The string includes information about actors/pools,
+    * activities and tasks, and interactions/message flows between pools. If any errors occur during
+    * the extraction of BPMN data, an error message is also included in the returned string.
+    */
     @Override
     public String parse() {
         StringBuilder sb = new StringBuilder();
