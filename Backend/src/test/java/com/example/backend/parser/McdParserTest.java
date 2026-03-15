@@ -1,8 +1,5 @@
 package com.example.backend.parser;
 
-import IhmMCD2.IhmRelation2;
-import com.example.backend.modules.analysis.model.Actor;
-import com.example.backend.modules.analysis.model.McdLink;
 import com.example.backend.modules.analysis.parser.McdParserStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,39 +27,39 @@ public class McdParserTest {
     @Test
     public void testShouldContainMcdHeader() {
         assertTrue(output.contains("--- DÉTAILS DU MODÈLE MCD"),
-                "Le header spécifique au MCD est absent");
+                "The MCD-specific header is missing");
     }
 
     @Test
     public void testshouldlistEntitiesSection() {
         assertTrue(output.contains("[ENTITÉS]"),
-                "La section listant les entités est absente");
+                "The section listing the entities is missing");
     }
 
     @Test
     public void testShouldContainSpecificEntityname() {
 
         assertTrue(output.contains("Connexion"),
-                "L'entité 'Connexion' devrait être présente dans la sortie textuelle");
+                "The ‘Connection’ entity should appear in the text output");
     }
 
     @Test
     public void testShouldlistRelationsandCardinalitiesSection() {
         assertTrue(output.contains("[RELATIONS ET CARDINALITÉS]"),
-                "La section des relations est indispensable pour l'audit de cohérence");
+                "The ‘Connection’ entity should appear in the text output. The relationships section is essential for consistency auditing.");
     }
 
     @Test
     public void testShouldformatlinksWithReadablesentence() {
 
         assertTrue(output.contains("est liée à la relation"),
-                "Les liens devraient être décrits par une phrase compréhensible pour l'IA");
+                "Links should be described using a sentence that is understandable to the IA");
     }
 
     @Test
     public void testShouldContainSpecificRelationname() {
 
         assertTrue(output.contains("concerne"),
-                "La relation 'concerne' devrait être extraite dans le rapport textuel");
+                "The phrase “concerns” should be included in the text report");
     }
 }

@@ -38,28 +38,28 @@ public class BpmnParserTest {
     @Test
     public void testShoudContainsBpmnHeader() {
         assertTrue(output.contains("--- DÉTAILS DU MODÈLE BPMN"),
-                "La sortie devrait commencer par le header du modèle BPMN");
+                "The output should begin with the BPMN model header");
     }
 
 
     @Test
     public void testShouldlistDefinedActorsCorrectly() {
 
-        assertTrue(output.contains("[ACTEURS / POOLS]"), "La section Acteurs est manquante");
-        assertTrue(output.contains("Utilisateur"), "L'acteur 'Utilisateur' devrait être listé");
+        assertTrue(output.contains("[ACTEURS / POOLS]"), "The “Actors” section is missing");
+        assertTrue(output.contains("Utilisateur"), "The ‘User’ actor should be listed");
     }
 
     @Test
     public void testShouldformatTaskswithCorrectprefix() {
 
         assertTrue(output.contains("[ACTIVITÉS ET TÂCHES]"), "La section Tâches est manquante");
-        assertTrue(output.contains("Tâche :"), "Chaque tâche devrait être préfixée par 'Tâche :'");
+        assertTrue(output.contains("Tâche :"), "Each task should begin with “Task: ");
     }
 
     @Test
     public void testShouldContainInteractionSectionforMessageflows() {
         assertTrue(output.contains("[INTERACTIONS / FLUX DE MESSAGES]"),
-                "La section des flux de messages est obligatoire pour l'IA");
+                "The message flow section is required for the AI");
     }
 
 
@@ -67,7 +67,7 @@ public class BpmnParserTest {
     @Test
     public void testShouldnotReturnEmptyString() {
         assertNotNull(output);
-        assertFalse(output.trim().isEmpty(), "La sortie du parseur ne doit pas être vide");
+        assertFalse(output.trim().isEmpty(), "The parser's output must not be empty");
     }
 
 

@@ -54,24 +54,23 @@ public class AuditServiceTest {
 
         when(auditProjectRepository.findById(projectId)).thenReturn(Optional.of(mockProject));
 
-        // Simulation de la réponse de l'IA
+        // Simulation of the AI's response
         List<AnomalyDTO> mockAnomalies = List.of(
                 new AnomalyDTO("Description test", "INCOHERENCE", "CRITICAL")
         );
         when(mistralService.executeAuditAnalysis(any(), any(), any(), any())).thenReturn(mockAnomalies);
 
-        // Simulation du repository de types
+
         when(anomalyTypeRepository.findByWording(anyString())).thenReturn(Optional.empty());
         when(reportRepository.save(any(Report.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        // Mock d'un fichier vide (on teste juste le flux)
         MultipartFile mockFile = mock(MultipartFile.class);
         when(mockFile.isEmpty()).thenReturn(true);
 
 
         Report result = auditService.startAudit(projectId, mockFile, null, null);
 
-        // ASSERT
+
         assertNotNull(result);
         assertEquals(1, result.getAnomalies().size());
         assertEquals("Description test", result.getAnomalies().get(0).getDescription());

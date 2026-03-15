@@ -1,5 +1,6 @@
 package com.example.backend.modules.projects.audit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import javax.print.attribute.standard.Severity;
@@ -25,6 +26,7 @@ public class Anomaly {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rapport_id", nullable = false)
+    @JsonIgnore
     private Report rapport;
 
     public UUID getId() {

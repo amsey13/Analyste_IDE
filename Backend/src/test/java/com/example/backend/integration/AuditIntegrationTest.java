@@ -9,14 +9,12 @@ import com.example.backend.modules.projects.audit.dao.ReportRepository;
 import com.example.backend.modules.projects.audit.entity.AuditProject;
 import com.example.backend.modules.projects.audit.entity.Report;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -40,23 +38,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @Transactional
-public class AuditIntegratonTest {
+public class AuditIntegrationTest {
 
 
     private MockMvc mockMvc;
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-    @MockitoBean
-    private ClientHttp client;
-    @Autowired
-    private UserRepository userRepository;
-
-
-    @Autowired
-    private ReportRepository reportRepository;
-    @Autowired
-    private AuditProjectRepository auditProjectRepository;
+    @Autowired private WebApplicationContext webApplicationContext;
+    @MockitoBean private ClientHttp client;
+    @Autowired private UserRepository userRepository;
+    @Autowired private ReportRepository reportRepository;
+    @Autowired private AuditProjectRepository auditProjectRepository;
 
     @BeforeEach
     public void setup() {
@@ -96,9 +86,9 @@ public class AuditIntegratonTest {
         byte[] fakeObject = bos.toByteArray();
 
         mockMvc.perform(multipart("/api/audit/{projectId}/analyze", projectId)
-                .file("bpmn", fakeXml)    // Pour BpmnParserStrategy
-                .file("mcd", fakeObject)  // Pour tes objets sérialisés
-                .file("mfc", fakeObject)  // Pour tes objets sérialisés
+                .file("bpmn", fakeXml)
+                .file("mcd", fakeObject)
+                .file("mfc", fakeObject)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
         )
 
@@ -114,7 +104,6 @@ public class AuditIntegratonTest {
         assertEquals(1, savedReports.size());
 
         Report mainReport = savedReports.get(0);
-        // On vérifie que le rapport est bien lié au bon projet
         assertEquals(projectId, mainReport.getProject().getIdProject());
         assertEquals(90.0, mainReport.getScore());
         assertFalse(mainReport.getAnomalies().isEmpty());

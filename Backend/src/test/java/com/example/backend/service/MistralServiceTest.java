@@ -1,6 +1,6 @@
 package com.example.backend.service;
 
-import ch.qos.logback.core.net.server.Client;
+
 import com.example.backend.modules.analysis.exporter.ClientHttp;
 import com.example.backend.modules.analysis.exporter.HttpResponse;
 import com.example.backend.modules.analysis.exporter.MistralService;
@@ -11,7 +11,6 @@ import com.example.backend.modules.projects.audit.entity.SeverityLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestTemplate;
@@ -19,8 +18,6 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,10 +41,10 @@ public class MistralServiceTest {
     @Test
     public void testExecuteAuditAnalysisShouldReturnDtoList() throws IOException {
 
-        // 1. Le JSON que l'IA renvoie vraiment (le contenu métier)
+
         String innerJson = "{\"anomalies\": [{\"description\": \"Tache orpheline\", \"type\": \"TACHE_SANS_US\", \"severity\": \"HIGH\"}]}";
 
-        // 2. Le Mock aligné EXACTEMENT sur ton chemin : outputs -> [0] -> content
+
         String mockJsonResponse = """
         {
               "outputs": [
@@ -89,7 +86,7 @@ public class MistralServiceTest {
 
         Anomaly criticalAnomaly = new Anomaly();
         criticalAnomaly.setDescription("Erreur grave");
-        criticalAnomaly.setSeverity(SeverityLevel.CRITICAL); // On utilise l'Enum
+        criticalAnomaly.setSeverity(SeverityLevel.CRITICAL);
 
 
         Anomaly mediumAnomaly = new Anomaly();
