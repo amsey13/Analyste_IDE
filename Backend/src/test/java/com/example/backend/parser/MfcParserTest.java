@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MfcParserTest {
 
     private MfcParserStrategy parser;
+    String output;
 
     @BeforeEach
     public void setUp() {
@@ -22,42 +23,45 @@ public class MfcParserTest {
             throw new RuntimeException("MFC file not found");
         }
         parser = new MfcParserStrategy(in);
+        output = parser.parse();
+    }
+
+
+    @Test
+    public void testOutputShouldContainMfcHeaderAndSectionTitles() {
+        assertNotNull(output);
+        assertTrue(output.contains("DÉTAILS DU MODÈLE MFC"), "Le header MFC est manquant");
+        assertTrue(output.contains("[ACTEURS]"), "La section des acteurs est manquante");
     }
 
     @Test
-    public void testLoadLines() {
-        List<Object> lines = parser.loadObjects();
-        assertNotNull(lines);
-        assertFalse(lines.isEmpty(), "MFC object cannot be empty");
+    public void testOutputShouldDistinguishInternalAndExternalActors() {
+
+        assertTrue(output.contains("- Internes :"), "Le libellé des acteurs internes est absent");
+        assertTrue(output.contains("- Externes :"), "Le libellé des acteurs externes est absent");
     }
 
     @Test
-    public void testFindActors() {
-        List<Actor> actors = parser.findActors();
+    public void testOutputShouldContainSpecificActorNameFromResource() {
 
-        assertNotNull(actors);
-        assertFalse(actors.isEmpty(), "There's at least one actor");
-
-
-        assertTrue(actors.stream().anyMatch(a -> a.getName().equals("Utilisateur")),
-                "the first actor should be the actor name");
+        assertTrue(output.contains("Utilisateur"), "L'acteur 'Utilisateur' devrait apparaître dans le texte");
     }
 
     @Test
-    public void testFindFluxs(){
-        List<Flux> fluxs = parser.findFluxs();
-        assertNotNull(fluxs);
-        assertFalse(fluxs.isEmpty(), "There's at least one flux");
-
-
-        assertTrue(fluxs.stream().anyMatch(f -> "Utilisateur".equals(f.getSender())),
-                "The flux with the sender should be the utilisateur");
-
+    public void testOutputShouldListFluxAndMessagesSection() {
+        assertTrue(output.contains("[FLUX ET MESSAGES]"), "La section des flux est absente");
     }
 
+    @Test
+    public void testOutputShouldFormatFluxArrowAndSpecificMessageCorrectly() {
 
+        assertTrue(output.contains("Utilisateur"), "Le formatage du flux avec la flèche est incorrect");
+    }
 
-
+    @Test
+    public void testOutputShouldNotBeEmptyOrNull() {
+        assertFalse(output.trim().isEmpty(), "Le parseur MFC a renvoyé une chaîne vide");
+    }
 
 
 

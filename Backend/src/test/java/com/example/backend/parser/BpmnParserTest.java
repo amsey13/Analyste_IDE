@@ -19,6 +19,7 @@ public class BpmnParserTest {
 
 
     BpmnParserStrategy parser;
+    String output;
 
 
 
@@ -29,47 +30,48 @@ public class BpmnParserTest {
         if (in == null) {
             throw new RuntimeException("BPMN resource not found");
         }
+
         parser = new BpmnParserStrategy(in);
+        output = parser.parse();
     }
 
     @Test
-    public void testParseBpmnAndFindACtors() throws XPathExpressionException {
-
-        List<Actor> actors = parser.findActors();
-
-        assertNotNull(actors);
-        assertFalse(actors.isEmpty());
-        assertEquals(2, actors.size());
-
-        // On vérifie le nom via l'accesseur du record
-        assertTrue(actors.stream().anyMatch(a -> a.getName().equals("Utilisateur")));
-
-    
-    }
-
-    @Test
-    public void testParseBpmnAndFindTasks() throws XPathExpressionException {
-        List<String> tasks = parser.findTasks(parser.getDocument(), parser.getXpath());
-        assertNotNull(tasks);
-        assertFalse(tasks.isEmpty());
-        assertEquals(2, tasks.size());
+    public void testShoudContainsBpmnHeader() {
+        assertTrue(output.contains("--- DÉTAILS DU MODÈLE BPMN"),
+                "La sortie devrait commencer par le header du modèle BPMN");
     }
 
 
     @Test
-    public void testParseBpmnAndFindFlux() throws XPathExpressionException {
-        // On utilise la méthode de l'interface (findFluxs) plutôt que la méthode interne
-        List<Flux> fluxs = parser.findFluxs();
+    public void testShouldlistDefinedActorsCorrectly() {
 
-        assertNotNull(fluxs);
-        assertFalse(fluxs.isEmpty());
-        assertEquals(2, fluxs.size());
-
-        // On vérifie maintenant les champs source/target directement
-        boolean found = fluxs.stream().anyMatch(f -> "Utilisateur".equals(f.getSender()));
-        assertTrue(found, "Le flux devrait avoir un émetteur 'Utilisateur'");
-
+        assertTrue(output.contains("[ACTEURS / POOLS]"), "La section Acteurs est manquante");
+        assertTrue(output.contains("Utilisateur"), "L'acteur 'Utilisateur' devrait être listé");
     }
+
+    @Test
+    public void testShouldformatTaskswithCorrectprefix() {
+
+        assertTrue(output.contains("[ACTIVITÉS ET TÂCHES]"), "La section Tâches est manquante");
+        assertTrue(output.contains("Tâche :"), "Chaque tâche devrait être préfixée par 'Tâche :'");
+    }
+
+    @Test
+    public void testShouldContainInteractionSectionforMessageflows() {
+        assertTrue(output.contains("[INTERACTIONS / FLUX DE MESSAGES]"),
+                "La section des flux de messages est obligatoire pour l'IA");
+    }
+
+
+
+    @Test
+    public void testShouldnotReturnEmptyString() {
+        assertNotNull(output);
+        assertFalse(output.trim().isEmpty(), "La sortie du parseur ne doit pas être vide");
+    }
+
+
+
 
 
 

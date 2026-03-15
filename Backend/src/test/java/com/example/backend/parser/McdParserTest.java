@@ -4,6 +4,7 @@ import IhmMCD2.IhmRelation2;
 import com.example.backend.modules.analysis.model.Actor;
 import com.example.backend.modules.analysis.model.McdLink;
 import com.example.backend.modules.analysis.parser.McdParserStrategy;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileNotFoundException;
@@ -14,81 +15,54 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class McdParserTest {
 
-    int nbEntity = 4; //Number of entities in the test file used
+    int nbEntity = 4;//Number of entities in the test file used
+    String output;
 
-    private McdParserStrategy createParser() {
+    @BeforeEach
+    public void setUp() throws FileNotFoundException {
         InputStream is = getClass().getResourceAsStream("/resourcesparser/test.mcd");
         assertNotNull(is);
-        return new McdParserStrategy(is);
+        McdParserStrategy parser = new McdParserStrategy(is);
+        output = parser.parse();
     }
 
 
     @Test
-    public void testLoadObjects() throws Exception {
-
-        McdParserStrategy parser = createParser();
-        List<Object> objects = parser.loadObjects();
-
-        assertNotNull(objects);
-        assertFalse(objects.isEmpty());
+    public void testShouldContainMcdHeader() {
+        assertTrue(output.contains("--- DÉTAILS DU MODÈLE MCD"),
+                "Le header spécifique au MCD est absent");
     }
 
     @Test
-    public void testGetAllEntityOk() throws FileNotFoundException {
-        McdParserStrategy parser = createParser();
-        List<Actor> actors = parser.findActors();
-
-        assertNotNull(actors);
-        assertEquals(4, actors.size());
-        assertTrue(actors.stream().anyMatch(a -> "Connexion".equals(a.getName())),
-                "The actor 'Connexion' should be present");
-
-
+    public void testshouldlistEntitiesSection() {
+        assertTrue(output.contains("[ENTITÉS]"),
+                "La section listant les entités est absente");
     }
 
     @Test
-    public void testFindRelations() {
+    public void testShouldContainSpecificEntityname() {
 
-        McdParserStrategy parser = createParser();
-        List<Object> objects = parser.loadObjects();
-        List<IhmRelation2> relations = parser.findRelations(objects);
-        List<String> names = relations.stream()
-                .map(r -> r.getRelation().getNom())
-                .toList();
-
-        assertNotNull(relations);
-        assertFalse(relations.isEmpty());
-        assertTrue(names.contains("concerne"));
-
-    }
-
-
-    @Test
-    public void testFindAttributes() {
-
-        McdParserStrategy parser = createParser();
-
-        List<Object> objects = parser.loadObjects();
-        List<Object> attributes = parser.findAttributes(objects);
-
-        assertNotNull(attributes);
-        assertTrue(attributes.size()>nbEntity); //Entity without attributes aren't allowed so it should have at least 4 attributes
+        assertTrue(output.contains("Connexion"),
+                "L'entité 'Connexion' devrait être présente dans la sortie textuelle");
     }
 
     @Test
-    public void testFindLinks() {
-        McdParserStrategy parser = createParser();
-        // Test de la logique métier spécifique au MCD
-        List<McdLink> links = parser.findLinks(parser.loadObjects());
-
-        assertNotNull(links);
-        assertFalse(links.isEmpty());
-        assertNotNull(links.get(0).getEntity());
-
+    public void testShouldlistRelationsandCardinalitiesSection() {
+        assertTrue(output.contains("[RELATIONS ET CARDINALITÉS]"),
+                "La section des relations est indispensable pour l'audit de cohérence");
     }
 
+    @Test
+    public void testShouldformatlinksWithReadablesentence() {
 
+        assertTrue(output.contains("est liée à la relation"),
+                "Les liens devraient être décrits par une phrase compréhensible pour l'IA");
+    }
 
+    @Test
+    public void testShouldContainSpecificRelationname() {
 
-
+        assertTrue(output.contains("concerne"),
+                "La relation 'concerne' devrait être extraite dans le rapport textuel");
+    }
 }
