@@ -8,5 +8,10 @@ import java.util.List;
 public interface ModelParserStrategy {
 
 
+    /**
+     * The `parse` function in Java likely returns a String value.
+     * 
+     * @return A String is being returned.
+     */
     public String parse();
 }
