@@ -47,9 +47,6 @@ const deleteProject = async (projectId) => {
   }
 }
 
-onMounted(() => {
-  fetchProjects()
-})
 
 const paginatedProjects = computed(() => {
   return projects.value.slice(first.value, first.value + rows.value)

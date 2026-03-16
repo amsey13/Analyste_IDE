@@ -1,8 +1,11 @@
 package com.example.backend.service;
 
 import com.example.backend.core.auth.entity.User;
+import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
+import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
+import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.entity.UserStory;
@@ -19,7 +22,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,12 +54,23 @@ public class SupportFeatureServiceTest {
     void testAddActorSuccess() {
         SupportProject project = createMockProject("user1");
         UUID pid = project.getIdProject(); // On utilise l'ID réel du projet mocké
-
+        String actorName = "Client";
         when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
+
+        when(actorRepository.save(any(Actor.class))).thenAnswer(invocation -> {
+            Actor actorToSave = invocation.getArgument(0);
+            if (actorToSave.getId() == null) {
+                actorToSave.setId(UUID.randomUUID()); // Simule l'ID généré
+            }
+            return actorToSave;
+        });
 
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "user1");
-            supportService.addActor(pid, "Client");
+            ActorResponseDTO result = supportService.addActor(pid, actorName);
+            assertNotNull(result);
+            assertEquals(actorName, result.getName());
+            assertNotNull(result.getId());
             verify(actorRepository).save(any(Actor.class));
         }
     }
@@ -62,18 +78,28 @@ public class SupportFeatureServiceTest {
     @Test
     void testAddUserStorySuccess() {
         SupportProject project = createMockProject("user1");
-        UUID pid = project.getIdProject(); // L'ID doit matcher
+        UUID pid = project.getIdProject();
         UUID aid = UUID.randomUUID();
 
         Actor actor = new Actor();
-        actor.setProject(project); // L'acteur appartient bien à ce projet
-
+        actor.setProject(project);
+        actor.setId(aid);
         when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
         when(actorRepository.findById(aid)).thenReturn(Optional.of(actor));
 
+        when(userStoryRepository.save(any(UserStory.class))).thenAnswer(invocation -> {
+            UserStory usToSave = invocation.getArgument(0);
+            if (usToSave.getId() == null) {
+                usToSave.setId(UUID.randomUUID()); // On simule la génération de l'ID
+            }
+            return usToSave;
+        });
+
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "user1");
-            supportService.addUserStory(pid, aid, "US1", "Desc");
+            UserStoryResponseDTO result = supportService.addUserStory(pid, aid,"Desc", "Benefit", "Acceptance");
+            assertNotNull(result);
+            assertNotNull(result.getId());
             verify(userStoryRepository).save(any(UserStory.class));
         }
     }
@@ -96,7 +122,7 @@ public class SupportFeatureServiceTest {
             mockAuth(ms, "user1");
             // Doit lever l'exception car aid appartient à p2 et on essaie d'ajouter dans p1
             assertThrows(UnauthorizedAccessException.class, () ->
-                    supportService.addUserStory(p1Id, aid, "US1", "X")
+                    supportService.addUserStory(p1Id, aid, "X","Y","Z")
             );
         }
     }
@@ -112,6 +138,37 @@ public class SupportFeatureServiceTest {
             mockAuth(ms, "user1");
             supportService.saveBpmnDiagram(pid, "<xml/>");
             assertEquals("<xml/>", project.getBpmnXml());
+            verify(projectRepository).save(project);
+        }
+    }
+
+    @Test
+    void testSaveBpmnDiagramWithCoverageCalculation() {
+        SupportProject project = createMockProject("user1");
+        UUID pid = project.getIdProject();
+
+        UserStory us1 = new UserStory(); us1.setId(UUID.randomUUID());
+        UserStory us2 = new UserStory(); us2.setId(UUID.randomUUID());
+        project.setUserStories(List.of(us1, us2));
+
+        when(projectRepository.findById(pid)).thenReturn(Optional.of(project));
+        when(projectRepository.save(any(SupportProject.class))).thenAnswer(i -> i.getArgument(0));
+
+        try (MockedStatic<SecurityContextHolder> msAuth = mockStatic(SecurityContextHolder.class);
+             MockedStatic<BpmnParserStrategy> msBpmn = mockStatic(BpmnParserStrategy.class)) {
+
+            mockAuth(msAuth, "user1");
+
+
+            msBpmn.when(() -> BpmnParserStrategy.extractLinkedUserStories(anyString()))
+                    .thenReturn(Set.of(us1.getId().toString()));
+
+            // Act
+            supportService.saveBpmnDiagram(pid, "<bpmn>test</bpmn>");
+
+            // Assert
+            assertEquals("<bpmn>test</bpmn>", project.getBpmnXml(), "Le XML doit être sauvegardé");
+            assertEquals(50.0, project.getCoverageScore(), "Le score doit être de 50.0% (1 US sur 2)");
             verify(projectRepository).save(project);
         }
     }

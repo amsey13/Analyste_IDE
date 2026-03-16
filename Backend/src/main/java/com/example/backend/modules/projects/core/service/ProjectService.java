@@ -180,6 +180,21 @@ public class ProjectService {
 
     }
 
+    public ProjectResponseDTO getProjectById(UUID id) throws UserNotFoundException {
+
+        Project projet = projectRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Project not found with ID: " + id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserId = auth.getName();
+        String projectOwnerId = projet.getUser().getExternalId();
+
+        if (!projectOwnerId.equals(currentUserId)) {
+            throw new AccessDeniedException("You're not allowed to access this project.");
+        }
+        return mapDTO(projet);
+    }
+
 
 
 

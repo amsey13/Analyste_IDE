@@ -8,7 +8,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
 @Entity
-@DiscriminatorValue("audit")
+@DiscriminatorValue("AUDIT")
 public class AuditProject extends Project {
 
     @Column(name = "taiga_token", columnDefinition = "TEXT")
