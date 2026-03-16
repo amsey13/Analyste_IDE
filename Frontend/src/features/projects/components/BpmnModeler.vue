@@ -8,29 +8,76 @@ import { SupportFeatureService } from '../api/SupportFeatureService';
 const props = defineProps({
   projectId: { type: String, required: true },
   initialXml: { type: String, default: null },
-  actors: { type: Array, default: () => [] }
+  actors: { type: Array, default: () => [] },
+  userStories: { type: Array, default: () => [] }
 });
 const emptyBpmn = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="false" />
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:custom="http://analytiq/schema/bpmn"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_1" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1" />
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1" />
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
 const container = ref(null);
 let bpmnModeler = null;
 
+const showPopover = ref(false);
+const popoverPosition = ref({ top: '0px', left: '0px' });
+const selectedTask = ref(null);
+
+const linkedUsIds = ref([]);
+const updateLinkedUS = () => {
+  if (!selectedTask.value) return;
+  const modeling = bpmnModeler.get('modeling');
+  const newValue = linkedUsIds.value.join(',');
+  modeling.updateProperties(selectedTask.value, {
+    'custom:linkedUserStories': newValue
+  });
+};
+
 onMounted(async () => {
   bpmnModeler = new Modeler({ container: container.value });
+  let xml = props.initialXml || emptyBpmn;
 
-  let xmlToLoad = props.initialXml || emptyBpmn;
+  await bpmnModeler.importXML(xml);
 
-  try {
-    await bpmnModeler.importXML(xmlToLoad);
-  } catch (err) {
-    console.error("Erreur lors de l'initialisation du diagramme vide", err);
-  }
+  // --- ÉCOUTEUR D'ÉVÉNEMENTS BPMN ---
+  const eventBus = bpmnModeler.get('eventBus');
+
+  // Quand on clique sur un élément du diagramme
+  eventBus.on('element.click', (e) => {
+    const element = e.element;
+
+    // On vérifie si l'élément est une tâche (Task, UserTask, ServiceTask, etc.)
+    if (element.type.includes('Task')) {
+      selectedTask.value = element;
+
+      const existingLinks = element.businessObject.get('custom:linkedUserStories');
+      linkedUsIds.value = existingLinks ? existingLinks.split(',') : [];
+
+      // On récupère les coordonnées de la souris pour placer le pop-over
+      popoverPosition.value = {
+        top: `${e.originalEvent.clientY}px`,
+        left: `${e.originalEvent.clientX + 20}px` // +20px pour décaler un peu à droite de la souris
+      };
+      showPopover.value = true;
+    } else {
+      // Si on clique sur une piscine ou une flèche, on ferme le pop-over
+      showPopover.value = false;
+      selectedTask.value = null;
+    }
+  });
+
+  // Quand on clique dans le vide (sur le fond du canevas)
+  eventBus.on('canvas.click', () => {
+    showPopover.value = false;
+    selectedTask.value = null;
+  });
 });
 
 // --- DRAG & DROP : CRÉATION D'UNE VÉRITABLE PISCINE ---
@@ -76,7 +123,6 @@ onBeforeUnmount(() => {
       <div class="flex-1 overflow-y-auto">
         <div v-for="actor in actors" :key="actor.id"
              class="p-3 mb-3 bg-white border-round-lg shadow-1 cursor-move hover:shadow-3 hover:border-primary transition-all border-1 surface-border flex align-items-center"
-             draggable="true"
              @mousedown="startDrag($event, actor)">
           <div class="w-2rem h-2rem border-circle bg-primary-50 flex align-items-center justify-content-center mr-3">
             <i class="pi pi-user text-primary"></i>
@@ -100,6 +146,42 @@ onBeforeUnmount(() => {
       </div>
 
       <div ref="container" class="h-full w-full"></div>
+    </div>
+    <div v-if="showPopover"
+         class="fixed z-5 bg-white border-round-lg shadow-6 border-1 surface-border p-3 w-15rem transition-duration-100"
+         :style="{ top: popoverPosition.top, left: popoverPosition.left }">
+
+      <div class="flex justify-content-between align-items-center mb-2 border-bottom-1 surface-border pb-2">
+    <span class="font-bold text-700 text-sm">
+      <i class="pi pi-check-square text-primary mr-2"></i>
+      {{ selectedTask?.businessObject?.name || 'Tâche sans nom' }}
+    </span>
+        <button @click="showPopover = false" class="p-link text-500 hover:text-700">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-500 mb-2">Lier des User Stories :</p>
+
+      <div class="text-sm font-italic text-400 p-2 text-center border-round surface-50">
+        <div class="max-h-15rem overflow-y-auto pr-2 mt-2">
+          <div v-for="us in userStories" :key="us.id" class="flex align-items-start mb-3 border-bottom-1 surface-border pb-2">
+            <input type="checkbox"
+                   :id="'us-' + us.id"
+                   :value="us.id"
+                   v-model="linkedUsIds"
+                   @change="updateLinkedUS"
+                   class="mt-1 mr-2 cursor-pointer" />
+
+            <label :for="'us-' + us.id" class="text-sm text-700 cursor-pointer line-height-2">
+              {{ us.description }} </label>
+          </div>
+
+          <div v-if="userStories.length === 0" class="text-sm font-italic text-400 p-2 text-center">
+            Aucune User Story disponible.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
