@@ -1,9 +1,7 @@
 package com.example.backend.parser;
 
-import IhmMCD2.IhmRelation2;
-import com.example.backend.modules.analysis.model.Actor;
-import com.example.backend.modules.analysis.model.McdLink;
 import com.example.backend.modules.analysis.parser.McdParserStrategy;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileNotFoundException;
@@ -14,81 +12,54 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class McdParserTest {
 
-    int nbEntity = 4; //Number of entities in the test file used
+    int nbEntity = 4;//Number of entities in the test file used
+    String output;
 
-    private McdParserStrategy createParser() {
+    @BeforeEach
+    public void setUp() throws FileNotFoundException {
         InputStream is = getClass().getResourceAsStream("/resourcesparser/test.mcd");
         assertNotNull(is);
-        return new McdParserStrategy(is);
+        McdParserStrategy parser = new McdParserStrategy(is);
+        output = parser.parse();
     }
 
 
     @Test
-    public void testLoadObjects() throws Exception {
-
-        McdParserStrategy parser = createParser();
-        List<Object> objects = parser.loadObjects();
-
-        assertNotNull(objects);
-        assertFalse(objects.isEmpty());
+    public void testShouldContainMcdHeader() {
+        assertTrue(output.contains("--- DÉTAILS DU MODÈLE MCD"),
+                "The MCD-specific header is missing");
     }
 
     @Test
-    public void testGetAllEntityOk() throws FileNotFoundException {
-        McdParserStrategy parser = createParser();
-        List<Actor> actors = parser.findActors();
-
-        assertNotNull(actors);
-        assertEquals(4, actors.size());
-        assertTrue(actors.stream().anyMatch(a -> "Connexion".equals(a.getName())),
-                "The actor 'Connexion' should be present");
-
-
+    public void testshouldlistEntitiesSection() {
+        assertTrue(output.contains("[ENTITÉS]"),
+                "The section listing the entities is missing");
     }
 
     @Test
-    public void testFindRelations() {
+    public void testShouldContainSpecificEntityname() {
 
-        McdParserStrategy parser = createParser();
-        List<Object> objects = parser.loadObjects();
-        List<IhmRelation2> relations = parser.findRelations(objects);
-        List<String> names = relations.stream()
-                .map(r -> r.getRelation().getNom())
-                .toList();
-
-        assertNotNull(relations);
-        assertFalse(relations.isEmpty());
-        assertTrue(names.contains("concerne"));
-
-    }
-
-
-    @Test
-    public void testFindAttributes() {
-
-        McdParserStrategy parser = createParser();
-
-        List<Object> objects = parser.loadObjects();
-        List<Object> attributes = parser.findAttributes(objects);
-
-        assertNotNull(attributes);
-        assertTrue(attributes.size()>nbEntity); //Entity without attributes aren't allowed so it should have at least 4 attributes
+        assertTrue(output.contains("Connexion"),
+                "The ‘Connection’ entity should appear in the text output");
     }
 
     @Test
-    public void testFindLinks() {
-        McdParserStrategy parser = createParser();
-        // Test de la logique métier spécifique au MCD
-        List<McdLink> links = parser.findLinks(parser.loadObjects());
-
-        assertNotNull(links);
-        assertFalse(links.isEmpty());
-        assertNotNull(links.get(0).getEntity());
-
+    public void testShouldlistRelationsandCardinalitiesSection() {
+        assertTrue(output.contains("[RELATIONS ET CARDINALITÉS]"),
+                "The ‘Connection’ entity should appear in the text output. The relationships section is essential for consistency auditing.");
     }
 
+    @Test
+    public void testShouldformatlinksWithReadablesentence() {
 
+        assertTrue(output.contains("est liée à la relation"),
+                "Links should be described using a sentence that is understandable to the IA");
+    }
 
+    @Test
+    public void testShouldContainSpecificRelationname() {
 
-
+        assertTrue(output.contains("concerne"),
+                "The phrase “concerns” should be included in the text report");
+    }
 }

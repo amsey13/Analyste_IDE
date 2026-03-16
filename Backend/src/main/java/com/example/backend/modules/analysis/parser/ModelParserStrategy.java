@@ -7,7 +7,11 @@ import java.util.List;
 
 public interface ModelParserStrategy {
 
-    public List<Actor> findActors();
 
-    public List<Flux> findFluxs();
+    /**
+     * The `parse` function in Java likely returns a String value.
+     * 
+     * @return A String is being returned.
+     */
+    public String parse();
 }
