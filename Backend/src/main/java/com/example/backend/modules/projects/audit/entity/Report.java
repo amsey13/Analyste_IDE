@@ -1,6 +1,7 @@
 package com.example.backend.modules.projects.audit.entity;
 
 import com.example.backend.modules.projects.core.entity.Project;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -20,7 +21,11 @@ public class Report {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="id_project", nullable = false)
+    @JsonIgnore
     private Project project;
+
+    @Column
+    private Double score;
 
     public List<Anomaly> getAnomalies() {
         return anomalies;
@@ -54,13 +59,16 @@ public class Report {
         this.project = project;
     }
 
-    // Dans ton entité Report
+
     @OneToMany(mappedBy = "rapport", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Anomaly> anomalies = new ArrayList<>();
 
 
+    public double getScore() {
+        return score;
+    }
 
-
-
-
+    public void setScore(double score) {
+        this.score = score;
+    }
 }

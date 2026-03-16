@@ -1,0 +1,1 @@
+alter table report add column score double precision;

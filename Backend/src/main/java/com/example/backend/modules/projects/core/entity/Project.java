@@ -8,6 +8,7 @@ import java.util.UUID;
 import com.example.backend.core.auth.entity.User;
 
 import com.example.backend.modules.projects.audit.entity.Report;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -43,6 +44,7 @@ public class Project {
     private User user;
 
     @OneToMany(mappedBy = "project")
+    @JsonIgnore
     private List<Report> reports = new ArrayList<>();
 
 
