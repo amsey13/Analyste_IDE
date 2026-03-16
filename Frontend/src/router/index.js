@@ -45,15 +45,17 @@ const routes = [
                 meta: { requiresAuth: true }
             },
             {
-            path: 'accompagnement',
+            path: 'accompagnement/:id',
             name: 'accompagnement',
             component: AccompagnementView,
+            props: true,
             meta: { requiresAuth: true }
             },
             {
-            path: 'audit',
+            path: 'audit/:id',
             name: 'audit',
             component: AuditView,
+            props: true,
             meta: { requiresAuth: true }
             }
         ]

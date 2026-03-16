@@ -14,7 +14,10 @@ export const ProjectService = {
     },
 
 
-
+    async getProjectById(projectId) {
+        const response = await apiClient.get(`/projects/${projectId}`);
+        return response.data;
+    },
 
 
     /**
