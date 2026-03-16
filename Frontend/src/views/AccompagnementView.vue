@@ -110,6 +110,7 @@ onMounted(async () => {
                   :projectId="projectId"
                   :initialXml="project.bpmnXml"
                   :actors="project.actors"
+                  :userStories="project.userStories"
               />
             </div>
           </TabPanel>
