@@ -3,8 +3,10 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import FileUpload from 'primevue/fileupload'
 import { ref, computed } from 'vue'
+
 import auditProjectService from "../features/projects/api/AuditProjectService.js";
 import {useRoute} from 'vue-router'
+
 
 const router = useRoute()
 const files = ref({
@@ -85,18 +87,48 @@ const uploadedCount = computed(() => {
   return Object.values(files.value).filter(f => f !== null).length
 })
 
-const generateAudit = () => {
+const report = ref(null)
+
+const generateAudit = async () => {
 
   if (uploadedCount.value < 2) {
-    errorMessage.value = "Veuillez importer au moins deux fichiers avant de générer le rapport."
+    errorMessage.value = "Veuillez importer au moins deux fichiers."
     return
   }
 
-  errorMessage.value = ""
+  const formData = new FormData()
 
-  console.log("Audit lancé avec :", files.value)
+  if (files.value.bpmn) formData.append("bpmn", files.value.bpmn)
+  if (files.value.mcd) formData.append("mcd", files.value.mcd)
+  if (files.value.mfc) formData.append("mfc", files.value.mfc)
+  
+  console.log("FILES :", files.value)
 
+  for (let pair of formData.entries()) {
+    console.log(pair[0], pair[1])
+  }
+
+  try {
+
+    const response = await apiClient.post(
+      `/audit/${projectId}/analyze`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      }
+    )
+
+    report.value = response.data
+
+  } catch (error) {
+    console.error("Erreur audit :", error)
+  }
 }
+
+
+
 </script>
 
 <template>
@@ -178,6 +210,27 @@ const generateAudit = () => {
           :loading="isLoading"
           @click="startAudit"
       />
+    </div>
+    <div v-if="report" class="mt-5">
+
+      <h2>Résultat de l'audit</h2>
+
+      <p>
+        Score de cohérence : <b>{{ report.score }} %</b>
+      </p>
+
+      <p>
+        Généré le : {{ report.creationDate }}
+      </p>
+
+      <h3>Anomalies détectées</h3>
+
+      <ul>
+        <li v-for="a in report.anomalies" :key="a.id">
+          {{ a.message }}
+        </li>
+      </ul>
+
     </div>
 
   </div>
