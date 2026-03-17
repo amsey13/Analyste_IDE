@@ -2,6 +2,7 @@ package com.example.backend.modules.analysis.exporter;
 
 import com.example.backend.modules.projects.audit.dto.AnomalyDTO;
 import com.example.backend.modules.projects.audit.entity.Report;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -216,6 +217,8 @@ public class MistralService {
                          }
                        ]
                      }
+        IMPORTANT : Ta réponse doit être un JSON compact. Ne mets pas de vrais sauts de ligne à l'intérieur des valeurs de texte (descriptions ou suggestions)
+        utilise '\\n' si nécessaire."
         """.formatted(sb.toString());
 
     }
@@ -246,18 +249,28 @@ public class MistralService {
         String prompt = this.buildAuditPrompt(bpmn,mcd,mfc,us);
         String response = this.askQuestion(prompt);
 
+        String cleanedResponse = response.trim();
+        if (cleanedResponse.contains("```json")) {
+            cleanedResponse = cleanedResponse.substring(cleanedResponse.indexOf("```json") + 7);
+            cleanedResponse = cleanedResponse.substring(0, cleanedResponse.lastIndexOf("```"));
+        } else if (cleanedResponse.contains("```")) {
+            cleanedResponse = cleanedResponse.substring(cleanedResponse.indexOf("```") + 3);
+            cleanedResponse = cleanedResponse.substring(0, cleanedResponse.lastIndexOf("```"));
+        }
+        cleanedResponse = cleanedResponse.trim();
+
 
         try{
-            JsonNode root = mapper.readTree(response);
-
-
-
+            JsonNode root = mapper.readTree(cleanedResponse);
             JsonNode anomalies = root.path("anomalies");
 
             if (anomalies.isMissingNode() || !anomalies.isArray()) {
                 root.fieldNames().forEachRemaining(name -> System.out.println(" -> " + name));
                 throw new IOException("La clé 'anomalies' est absente ou n'est pas un tableau. Réponse brute : " + response );
             }
+            this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
+
+
 
             return mapper.readValue(
                     anomalies.toString(),
