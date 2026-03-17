@@ -22,8 +22,27 @@ public class Suggestion {
     @JsonIgnore
     private Anomaly anomaly;
 
+    public UUID getId() {
+        return id;
+    }
 
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
+    public String getContent() {
+        return content;
+    }
 
+    public void setContent(String content) {
+        this.content = content;
+    }
 
+    public Anomaly getAnomaly() {
+        return anomaly;
+    }
+
+    public void setAnomaly(Anomaly anomaly) {
+        this.anomaly = anomaly;
+    }
 }
