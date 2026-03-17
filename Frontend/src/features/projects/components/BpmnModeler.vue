@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, onBeforeUnmount } from 'vue';
+import { ref, shallowRef, toRaw, onMounted, onBeforeUnmount } from 'vue';
 import Modeler from 'bpmn-js/lib/Modeler';
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
@@ -11,6 +11,8 @@ const props = defineProps({
   actors: { type: Array, default: () => [] },
   userStories: { type: Array, default: () => [] }
 });
+const emit = defineEmits(['update:coverageScore']);
+
 const emptyBpmn = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
@@ -28,16 +30,28 @@ let bpmnModeler = null;
 
 const showPopover = ref(false);
 const popoverPosition = ref({ top: '0px', left: '0px' });
-const selectedTask = ref(null);
+const selectedTask = shallowRef(null);
 
 const linkedUsIds = ref([]);
-const updateLinkedUS = () => {
+const updateLinkedUS = async () => {
   if (!selectedTask.value) return;
   const modeling = bpmnModeler.get('modeling');
   const newValue = linkedUsIds.value.join(',');
-  modeling.updateProperties(selectedTask.value, {
+  modeling.updateProperties(toRaw(selectedTask.value), {
     'custom:linkedUserStories': newValue
   });
+  await saveDiagram();
+};
+const isSaving = ref(false);
+let saveTimeout = null;
+
+const triggerAutoSave = () => {
+  isSaving.value = true;
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    await saveDiagram();
+    isSaving.value = false;
+  }, 1500);
 };
 
 onMounted(async () => {
@@ -78,6 +92,10 @@ onMounted(async () => {
     showPopover.value = false;
     selectedTask.value = null;
   });
+
+  eventBus.on('commandStack.changed', () => {
+    triggerAutoSave();
+  });
 });
 
 // --- DRAG & DROP : CRÉATION D'UNE VÉRITABLE PISCINE ---
@@ -104,8 +122,15 @@ const resetZoom = () => {
 };
 
 const saveDiagram = async () => {
-  const { xml } = await bpmnModeler.saveXML({ format: true });
-  await SupportFeatureService.saveBpmnDiagram(props.projectId, xml);
+  try {
+    const { xml } = await bpmnModeler.saveXML({ format: true });
+    const updatedProject = await SupportFeatureService.saveBpmnDiagram(props.projectId, xml);
+    if (updatedProject && updatedProject.coverageScore !== undefined) {
+      emit('update:coverageScore', updatedProject.coverageScore);
+    }
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde du BPMN:", error);
+  }
 };
 
 onBeforeUnmount(() => {
@@ -132,9 +157,14 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="mt-4 pt-3 border-top-1 surface-border">
-        <button @click="saveDiagram" class="p-button p-button-success w-full shadow-2 font-bold">
-          <i class="pi pi-save mr-2"></i> Sauvegarder
-        </button>
+        <div class="mt-4 pt-3 border-top-1 surface-border flex justify-content-center">
+        <span v-if="isSaving" class="text-sm font-bold text-orange-500 flex align-items-center gap-2 fadein">
+          <i class="pi pi-spin pi-spinner"></i> Sauvegarde en cours...
+        </span>
+          <span v-else class="text-sm font-bold text-green-500 flex align-items-center gap-2 fadein">
+          <i class="pi pi-cloud-upload"></i> Sauvegardé dans le cloud
+        </span>
+        </div>
       </div>
     </div>
 
