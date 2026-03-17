@@ -6,6 +6,7 @@ import com.example.backend.modules.analysis.exporter.ClientHttp;
 import com.example.backend.modules.analysis.exporter.HttpResponse;
 import com.example.backend.modules.projects.audit.dao.AuditProjectRepository;
 import com.example.backend.modules.projects.audit.dao.ReportRepository;
+import com.example.backend.modules.projects.audit.entity.Anomaly;
 import com.example.backend.modules.projects.audit.entity.AuditProject;
 import com.example.backend.modules.projects.audit.entity.Report;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,8 +27,7 @@ import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -75,7 +75,18 @@ public class AuditIntegrationTest {
         UUID projectId = project.getIdProject();
 
 
-        String aiJson = "{\"anomalies\": [{\"description\": \"Incohérence BPMN\", \"type\": \"TACHE_SANS_US\", \"severity\": \"HIGH\"}]}";
+        String aiJson = """
+    {
+      "anomalies": [
+        {
+          "description": "Incohérence BPMN",
+          "type": "TACHE_SANS_US",
+          "severity": "HIGH",
+          "suggestion": "Ajouter une User Story correspondante dans le backlog Taiga."
+        }
+      ]
+    }
+    """;
         String mockAiResponse = "{\"outputs\": [{\"content\": " + new ObjectMapper().writeValueAsString(aiJson) + "}]}";
 
         when(client.execute(anyString())).thenReturn(new HttpResponse(200, null, mockAiResponse));
@@ -99,16 +110,22 @@ public class AuditIntegrationTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.score").value(90.0)) //
-                .andExpect(jsonPath("$.anomalies[0].description").value("Incohérence BPMN"));
+                .andExpect(jsonPath("$.anomalies[0].description").value("Incohérence BPMN"))
+                .andExpect(jsonPath("$.anomalies[0].suggestion.content").value("Ajouter une User Story correspondante dans le backlog Taiga."));
+
 
 
         List<Report> savedReports = reportRepository.findAll();
         assertEquals(1, savedReports.size());
 
         Report mainReport = savedReports.get(0);
+        Anomaly savedAnomaly = mainReport.getAnomalies().get(0);
         assertEquals(projectId, mainReport.getProject().getIdProject());
         assertEquals(90.0, mainReport.getScore());
         assertFalse(mainReport.getAnomalies().isEmpty());
+        assertNotNull(savedAnomaly.getSuggestion(), "La suggestion devrait être enregistrée en base");
+        assertEquals("Ajouter une User Story correspondante dans le backlog Taiga.",
+                savedAnomaly.getSuggestion().getContent());
     }
 
 }
