@@ -2,11 +2,64 @@
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import FileUpload from 'primevue/fileupload'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-const bpmnFile = ref(null)
-const mcdFile = ref(null)
-const mfcFile = ref(null)
+const files = ref({
+  bpmn: null,
+  mcd: null,
+  mfc: null
+})
+
+const fileTypes = [
+  {
+    key: 'bpmn',
+    title: '1. Processus (BPMN)',
+    icon: 'pi pi-cog',
+    accept: '.bpm',
+    description: 'Diagramme de processus'
+  },
+  {
+    key: 'mcd',
+    title: '2. Données (MCD)',
+    icon: 'pi pi-database',
+    accept: '.mcd',
+    description: 'Fait par JMerise !!'
+  },
+  {
+    key: 'mfc',
+    title: '3. Flux (MFC)',
+    icon: 'pi pi-sync',
+    accept: '.flu',
+    description: 'Fait par JFlux !!'
+  }
+]
+
+const errorMessage = ref('')
+
+const handleUpload = (event, type) => {
+  files.value[type] = event.files[0]
+}
+
+const removeFile = (type) => {
+  files.value[type] = null
+}
+
+const uploadedCount = computed(() => {
+  return Object.values(files.value).filter(f => f !== null).length
+})
+
+const generateAudit = () => {
+
+  if (uploadedCount.value < 2) {
+    errorMessage.value = "Veuillez importer au moins deux fichiers avant de générer le rapport."
+    return
+  }
+
+  errorMessage.value = ""
+
+  console.log("Audit lancé avec :", files.value)
+
+}
 </script>
 
 <template>
@@ -21,64 +74,53 @@ const mfcFile = ref(null)
 
     <div class="grid">
 
-      <div class="col-12 md:col-4">
-        <Card>
-          <template #content>
-            <i class="pi pi-database text-4xl mb-3"></i>
-            2. Données (MCD)
-            <p class="text-600 mb-3">
-              Fait par JMerise !!
-            </p>
-            <FileUpload
-                mode="basic"
-                name="mcd"
-                accept=".mcd"
-                chooseLabel="Importer fichier MCD"
-                @select="(e) => mcdFile = e.files[0]"
-            />
+      <div
+        v-for="type in fileTypes"
+        :key="type.key"
+        class="col-12 md:col-4"
+      >
 
-          </template>
-        </Card>
-      </div>
-
-
-      <div class="col-12 md:col-4">
         <Card class="text-center">
 
           <template #content>
-            <i class="pi pi-cog text-4xl mb-3"></i>
-             1. Processus (BPMN)
-            <FileUpload
-                mode="basic"
-                name="bpmn"
-                accept=".bpm"
-                chooseLabel="Importer fichier BPMN"
-                @select="(e) => bpmnFile.value = e.files[0]"
-            />
 
-          </template>
-        </Card>
-      </div>
+            <i :class="type.icon + ' text-4xl mb-3'"></i>
 
+            <h3>{{ type.title }}</h3>
 
-
-      <div class="col-12 md:col-4">
-        <Card>
-          <template #content>
-            <i class="pi pi-sync text-4xl mb-3"></i>
-             3. Flux (MFC)
             <p class="text-600 mb-3">
-              Fait par JFlux !!
+              {{ type.description }}
             </p>
+
             <FileUpload
-                mode="basic"
-                name="mfc"
-                accept=".flu"
-                chooseLabel="Importer fichier MFC"
-                @select="(e) => mfcFile = e.files[0]"
+              mode="basic"
+              :name="type.key"
+              :accept="type.accept"
+              chooseLabel="Importer fichier"
+              @select="(e) => handleUpload(e, type.key)"
             />
+
+            <div
+              v-if="files[type.key]"
+              class="mt-3 flex align-items-center justify-content-between"
+            >
+              <span class="text-600">
+                {{ files[type.key].name }}
+              </span>
+
+              <Button
+                icon="pi pi-times"
+                severity="danger"
+                text
+                rounded
+                @click="removeFile(type.key)"
+              />
+            </div>
+
           </template>
+
         </Card>
+
       </div>
 
     </div>
@@ -87,8 +129,16 @@ const mfcFile = ref(null)
       ⚠ Veuillez fournir au moins 2 fichiers pour lancer une comparaison.
     </div>
 
+    <div v-if="errorMessage" class="text-red-500 text-center mt-2">
+      {{ errorMessage }}
+    </div>
+
     <div class="mt-4 flex justify-content-center">
-      <Button label="Générer le Rapport d'Audit" icon="pi pi-file" />
+      <Button
+        label="Générer le Rapport d'Audit"
+        icon="pi pi-file"
+        @click="generateAudit"
+      />
     </div>
 
   </div>
