@@ -19,6 +19,10 @@ onMounted(async () => {
   try {
     const data = await ProjectService.getProjects()
     projects.value = data
+    if(data.length > 0){
+      console.log("Structure du premier projet :", data[0]);
+      console.log("Clés disponibles :", Object.keys(data[0]));
+    }
   } catch (error) {
     console.error('Erreur lors du chargement des projets :', error)
   } finally {
@@ -41,7 +45,7 @@ const goToProject = (projectId) => {
 const deleteProject = async (projectId) => {
   try {
     await ProjectService.deleteProject(projectId)
-    projects.value = projects.value.filter((p) => p.id !== projectId)
+    projects.value = projects.value.filter((p) => p.idProject !== projectId)
   } catch (error) {
     console.error('Erreur lors de la suppression du projet :', error)
   }
@@ -92,7 +96,7 @@ const openProject = (projectId) => {
         >
           <template #content>
 
-            <h3>{{ project.nom || 'Sans nom' }}</h3>
+            <h3>{{ project.name}}</h3>
 
             <p>
               {{ project.description || 'Pas de description' }}
