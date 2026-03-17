@@ -29,6 +29,9 @@ public class Anomaly {
     @JsonIgnore
     private Report rapport;
 
+    @OneToOne(mappedBy = "anomaly",cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Suggestion suggestion;
+
     public UUID getId() {
         return id;
     }
@@ -67,5 +70,13 @@ public class Anomaly {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public Suggestion getSuggestion() {
+        return suggestion;
+    }
+
+    public void setSuggestion(Suggestion suggestion) {
+        this.suggestion = suggestion;
     }
 }

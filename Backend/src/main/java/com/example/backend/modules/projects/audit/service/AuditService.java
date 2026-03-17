@@ -69,6 +69,15 @@ public class AuditService {
                 });
 
         anomaly.setAnomalyType(type);
+
+        if(anomalyDTO.suggestion() != null && ! anomalyDTO.suggestion().isEmpty()){
+            Suggestion suggestion = new Suggestion();
+            suggestion.setContent(anomalyDTO.suggestion());
+            suggestion.setAnomaly(anomaly);
+            anomaly.setSuggestion(suggestion);
+        }
+
+
         return anomaly;
     }
 
