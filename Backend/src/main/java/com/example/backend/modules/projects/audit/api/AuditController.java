@@ -21,12 +21,12 @@ public class AuditController {
     @PostMapping("/{projectId}/analyze")
     public ResponseEntity<Report> analyze(
             @PathVariable UUID projectId,
-            @RequestParam(value = "bpmn", required = false) MultipartFile bpmnFile,
-            @RequestParam(value = "mcd", required = false) MultipartFile mcdFile,
-            @RequestParam(value = "mfc", required = false) MultipartFile mfcFile
+            @RequestParam(value = "bpmn", required = false) MultipartFile bpmn,
+            @RequestParam(value = "mcd", required = false) MultipartFile mcd,
+            @RequestParam(value = "mfc", required = false) MultipartFile mfc
     ){
         try{
-            Report report = auditService.startAudit(projectId,bpmnFile,mcdFile,mfcFile);
+            Report report = auditService.startAudit(projectId,bpmn,mcd,mfc);
             return ResponseEntity.ok(report);
         }
         catch (Exception e){

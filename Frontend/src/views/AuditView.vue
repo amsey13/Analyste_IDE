@@ -3,13 +3,12 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import FileUpload from 'primevue/fileupload'
 import { ref, computed } from 'vue'
-//import axios from "axios"
-import apiClient from '../api/HttpClient.js'
-import { useRoute } from "vue-router"
 
-const route = useRoute()
-const projectId = route.params.id
+import auditProjectService from "../features/projects/api/AuditProjectService.js";
+import {useRoute} from 'vue-router'
 
+
+const router = useRoute()
 const files = ref({
   bpmn: null,
   mcd: null,
@@ -21,7 +20,7 @@ const fileTypes = [
     key: 'bpmn',
     title: '1. Processus (BPMN)',
     icon: 'pi pi-cog',
-    accept: '.bpmn, .xml',
+    accept: '.bpmn',
     description: 'Diagramme de processus'
   },
   {
@@ -42,8 +41,42 @@ const fileTypes = [
 
 const errorMessage = ref('')
 
+const isLoading = ref(false)
+
+const idProject = router.params.id
+console.log("Prop idProject reçue à l'initialisation :", idProject)
+const startAudit = async () => {
+  console.log('Starting Audit of id project :', idProject)
+  if (uploadedCount.value < 2) {
+    errorMessage.value = "Veuillez importer au moins deux fichiers."
+    return
+  }
+  isLoading.value = true
+  errorMessage.value = ""
+
+  try{
+    const report = await auditProjectService.analyzeProject(
+        idProject,
+        files.value.bpmn,
+        files.value.mcd,
+        files.value.mfc,
+    )
+    console.log("Audit reussi ! Rapport : ",report)
+    alert(`Audit terminé avec succès ! Score : ${report.score}/100`)
+
+  } catch(error) {
+    errorMessage.value = "Erreur lors de l'analyse : " + (error.response?.data?.message || error.message)
+  }
+  finally {
+    isLoading.value = false
+  }
+
+}
+
 const handleUpload = (event, type) => {
-  files.value[type] = event.files[0]
+  if (event.files && event.files.length > 0) {
+    files.value[type] = event.files[0]
+  }
 }
 
 const removeFile = (type) => {
@@ -161,7 +194,7 @@ const generateAudit = async () => {
 
     </div>
 
-    <div class="mt-5 text-center text-600">
+    <div v-if="uploadedCount < 2" class="mt-5 text-center text-600">
       ⚠ Veuillez fournir au moins 2 fichiers pour lancer une comparaison.
     </div>
 
@@ -171,9 +204,11 @@ const generateAudit = async () => {
 
     <div class="mt-4 flex justify-content-center">
       <Button
-        label="Générer le Rapport d'Audit"
-        icon="pi pi-file"
-        @click="generateAudit"
+          label="Générer le Rapport d'Audit"
+          icon="pi pi-file"
+          :disabled="uploadedCount < 2"
+          :loading="isLoading"
+          @click="startAudit"
       />
     </div>
     <div v-if="report" class="mt-5">

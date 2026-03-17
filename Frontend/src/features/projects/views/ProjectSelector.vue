@@ -44,10 +44,10 @@ onMounted(async () => {
   }
 });
 
-const openProjet = (idProjet) =>{
+const openProjet = (projectId) =>{
   router.push({
     name: 'project-dashboard',
-    params: { id: idProjet }
+    params: { id: projectId }
   });
 };
 
@@ -56,18 +56,21 @@ const goToCreate = () => {
   router.push({ name: 'project-create' });
 };
 
-const deleteProjet = (idProjet) => {
+const deleteProjet = (idProject) => {
+  console.log("Tentative de suppression de l'ID :", idProject)
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
-        await ProjectService.deleteProjet(idProjet);
-        projets.value = projets.value.filter(p => p.idProjet !== idProjet);
+        await ProjectService.deleteProjet(idProject);
+        projets.value = projets.value.filter(p => p.idProject !== idProject);;
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Projet supprimé' });
+
       } catch (e) {
-        console.error("Erreur lors de la suppression du projet", e);
+        console.error("Erreur lors de la suppression du projet", e.title);
+        console.log("ID envoyé :", idProject)
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le projet' });
       }
     }
@@ -114,45 +117,28 @@ const deleteProjet = (idProjet) => {
 
       <!-- Liste projets -->
       <div
-          v-for="p in displayedProjects"
-          :key="p.idProjet"
-          class="col-12 md:col-6 lg:col-4"
+          v-for="project in displayedProjects"
+          :key="project.idProject"  class="col-12 md:col-6 lg:col-4"
       >
-        <Card
-            class="h-full cursor-pointer hover:shadow-4 transition-duration-200"
-            @click="openProjet(p.idProjet)"
-        >
-
-          <template #title>
-            {{ p.nom }}
-          </template>
-
+        <Card class="project-card" @click="openProjet(project.idProject)">
           <template #content>
+            <h3>{{ project.nom || 'Sans nom' }}</h3>
+            <p>{{ project.description || 'Pas de description' }}</p>
+            <span>{{ project.statut }}</span>
 
-            <p class="text-600 mb-3">
-              {{ p.description || 'Pas de description' }}
-            </p>
+            <ProgressBar :value="project.progress || 50" style="height: 12px; margin-top: 1rem" />
 
-            <div class="mb-2 text-sm text-500">
-              En cours
-            </div>
-
-            <ProgressBar :value="p.progress || 50"></ProgressBar>
-
+            <!-- bouton suppression -->
+            <Button
+                label="Supprimer"
+                icon="pi pi-trash"
+                severity="danger"
+                text
+                rounded
+                class="mt-2"
+                @click.stop="deleteProjet(project.idProject)"
+            />
           </template>
-
-          <template #footer>
-            <div class="flex justify-content-end">
-              <Button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  text
-                  rounded
-                  @click.stop="deleteProjet(p.idProjet)"
-              />
-            </div>
-          </template>
-
         </Card>
       </div>
       <!-- Carte Voir plus -->

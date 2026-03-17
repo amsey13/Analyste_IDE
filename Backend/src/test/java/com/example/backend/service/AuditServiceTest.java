@@ -56,7 +56,7 @@ public class AuditServiceTest {
 
         // Simulation of the AI's response
         List<AnomalyDTO> mockAnomalies = List.of(
-                new AnomalyDTO("Description test", "INCOHERENCE", "CRITICAL")
+                new AnomalyDTO("Description test", "INCOHERENCE", "CRITICAL", null)
         );
         when(mistralService.executeAuditAnalysis(any(), any(), any(), any())).thenReturn(mockAnomalies);
 
@@ -107,6 +107,35 @@ public class AuditServiceTest {
         assertThrows(RuntimeException.class, () -> {
             auditService.startAudit(projectId, null, null, null);
         });
+    }
+
+    @Test
+    public void testStartAuditShouldIncludeSuggestionsWhenProvidedByIA() throws Exception {
+
+        when(auditProjectRepository.findById(projectId)).thenReturn(Optional.of(mockProject));
+        String sugg = "Voici comment corriger : liez la tâche à l'US #12.";
+
+
+        AnomalyDTO mockDto = new AnomalyDTO("Anomalie avec aide", "TACHE_SANS_US", "MEDIUM",sugg);
+
+
+        when(mistralService.executeAuditAnalysis(any(), any(), any(), any()))
+                .thenReturn(List.of(mockDto));
+
+        when(reportRepository.save(any(Report.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(anomalyTypeRepository.findByWording(anyString())).thenReturn(Optional.empty());
+
+        Report result = auditService.startAudit(projectId, null, null, null);
+
+
+
+
+        var savedAnomaly = result.getAnomalies().get(0);
+        assertNotNull(savedAnomaly.getSuggestion(), "L'anomalie devrait avoir une suggestion liée");
+        assertEquals("Voici comment corriger : liez la tâche à l'US #12.", savedAnomaly.getSuggestion().getContent());
+
+
+        assertEquals(savedAnomaly, savedAnomaly.getSuggestion().getAnomaly());
     }
 
 

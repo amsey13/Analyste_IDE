@@ -2,6 +2,7 @@ package com.example.backend.modules.analysis.exporter;
 
 import com.example.backend.modules.projects.audit.dto.AnomalyDTO;
 import com.example.backend.modules.projects.audit.entity.Report;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -190,8 +191,9 @@ public class MistralService {
         [RÈGLES DE SÉVÉRITÉ]
         Utilise impérativement l'une de ces valeurs pour 'severity' :
         - CRITICAL (Erreur bloquante, incohérence majeure)
-        - MAJOR (Manque important)
-        - MINOR (Optimisation ou libellé mal nommé)
+        - HIGH (Manque important)
+        - MEDIUM
+        - LOW (Optimisation ou libellé mal nommé)
         
         [TYPES D'ANOMALIES AUTORISÉS]
         Utilise l'un de ces libellés pour 'type' :
@@ -204,8 +206,19 @@ public class MistralService {
         [CONSIGNES]
         1. Analyse UNIQUEMENT les modèles fournis.
         2. Vérifie la cohérence croisée (ex: une donnée citée dans une US doit être dans le MCD).
+        2,5. Pour chaque anomalie detecté propose une solution concrete pour la resoudre
         3. Réponds UNIQUEMENT au format JSON :
-        {"anomalies": [{"description": "...", "type": "...", "severity": "..."}]}
+        {"anomalies": [
+                         {
+                           "description": "...",\s
+                           "type": "...",\s
+                           "severity": "...",\s
+                           "suggestion": "Texte expliquant comment corriger l'anomalie"
+                         }
+                       ]
+                     }
+        IMPORTANT : Ta réponse doit être un JSON compact. Ne mets pas de vrais sauts de ligne à l'intérieur des valeurs de texte (descriptions ou suggestions)
+        utilise '\\n' si nécessaire."
         """.formatted(sb.toString());
 
     }
@@ -236,20 +249,28 @@ public class MistralService {
         String prompt = this.buildAuditPrompt(bpmn,mcd,mfc,us);
         String response = this.askQuestion(prompt);
 
-        System.out.println("DEBUG [executeAuditAnalysis] Response reçue : " + response);
+        String cleanedResponse = response.trim();
+        if (cleanedResponse.contains("```json")) {
+            cleanedResponse = cleanedResponse.substring(cleanedResponse.indexOf("```json") + 7);
+            cleanedResponse = cleanedResponse.substring(0, cleanedResponse.lastIndexOf("```"));
+        } else if (cleanedResponse.contains("```")) {
+            cleanedResponse = cleanedResponse.substring(cleanedResponse.indexOf("```") + 3);
+            cleanedResponse = cleanedResponse.substring(0, cleanedResponse.lastIndexOf("```"));
+        }
+        cleanedResponse = cleanedResponse.trim();
+
 
         try{
-            JsonNode root = mapper.readTree(response);
-
-            System.out.println("DEBUG [executeAuditAnalysis] Root type : " + root.getNodeType());
-
+            JsonNode root = mapper.readTree(cleanedResponse);
             JsonNode anomalies = root.path("anomalies");
 
             if (anomalies.isMissingNode() || !anomalies.isArray()) {
-                System.out.println("DEBUG [executeAuditAnalysis] Clés trouvées : ");
                 root.fieldNames().forEachRemaining(name -> System.out.println(" -> " + name));
                 throw new IOException("La clé 'anomalies' est absente ou n'est pas un tableau. Réponse brute : " + response );
             }
+            this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
+
+
 
             return mapper.readValue(
                     anomalies.toString(),

@@ -52,9 +52,6 @@ public class ProjectController {
     }
     @GetMapping("/{id}")
     public ResponseEntity<ProjectResponseDTO> getProjectById(@PathVariable UUID id) throws UserNotFoundException {
-        // Assure-toi que la méthode getProjectById existe bien dans ton ProjectService
-        // Elle doit récupérer le projet, vérifier que l'utilisateur en est le propriétaire,
-        // et le mapper en ProjectResponseDTO (ou SupportProjectResponseDTO).
         return ResponseEntity.ok(projectService.getProjectById(id));
     }
 

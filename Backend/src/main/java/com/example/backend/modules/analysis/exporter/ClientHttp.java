@@ -30,7 +30,7 @@ public class ClientHttp {
     }
 
     public ClientHttp() {
-        this.timeout = 20000;
+        this.timeout = 60000;
         this.method = "POST";
     }
 
@@ -64,7 +64,7 @@ public class ClientHttp {
 
         // Time configuration a little bit longer cause the request is heavy
         conn.setRequestMethod(this.method);
-        conn.setConnectTimeout(10000);
+        conn.setConnectTimeout(15000);
         conn.setReadTimeout(this.timeout);
 
 

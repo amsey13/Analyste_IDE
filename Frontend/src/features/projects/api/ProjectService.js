@@ -33,9 +33,14 @@ export const ProjectService = {
     },
 
 
-    async deleteProjet(projetId) {
+    async deleteProjet(idProject) {
+
+        if (!idProject) {
+            console.error("projectId est undefined !")
+            return
+        }
         
-        return await apiClient.delete(`/projects/${projetId}`);
+        return await apiClient.delete(`/projects/${idProject}`);
     }
 
 }
