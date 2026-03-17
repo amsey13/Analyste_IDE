@@ -190,8 +190,9 @@ public class MistralService {
         [RÈGLES DE SÉVÉRITÉ]
         Utilise impérativement l'une de ces valeurs pour 'severity' :
         - CRITICAL (Erreur bloquante, incohérence majeure)
-        - MAJOR (Manque important)
-        - MINOR (Optimisation ou libellé mal nommé)
+        - HIGH (Manque important)
+        - MEDIUM
+        - LOW (Optimisation ou libellé mal nommé)
         
         [TYPES D'ANOMALIES AUTORISÉS]
         Utilise l'un de ces libellés pour 'type' :
@@ -204,8 +205,17 @@ public class MistralService {
         [CONSIGNES]
         1. Analyse UNIQUEMENT les modèles fournis.
         2. Vérifie la cohérence croisée (ex: une donnée citée dans une US doit être dans le MCD).
+        2,5. Pour chaque anomalie detecté propose une solution concrete pour la resoudre
         3. Réponds UNIQUEMENT au format JSON :
-        {"anomalies": [{"description": "...", "type": "...", "severity": "..."}]}
+        {"anomalies": [
+                         {
+                           "description": "...",\s
+                           "type": "...",\s
+                           "severity": "...",\s
+                           "suggestion": "Texte expliquant comment corriger l'anomalie"
+                         }
+                       ]
+                     }
         """.formatted(sb.toString());
 
     }
@@ -236,17 +246,15 @@ public class MistralService {
         String prompt = this.buildAuditPrompt(bpmn,mcd,mfc,us);
         String response = this.askQuestion(prompt);
 
-        System.out.println("DEBUG [executeAuditAnalysis] Response reçue : " + response);
 
         try{
             JsonNode root = mapper.readTree(response);
 
-            System.out.println("DEBUG [executeAuditAnalysis] Root type : " + root.getNodeType());
+
 
             JsonNode anomalies = root.path("anomalies");
 
             if (anomalies.isMissingNode() || !anomalies.isArray()) {
-                System.out.println("DEBUG [executeAuditAnalysis] Clés trouvées : ");
                 root.fieldNames().forEachRemaining(name -> System.out.println(" -> " + name));
                 throw new IOException("La clé 'anomalies' est absente ou n'est pas un tableau. Réponse brute : " + response );
             }
