@@ -23,9 +23,6 @@ public class SupportProject extends Project {
     @Column(name = "bpmn_xml", columnDefinition = "TEXT")
     private String bpmnXml;
 
-    @Column(name = "data_dictionary", columnDefinition = "TEXT")
-    private String dataDictionary;
-
     @Column(name = "coverage_score")
     private Double coverageScore = 0.0;
 
@@ -44,7 +41,16 @@ public class SupportProject extends Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserStory> userStories = new ArrayList<>();
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DictionaryEntry> dictionaryEntries = new ArrayList<>();
 
+    public List<DictionaryEntry> getDictionaryEntries() {
+        return dictionaryEntries;
+    }
+
+    public void setDictionaryEntries(List<DictionaryEntry> dictionaryEntries) {
+        this.dictionaryEntries = dictionaryEntries;
+    }
 
     public StatusProject getStatus() {
         return status;
@@ -60,14 +66,6 @@ public class SupportProject extends Project {
 
     public void setBpmnXml(String bpmnXml) {
         this.bpmnXml = bpmnXml;
-    }
-
-    public String getDataDictionary() {
-        return dataDictionary;
-    }
-
-    public void setDataDictionary(String dataDictionary) {
-        this.dataDictionary = dataDictionary;
     }
 
     public List<Actor> getActors() {
