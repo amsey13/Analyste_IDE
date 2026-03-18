@@ -1,12 +1,15 @@
 package com.example.backend.modules.projects.acc.api;
 
 import com.example.backend.modules.projects.acc.dto.*;
+import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.service.SupportFeatureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -89,11 +92,14 @@ public class SupportFeatureController {
     }
 
     @PutMapping("/projects/{projectId}/bpmn")
-    public ResponseEntity<Void> saveBpmn(
+    public ResponseEntity<Map<String, Double>> saveBpmn(
             @PathVariable UUID projectId,
             @RequestBody String bpmnXml) {
-        supportService.saveBpmnDiagram(projectId, bpmnXml);
-        return ResponseEntity.ok().build();
+        SupportProject updatedProject = supportService.saveBpmnDiagram(projectId, bpmnXml);
+        Map<String, Double> response = new HashMap<>();
+        response.put("coverageScore", updatedProject.getCoverageScore());
+
+        return ResponseEntity.ok(response);
     }
 
 

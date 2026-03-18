@@ -111,6 +111,7 @@ onMounted(async () => {
                   :initialXml="project.bpmnXml"
                   :actors="project.actors"
                   :userStories="project.userStories"
+                  @update:coverageScore="project.coverageScore = $event"
               />
             </div>
           </TabPanel>
