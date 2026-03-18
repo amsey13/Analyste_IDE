@@ -34,5 +34,4 @@ public class BackendApplication {
                 .baselineOnMigrate(true)
                 .load();
     }
-
 }

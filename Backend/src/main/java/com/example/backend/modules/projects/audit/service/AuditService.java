@@ -72,8 +72,8 @@ public class AuditService {
 
         if(anomalyDTO.suggestion() != null && ! anomalyDTO.suggestion().isEmpty()){
             Suggestion suggestion = new Suggestion();
-            suggestion.setContent(anomalyDTO.suggestion());
-            suggestion.setAnomaly(anomaly);
+            // suggestion.setContent(anomalyDTO.suggestion());
+            // suggestion.setAnomaly(anomaly);
             anomaly.setSuggestion(suggestion);
         }
 

@@ -240,7 +240,7 @@
               <strong>Description :</strong>
               <span class="ml-1">{{ project.description.length }} caractères </span>
             </p>
-
+            <!--
             <p class="mb-0">
               <strong>Taiga :</strong>
               <span
@@ -249,12 +249,23 @@
               >
                       {{ project.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
                   </span>
+            </p>-->
+
+            <p v-if="project.project_type === 'audit'" class="mb-0">
+              <strong>Taiga :</strong>
+              <span
+                  class="ml-1"
+                  :class="taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
+              >
+              {{ taigaEnabled ? 'Activé' : 'Désactivé' }}
+              </span>
             </p>
 
             <p class="mb-2">
               <strong>Mode :</strong>
               <span class="ml-1">{{ project.project_type || 'Non sélectionné' }}</span>
             </p>
+
 
           </div>
         </div>
