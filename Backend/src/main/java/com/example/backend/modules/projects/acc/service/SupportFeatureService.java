@@ -1,5 +1,6 @@
 package com.example.backend.modules.projects.acc.service;
 
+import com.example.backend.modules.analysis.exporter.MistralService;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.projects.acc.dao.ActorRepository;
 import com.example.backend.modules.projects.acc.dao.DictionaryAttributeRepository;
@@ -16,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -29,19 +32,22 @@ public class SupportFeatureService {
     private final SupportProjectMapper supportProjectMapper;
     private final DictionaryEntryRepository dictionaryEntryRepository;
     private final DictionaryAttributeRepository dictionaryAttributeRepository;
+    private final MistralService mistralService;
 
     public SupportFeatureService(ActorRepository actorRepository,
                                  UserStoryRepository userStoryRepository,
                                  ProjectRepository projectRepository,
                                  SupportProjectMapper supportProjectMapper,
-                                DictionaryEntryRepository dictionaryEntryRepository,
-                                 DictionaryAttributeRepository dictionaryAttributeRepository) {
+                                 DictionaryEntryRepository dictionaryEntryRepository,
+                                 DictionaryAttributeRepository dictionaryAttributeRepository,
+                                 MistralService mistralService) {
         this.actorRepository = actorRepository;
         this.userStoryRepository = userStoryRepository;
         this.projectRepository = projectRepository;
         this.supportProjectMapper = supportProjectMapper;
         this.dictionaryEntryRepository = dictionaryEntryRepository;
         this.dictionaryAttributeRepository = dictionaryAttributeRepository;
+        this.mistralService = mistralService;
     }
     private UserStoryResponseDTO mapToDTO(UserStory us) {
         UserStoryResponseDTO dto = new UserStoryResponseDTO();
@@ -302,5 +308,22 @@ public class SupportFeatureService {
         dto.setNotNull(attr.getNotNull());
         dto.setDescription(attr.getDescription());
         return dto;
+    }
+    @Transactional(readOnly = true)
+    public List<DictionaryEntryRequestDTO> getDictionarySuggestions(UUID projectId) throws IOException {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        if (project.getUserStories() == null || project.getUserStories().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // On formate les US en un texte clair pour l'IA
+        StringBuilder usContent = new StringBuilder();
+        for (UserStory us : project.getUserStories()) {
+            usContent.append("- ").append(us.getIdentifier()).append(" : ")
+                    .append(us.getDescription()).append("\n");
+        }
+
+        return mistralService.suggestDictionaryFromUserStories(usContent.toString());
     }
 }
