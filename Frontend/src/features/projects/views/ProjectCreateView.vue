@@ -15,6 +15,7 @@
   const taigaEnabled = ref(false);
   const nameTouched = ref(false);
   const featureTouched = ref(false);
+  const showLoadingOverlay = ref(false);
 
   const project = ref({
     name: '',
@@ -45,6 +46,7 @@
     if(project.value.project_type === '') return;
     if(project.value.name.trim() === '') return;
 
+
     const payload = { ...project.value };
 
 
@@ -61,6 +63,10 @@
       const response = await ProjectService.createProject(payload);
       const newProjectId = response.idProject;
       const targetRouteName = ROUTES_BY_TYPE[payload.project_type];
+
+      showLoadingOverlay.value = true;
+
+      await new Promise((resolve, reject) => setTimeout(resolve, 4500));
 
       if (targetRouteName) {
         router.push({
@@ -288,5 +294,20 @@
         />
       </div>
     </div>
+
+    <!-- Loading Overlay -->
+    <Transition name="overlay-fade">
+      <div
+          v-if="showLoadingOverlay"
+          class="fixed top-0 left-0 w-full h-full flex flex-column align-items-center justify-content-center"
+          style="background: rgba(255,255,255,0.92); backdrop-filter: blur(6px); z-index: 9999;"
+      >
+        <div class="flex flex-column align-items-center gap-4">
+          <i class="pi pi-spin pi-spinner text-primary" style="font-size: 3rem;"></i>
+          <h2 class="text-900 font-bold m-0">Création du projet en cours...</h2>
+          <p class="text-600 m-0">Préparation de votre espace de travail</p>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
