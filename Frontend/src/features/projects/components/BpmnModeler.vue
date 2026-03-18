@@ -54,11 +54,33 @@ const triggerAutoSave = () => {
   }, 1500);
 };
 
+const highlightOrphanTasks = () => {
+  if (!bpmnModeler) return;
+
+  const elementRegistry = bpmnModeler.get('elementRegistry');
+  const canvas = bpmnModeler.get('canvas');
+
+  // On récupère uniquement les éléments qui sont des tâches (Task, UserTask, ServiceTask...)
+  const tasks = elementRegistry.filter(element => element.type.includes('Task'));
+
+  tasks.forEach(task => {
+    const linkedUS = task.businessObject.get('custom:linkedUserStories');
+
+    // Si la propriété n'existe pas ou est vide = tâche orpheline
+    if (!linkedUS || linkedUS.trim() === '') {
+      canvas.addMarker(task.id, 'orphan-task');
+    } else {
+      // Si elle a des US, on retire le marqueur au cas où il y était
+      canvas.removeMarker(task.id, 'orphan-task');
+    }
+  });
+};
 onMounted(async () => {
   bpmnModeler = new Modeler({ container: container.value });
   let xml = props.initialXml || emptyBpmn;
 
   await bpmnModeler.importXML(xml);
+  highlightOrphanTasks();
 
   // --- ÉCOUTEUR D'ÉVÉNEMENTS BPMN ---
   const eventBus = bpmnModeler.get('eventBus');
@@ -95,6 +117,7 @@ onMounted(async () => {
 
   eventBus.on('commandStack.changed', () => {
     triggerAutoSave();
+    highlightOrphanTasks();
   });
 });
 
@@ -229,5 +252,17 @@ onBeforeUnmount(() => {
 /* Style spécifique pour que les en-têtes de piscines soient bien visibles */
 .djs-visual rect {
   stroke-width: 2px !important;
+}
+
+.orphan-task .djs-visual rect {
+  stroke: #ef4444 !important; /* Rouge PrimeVue/Tailwind */
+  stroke-width: 3px !important;
+  stroke-dasharray: 5, 5 !important; /* Effet pointillé */
+  fill: #fff5f5 !important; /* Fond légèrement rouge pour accentuer */
+  transition: all 0.3s ease;
+}
+
+.orphan-task .djs-visual rect {
+  fill: #fff5f5 !important;
 }
 </style>
