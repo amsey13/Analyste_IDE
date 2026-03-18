@@ -78,5 +78,10 @@ export const SupportFeatureService = {
 
     async deleteDictionaryAttribute(attrId) {
         await apiClient.delete(`/support/dictionary-attributes/${attrId}`);
-    }
+    },
+
+    async suggestDictionary(projectId) {
+        const response = await apiClient.get(`/support/projects/${projectId}/dictionary-suggestions`);
+        return response.data;
+    },
 };

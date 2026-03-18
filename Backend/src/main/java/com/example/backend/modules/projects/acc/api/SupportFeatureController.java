@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -144,6 +146,16 @@ public class SupportFeatureController {
             @PathVariable UUID attrId,
             @RequestBody DictionaryAttributeRequestDTO dto) {
         return ResponseEntity.ok(supportService.updateDictionaryAttribute(attrId, dto));
+    }
+
+    @GetMapping("/projects/{projectId}/dictionary-suggestions")
+    public ResponseEntity<List<DictionaryEntryRequestDTO>> getDictionarySuggestions(@PathVariable UUID projectId) {
+        try {
+            List<DictionaryEntryRequestDTO> suggestions = supportService.getDictionarySuggestions(projectId);
+            return ResponseEntity.ok(suggestions);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
 
