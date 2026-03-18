@@ -120,13 +120,15 @@ const deleteProjet = (idProject) => {
           v-for="project in displayedProjects"
           :key="project.idProject"  class="col-12 md:col-6 lg:col-4"
       >
-        <Card class="project-card" @click="openProjet(project.idProject)">
+        <Card class="h-full cursor-pointer project-card" @click="openProjet(project.idProject)">
           <template #content>
-            <h3>{{ project.nom || 'Sans nom' }}</h3>
-            <p>{{ project.description || 'Pas de description' }}</p>
-            <span>{{ project.statut }}</span>
+            <div class="text-center p-5">
+              <i class="pi pi-folder-open text-4xl text-primary mb-3"></i>
+              <h3 class="mb-2">{{ project.name || 'Sans nom' }}</h3>
+             <p>{{ project.description || 'Pas de description' }}</p>
+            <span class="text-sm font-medium text-primary">{{ project.statut }}</span>
 
-            <ProgressBar :value="project.progress || 50" style="height: 12px; margin-top: 1rem" />
+            <ProgressBar :value="project.progress || 50" style="height: 8px; margin-top: 1rem" />
 
             <!-- bouton suppression -->
             <Button
@@ -138,6 +140,7 @@ const deleteProjet = (idProject) => {
                 class="mt-2"
                 @click.stop="deleteProjet(project.idProject)"
             />
+            </div>
           </template>
         </Card>
       </div>
