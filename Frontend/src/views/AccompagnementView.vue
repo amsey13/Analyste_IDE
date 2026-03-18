@@ -6,8 +6,9 @@ import Skeleton from 'primevue/skeleton';
 import ActorManager from '../features/projects/components/ActorManager.vue';
 import UserStoryManager from '../features/projects/components/UserStoryManager.vue';
 import BpmnModeler from '../features/projects/components/BpmnModeler.vue';
+import DictionaryManager from '../features/projects/components/DictionaryManager.vue';
 
-// Nouveaux imports PrimeVue v4
+
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';
@@ -33,19 +34,23 @@ const coverageBadgeClass = computed(() => {
   return matchedThreshold ? matchedThreshold.classes : thresholds[2].classes;
 });
 
-onMounted(async () => {
+const loadProject = async () => {
   try {
     project.value = await ProjectService.getProjectById(projectId);
 
     // Sécurité réactivité
     if (!project.value.actors) project.value.actors = [];
     if (!project.value.userStories) project.value.userStories = [];
-
+    if (!project.value.dictionaryEntries) project.value.dictionaryEntries = []; // <- NOUVEAU
   } catch (error) {
     console.error("Erreur lors du chargement du projet", error);
   } finally {
     isLoading.value = false;
   }
+};
+
+onMounted(() => {
+  loadProject();
 });
 </script>
 
@@ -70,6 +75,7 @@ onMounted(async () => {
         <TabList>
           <Tab value="0">1. Acteurs & User Stories</Tab>
           <Tab value="1">2. Modélisation BPMN</Tab>
+          <Tab value="2">3. Dictionnaire de Données</Tab>
         </TabList>
 
         <TabPanels class="flex-1 p-0 overflow-y-auto">
@@ -115,7 +121,15 @@ onMounted(async () => {
               />
             </div>
           </TabPanel>
-
+          <TabPanel value="2" class="h-full">
+            <div class="h-full p-4 overflow-y-auto">
+              <DictionaryManager
+                  :projectId="projectId"
+                  :entries="project.dictionaryEntries"
+                  @refresh="loadProject"
+              />
+            </div>
+          </TabPanel>
         </TabPanels>
       </Tabs>
     </div>
