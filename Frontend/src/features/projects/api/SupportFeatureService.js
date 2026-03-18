@@ -50,8 +50,33 @@ export const SupportFeatureService = {
         return response.data;
     },
 
-    async getBpmnSkeleton(projectId) {
-        const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/bpmn-skeleton`);
+    // --- Gestion du Dictionnaire de Données ---
+
+    async addDictionaryEntry(projectId, entryData) {
+        const response = await apiClient.post(`/support/projects/${projectId}/dictionary-entries`, entryData);
         return response.data;
     },
+
+    async updateDictionaryEntry(entryId, entryData) {
+        const response = await apiClient.put(`/support/dictionary-entries/${entryId}`, entryData);
+        return response.data;
+    },
+
+    async deleteDictionaryEntry(entryId) {
+        await apiClient.delete(`/support/dictionary-entries/${entryId}`);
+    },
+
+    async addDictionaryAttribute(entryId, attrData) {
+        const response = await apiClient.post(`/support/dictionary-entries/${entryId}/attributes`, attrData);
+        return response.data;
+    },
+
+    async updateDictionaryAttribute(attrId, attrData) {
+        const response = await apiClient.put(`/support/dictionary-attributes/${attrId}`, attrData);
+        return response.data;
+    },
+
+    async deleteDictionaryAttribute(attrId) {
+        await apiClient.delete(`/support/dictionary-attributes/${attrId}`);
+    }
 };
