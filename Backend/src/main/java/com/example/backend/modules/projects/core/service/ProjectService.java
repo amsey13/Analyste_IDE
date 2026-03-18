@@ -5,14 +5,19 @@ import com.example.backend.modules.projects.audit.dto.AuditProjectRequestDTO;
 import com.example.backend.modules.projects.audit.entity.AuditProject;
 import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
-import com.example.backend.core.auth.exeption.UserNotFoundException;
+import com.example.backend.core.auth.exception.UserNotFoundException;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.dto.BaseProjectRequestDTO;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
 import com.example.backend.modules.projects.core.entity.Project;
+import com.example.backend.modules.projects.acc.dto.SupportProjectRequestDTO;
+import com.example.backend.modules.projects.acc.entity.SupportProject;
+import com.example.backend.modules.projects.acc.entity.StatusProject;
 
 import com.example.backend.modules.projects.audit.taiga.service.TaigaService;
 import com.example.backend.modules.projects.audit.taiga.exception.IncorrectIdentifiersException;
+import com.example.backend.modules.projects.core.mapper.ProjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,33 +37,32 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final TaigaService taigaService;
-
-    public ProjectService(ProjectRepository projetRepository,
+    private final List<ProjectMapper> mappers;
+    public ProjectService(ProjectRepository projectRepository,
                           TaigaService taigaService,
-                          UserRepository userRepository) {
-        this.projectRepository = projetRepository;
+                          UserRepository userRepository,
+                          List<ProjectMapper> mappers) {
+        this.projectRepository = projectRepository;
         this.taigaService = taigaService;
         this.userRepository = userRepository;
+        this.mappers = mappers;
     }
 
-
-    
     /**
      * The `mapDTO` function takes a `Projet` object and maps its attributes to a `ProjetDTO` object.
-     * 
+     *
      * @param projet The `mapDTO` method takes a `Projet` object as a parameter and maps its attributes
      * to a `ProjetDTO` object. The `Projet` class seems to have the following attributes:
      * @return The method `mapDTO` is returning a `ProjetDTO` object after mapping the properties from
      * a `Projet` object.
      */
-    private ProjectResponseDTO mapDTO(Project projet){
-        ProjectResponseDTO dto = new ProjectResponseDTO();
-        dto.setIdProjet(projet.getIdProjet());
-        dto.setName(projet.getName());
-        dto.setDescription(projet.getDescription());
-        dto.setCreationDate(projet.getDateCreation());
-        dto.setUpdateDateDate(projet.getUpdatedAt());
-        return dto;
+
+    private ProjectResponseDTO mapDTO(Project projet) {
+        return mappers.stream()
+                .filter(mapper -> mapper.supports(projet))
+                .findFirst()
+                .map(mapper -> mapper.map(projet))
+                .orElseThrow(() -> new RuntimeException("Erreur critique : Aucun mapper trouvé pour " + projet.getClass().getName()));
     }
 
 
@@ -84,50 +88,34 @@ public class ProjectService {
                 .collect(Collectors.toList());
     }
 
-   
-    /**
-     * The function creates a new project using the provided data transfer object and associates it
-     * with the authenticated user, then saves and returns the mapped project DTO.
-     * 
-     * @param dto The `dto` parameter in the `createProjet` method is of type `ProjetDTO`, which is a
-     * Data Transfer Object representing project data. It contains information such as the project
-     * name, description, and possibly other details related to a project. This method is responsible
-     * for creating a new project
-     * @return The `createProjet` method returns a `ProjetDTO` object after creating a new `Projet`
-     * entity, saving it to the database, and mapping it to a DTO object.
-     */
-    public ProjectResponseDTO createProjet(BaseProjectRequestDTO dto) throws UserNotFoundException, IncorrectIdentifiersException {
+    private Boolean hasTaigaInformation(AuditProjectRequestDTO dto) {
 
-       User user = this.getAuthenticatedUser();
-        Project projet = new Project();
-        projet.setBaseInfo(dto.getName(), dto.getDescription(),user);
-        projet.setDateCreation(LocalDateTime.now());
-        return mapDTO(projectRepository.save(projet));
-    }
-
-    public ProjectResponseDTO createAuditProject(AuditProjectRequestDTO dto) throws UserNotFoundException, IncorrectIdentifiersException {
-        User user = this.getAuthenticatedUser();
-        AuditProject audit = new AuditProject();
-        audit.setBaseInfo(dto.getName(), dto.getDescription(), user);
-        audit.setDateCreation(LocalDateTime.now());
-
-        boolean hasTaigaInformation = dto.getTaigaUserName() != null && !dto.getTaigaUserName().isEmpty()
+        return dto.getTaigaUserName() != null && !dto.getTaigaUserName().isEmpty()
                 && dto.getTaigaPassword() != null && !dto.getTaigaPassword().isEmpty()
                 && dto.getTaigaProjectUrl() != null && !dto.getTaigaProjectUrl().isEmpty();
-
-        if(hasTaigaInformation){
-            String slug = extractSlug(dto.getTaigaProjectUrl());
-            String token = taigaService.authenticate(dto.getTaigaUserName(), dto.getTaigaPassword());
-
-            if(token == null){
-                throw new IncorrectIdentifiersException("Invalid Taiga Identifiers");
-            }
-            audit.setProjectSlug(slug);
-            audit.setTaigaToken(token);
-        }
-
-        return mapDTO(projectRepository.save(audit));
     }
+
+    /**
+     * The function `getAuthenticatedUser()` retrieves the authenticated user based on their external
+     * ID or throws a `UserNotFoundException` if the user is not found.
+     *
+     * @return The method `getAuthenticatedUser()` is returning a `User` object.
+     */
+    private User getAuthenticatedUser() throws UserNotFoundException {
+        String externalId = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByExternalId(externalId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
+   
+    private <T extends Project> T prepareProject(T project, BaseProjectRequestDTO dto) throws UserNotFoundException {
+        User user = getAuthenticatedUser();
+        project.setBaseInfo(dto.getName(), dto.getDescription(), user);
+        project.setDateCreation(LocalDateTime.now());
+        return project;
+    }
+
+
 
     private String extractSlug(String url) {
         if (url == null || !url.contains("project/")) {
@@ -135,6 +123,39 @@ public class ProjectService {
         }
         return url.split("project/")[1].split("/")[0];
 
+    }
+
+
+    private void takeTaigaInformation(AuditProjectRequestDTO dto, AuditProject audit) throws IncorrectIdentifiersException {
+        String slug = extractSlug(dto.getTaigaProjectUrl());
+        String token = taigaService.authenticate(dto.getTaigaUserName(), dto.getTaigaPassword());
+
+        if(token == null){
+            throw new IncorrectIdentifiersException("Invalid Taiga Identifiers");
+        }
+        audit.setProjectSlug(slug);
+        audit.setTaigaToken(token);
+    }
+
+    public ProjectResponseDTO createAuditProject(AuditProjectRequestDTO dto) throws UserNotFoundException, IncorrectIdentifiersException {
+
+        AuditProject audit = this.prepareProject(new AuditProject(), dto);
+
+        if(this.hasTaigaInformation(dto)){
+            this.takeTaigaInformation(dto, audit);
+        }
+
+        return mapDTO(projectRepository.save(audit));
+    }
+
+
+
+
+    public ProjectResponseDTO createSupportProject(SupportProjectRequestDTO dto) throws UserNotFoundException {
+       SupportProject support = this.prepareProject(new SupportProject(), dto);
+        support.setStatus(StatusProject.INITIALISE);
+
+        return mapDTO(projectRepository.save(support));
     }
 
     /**
@@ -152,8 +173,6 @@ public class ProjectService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUserId = auth.getName();
         String userKey = projet.getUser().getExternalId();
-
-
         if (!userKey.equals(currentUserId)) {
             throw new AccessDeniedException("You're not allowed to delete this project.");
         }
@@ -161,52 +180,23 @@ public class ProjectService {
 
     }
 
+    public ProjectResponseDTO getProjectById(UUID id) throws UserNotFoundException {
 
-    /**
-     * The function creates an audit project using the provided data and saves it to the repository
-     * after setting necessary attributes.
-     * 
-     * @param dto AuditProjectRequestDTO dto
-     * @param user The `user` parameter in the `createAuditProject` method is an instance of the `User`
-     * class. It is used to set the user-related information for the `AuditProject` being created. This
-     * information might include details like the user's name, email, role, or any other relevant
-     * @return The method `createAuditProject` is returning a `ProjectResponseDTO` object.
-     */
-    private ProjectResponseDTO createAuditProject(AuditProjectRequestDTO dto, User user) throws UserNotFoundException, IncorrectIdentifiersException {
+        Project projet = projectRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Project not found with ID: " + id));
 
-        AuditProject audit = new AuditProject();
-        audit.setBaseInfo(dto.getName(), dto.getDescription(), user);
-        audit.setDateCreation(LocalDateTime.now());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserId = auth.getName();
+        String projectOwnerId = projet.getUser().getExternalId();
 
-        boolean hasTaigaInformation = dto.getTaigaUserName() != null && !dto.getTaigaUserName().isEmpty()
-                && dto.getTaigaPassword() != null && !dto.getTaigaPassword().isEmpty()
-                && dto.getTaigaProjectUrl() != null && !dto.getTaigaProjectUrl().isEmpty();
-
-        if(hasTaigaInformation){
-            String slug = extractSlug(dto.getTaigaProjectUrl());
-            String token = taigaService.authenticate(dto.getTaigaUserName(), dto.getTaigaPassword());
-
-            if(token == null){
-                throw new IncorrectIdentifiersException("Invalid Taiga Identifiers");
-            }
-            audit.setProjectSlug(slug);
-            audit.setTaigaToken(token);
+        if (!projectOwnerId.equals(currentUserId)) {
+            throw new AccessDeniedException("You're not allowed to access this project.");
         }
-
-        return mapDTO(projectRepository.save(audit));
+        return mapDTO(projet);
     }
 
-    /**
-     * The function `getAuthenticatedUser()` retrieves the authenticated user based on their external
-     * ID or throws a `UserNotFoundException` if the user is not found.
-     * 
-     * @return The method `getAuthenticatedUser()` is returning a `User` object.
-     */
-    private User getAuthenticatedUser() throws UserNotFoundException {
-        String externalId = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByExternalId(externalId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-    }
+
+
 
 
 

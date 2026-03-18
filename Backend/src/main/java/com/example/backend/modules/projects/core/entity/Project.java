@@ -1,10 +1,14 @@
 package com.example.backend.modules.projects.core.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.example.backend.core.auth.entity.User;
 
+import com.example.backend.modules.projects.audit.entity.Report;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -39,6 +43,11 @@ public class Project {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @OneToMany(mappedBy = "project")
+    @JsonIgnore
+    private List<Report> reports = new ArrayList<>();
+
+
 
     public LocalDateTime getDateCreation() {
         return createdAt;
@@ -56,11 +65,11 @@ public class Project {
         this.updatedAt = updatedAt;
     }
 
-    public UUID getIdProjet() {
+    public UUID getIdProject() {
         return id;
     }
 
-    public void setIdProjet(UUID idProject) {
+    public void setIdProject(UUID idProject) {
         this.id = idProject;
     }
 

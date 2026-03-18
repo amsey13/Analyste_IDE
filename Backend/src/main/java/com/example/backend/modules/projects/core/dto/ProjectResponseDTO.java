@@ -22,11 +22,11 @@ public class ProjectResponseDTO {
         this.description = description;
     }
 
-    public UUID getIdProjet() {
+    public UUID getIdProject() {
         return id;
     }
 
-    public void setIdProjet(UUID id) {
+    public void setIdProject(UUID id) {
         this.id = id;
     }
 

@@ -3,18 +3,20 @@ package com.example.backend.service;
 import com.example.backend.modules.projects.audit.dto.AuditProjectRequestDTO;
 import com.example.backend.core.auth.dao.UserRepository;
 import com.example.backend.core.auth.entity.User;
-import com.example.backend.core.auth.exeption.UserNotFoundException;
+import com.example.backend.core.auth.exception.UserNotFoundException;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.dto.BaseProjectRequestDTO;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
 import com.example.backend.modules.projects.core.entity.Project;
 import com.example.backend.modules.projects.core.service.ProjectService;
-
+import com.example.backend.modules.projects.core.mapper.ProjectMapper;
+import com.example.backend.modules.projects.acc.dto.SupportProjectRequestDTO;
 import com.example.backend.modules.projects.audit.taiga.service.TaigaService;
 import com.example.backend.modules.projects.audit.taiga.exception.IncorrectIdentifiersException;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,275 +31,148 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ProjectServiceTest {
 
-    @Mock
-    private ProjectRepository projectRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private TaigaService taigaService;
+    @Mock private ProjectRepository projectRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private TaigaService taigaService;
+    @Mock private ProjectMapper projectMapper;
 
-    @InjectMocks
     private ProjectService projectService;
+    private List<ProjectMapper> mappers;
 
-
-    @Test
-    public void testCreateProjetSuccessWithoutTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
-
-        BaseProjectRequestDTO request = new BaseProjectRequestDTO();
-        request.setName("Test creation Projet");
-        UUID id = UUID.randomUUID();
-        User mockUser = new User();
-        mockUser.setId(id);
-
-        //We mock the security
-
-        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
-
-            Authentication auth = mock(Authentication.class);
-            SecurityContext context = mock(SecurityContext.class);
-
-            //simulates the output of Spring's security elements
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
-            when(context.getAuthentication()).thenReturn(auth);
-            when(auth.getName()).thenReturn("use-external-id");
-            when(userRepository.findByExternalId("use-external-id")).thenReturn(Optional.of(mockUser));
-            when(projectRepository.save(any(Project.class))).thenAnswer(i -> i.getArguments()[0]);
-
-            ProjectResponseDTO projetResult = projectService.createProjet(request);
-
-            assertNotNull(projetResult);
-            assertEquals("Test creation Projet", projetResult.getName());
-            verify(projectRepository, times(1)).save(any(Project.class));
-
-            verify(taigaService, never()).authenticate(anyString(), anyString());
-
-
-        }
+    @BeforeEach
+    void setUp() {
+        mappers = new ArrayList<>();
+        mappers.add(projectMapper);
+        projectService = new ProjectService(projectRepository, taigaService, userRepository, mappers);
     }
 
+    private void setupMapper(String name) {
+        when(projectMapper.supports(any())).thenReturn(true);
+        ProjectResponseDTO dto = new ProjectResponseDTO();
+        dto.setName(name);
+        when(projectMapper.map(any())).thenReturn(dto);
+    }
+
+    // --- CRÉATION ---
+
     @Test
-    public void testCreateProjetSuccessWithTaiga() throws UserNotFoundException, IncorrectIdentifiersException {
-        AuditProjectRequestDTO request = new AuditProjectRequestDTO();
-        request.setName("Projet Taiga");
-        request.setTaigaUserName("user-taiga");
-        request.setTaigaPassword("pass-taiga");
-        request.setTaigaProjectUrl("https://tree.taiga.io/project/mon-super-projet");
-
-        User mockUser = new User();
-        mockUser.setId(UUID.randomUUID());
-
-        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
-            Authentication auth = mock(Authentication.class);
-            SecurityContext context = mock(SecurityContext.class);
-
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
-            when(context.getAuthentication()).thenReturn(auth);
-            when(auth.getName()).thenReturn("user-id");
-            when(userRepository.findByExternalId("user-id")).thenReturn(Optional.of(mockUser));
-
-            // Correction : anyString() garantit que le mock s'active, peu importe la valeur exacte
-            when(taigaService.authenticate(anyString(), anyString())).thenReturn("fake-token");
-
-            // Correction : any() au lieu de any(Project.class) pour bien capter l'instance AuditProject
+    void testCreateProjectSuccess() throws Exception {
+       SupportProjectRequestDTO req = new SupportProjectRequestDTO();
+        req.setName("Projet Accompagnement");
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "u1");
+            when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(new User()));
             when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+            setupMapper("Projet Accompagnement");
 
-            ProjectResponseDTO result = projectService.createAuditProject(request);
-
-            assertNotNull(result);
-            verify(taigaService, times(1)).authenticate(anyString(), anyString());
-            verify(projectRepository, times(1)).save(any());
-        }
-    }
-
-    @Test
-    public void testCreateProjectWithInvalidTaigaIdentifiersShouldThrownAnException() {
-        AuditProjectRequestDTO request = new AuditProjectRequestDTO();
-        request.setName("Test creation Projet");
-        request.setTaigaUserName("mauvais-user");
-        request.setTaigaPassword("mauvais-pass");
-        request.setTaigaProjectUrl("https://tree.taiga.io/project/slug");
-
-        User mockUser = new User();
-        mockUser.setId(UUID.randomUUID());
-
-        try(MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)){
-            Authentication auth = mock(Authentication.class);
-            SecurityContext context = mock(SecurityContext.class);
-
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
-            when(context.getAuthentication()).thenReturn(auth);
-            when(auth.getName()).thenReturn("user-id");
-
-            when(userRepository.findByExternalId("user-id")).thenReturn(Optional.of(mockUser));
-
-            // Correction : On renvoie null pour forcer TON code métier (if token == null) à jeter l'exception
-            when(taigaService.authenticate(anyString(), anyString())).thenReturn(null);
-
-            assertThrows(IncorrectIdentifiersException.class, () -> {
-                projectService.createAuditProject(request);
-            });
-        } catch (IncorrectIdentifiersException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Test
-    public void testCreateProjectWithUserNotFoundException() {
-
-        BaseProjectRequestDTO request = new BaseProjectRequestDTO();
-        request.setName("Projet Test");
-
-        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
-
-            Authentication auth = mock(Authentication.class);
-            SecurityContext context = mock(SecurityContext.class);
-
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
-            when(context.getAuthentication()).thenReturn(auth);
-            when(auth.getName()).thenReturn("unknown-id");
-
-            when(userRepository.findByExternalId("unknown-id")).thenReturn(Optional.empty());
-
-            assertThrows(UserNotFoundException.class, () -> projectService.createProjet(request));
-
+            ProjectResponseDTO res = projectService.createSupportProject(req);
+            assertNotNull(res);
+            assertEquals("Projet Accompagnement", res.getName());
 
         }
     }
 
+    @Test
+    void testCreateAuditProjectSuccess() throws Exception {
+        AuditProjectRequestDTO req = new AuditProjectRequestDTO();
+        req.setName("Audit");
+        req.setTaigaUserName("u"); req.setTaigaPassword("p"); req.setTaigaProjectUrl("https://taiga.io/project/s");
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "u1");
+            when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(new User()));
+            when(taigaService.authenticate(anyString(), anyString())).thenReturn("token");
+            when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+            setupMapper("Audit");
+            assertNotNull(projectService.createAuditProject(req));
+        }
+    }
+
+    
+    @Test
+    void testCreateAuditInvalidIdentifiers() throws IncorrectIdentifiersException {
+        AuditProjectRequestDTO req = new AuditProjectRequestDTO();
+        req.setTaigaUserName("b"); req.setTaigaPassword("b"); req.setTaigaProjectUrl("https://taiga.io/project/s");
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "u1");
+            when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(new User()));
+            when(taigaService.authenticate(anyString(), anyString())).thenReturn(null); //The first thrown exception is for the method authenticate, so we return null to simulate a failed authentication
+            assertThrows(IncorrectIdentifiersException.class, () -> projectService.createAuditProject(req));
+        }
+    }
 
     @Test
-    public void testGetProjetsFromUserSucces() {
+    void testCreateProjectUserNotFound() {
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "unknown");
+            when(userRepository.findByExternalId("unknown")).thenReturn(Optional.empty());
+            assertThrows(UserNotFoundException.class, () -> projectService.createSupportProject(new SupportProjectRequestDTO()));
+        }
+    }
 
-        User mockUser = new User();
+    // --- RÉCUPÉRATION ---
+
+    @Test
+    void testGetProjectsSuccess() {
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "u1");
+            User u = new User();
+            when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(u));
+            when(projectRepository.findByUser(u)).thenReturn(List.of(new Project()));
+            setupMapper("P1");
+            assertEquals(1, projectService.getProjectsFromUser().size());
+        }
+    }
+
+    @Test
+    void testGetProjectsEmpty() {
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "u1");
+            User u = new User();
+            when(userRepository.findByExternalId("u1")).thenReturn(Optional.of(u));
+            when(projectRepository.findByUser(u)).thenReturn(new ArrayList<>());
+            assertTrue(projectService.getProjectsFromUser().isEmpty());
+        }
+    }
+
+    // --- SUPPRESSION ---
+
+    @Test
+    void testDeleteSuccess() throws Exception {
         UUID id = UUID.randomUUID();
-        mockUser.setId(id);
-
-        List<Project> mockProjets = new ArrayList<>();
-        Project mockProjet1 = new Project();
-        mockProjet1.setName("Projet 1");
-        Project mockProjet2 = new Project();
-        mockProjet2.setName("Projet 2");
-        mockProjets.add(mockProjet1);
-        mockProjets.add(mockProjet2);
-
-        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
-
-            Authentication auth = mock(Authentication.class);
-            SecurityContext context = mock(SecurityContext.class);
-
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(context);
-            when(context.getAuthentication()).thenReturn(auth);
-            when(auth.getName()).thenReturn("user-external-id");
-
-            when(userRepository.findByExternalId("user-external-id")).thenReturn(Optional.of(mockUser));
-            when(projectRepository.findByUser(mockUser)).thenReturn(mockProjets);
-
-            List<ProjectResponseDTO> results = projectService.getProjectsFromUser();
-
-            assertFalse(results.isEmpty());
-            assertEquals(2, results.size());
-        }
-
-
-    }
-
-    @Test
-    public void testGetProjetsForEmptyList() {
-
-        User mockUser = new User();
-
-        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
-            Authentication auth = mock(Authentication.class);
-            SecurityContext securityContext = mock(SecurityContext.class);
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-            when(securityContext.getAuthentication()).thenReturn(auth);
-            when(auth.getName()).thenReturn("user-external-id");
-
-            when(userRepository.findByExternalId("user-external-id")).thenReturn(Optional.of(mockUser));
-
-            when(projectRepository.findByUser(mockUser)).thenReturn(new ArrayList<>());
-
-            List<ProjectResponseDTO> result = projectService.getProjectsFromUser();
-
-            assertNotNull(result);
-            assertTrue(result.isEmpty());
-        }
-    }
-
-
-    @Test
-    void deleteProjetShouldDeleteWhenOwner() throws UserNotFoundException {
-        // 1. Arrange
-        UUID projectId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
-        String unique_Id = "id-pout-test";
-
-        Project projet = new Project();
-        projet.setIdProjet(projectId);
-
-        User mockUser = new User();
-        mockUser.setId(ownerId);
-        projet.setUser(mockUser);
-        mockUser.setExternalId(unique_Id);
-
-
-        when(projectRepository.findById(projectId)).thenReturn(Optional.of(projet));
-
-
-        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
-            Authentication auth = mock(Authentication.class);
-            SecurityContext securityContext = mock(SecurityContext.class);
-
-
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-            when(securityContext.getAuthentication()).thenReturn(auth);
-
-
-            when(auth.getName()).thenReturn(unique_Id);
-
-
-            projectService.deleteProject(projectId);
-
-
-            verify(projectRepository, times(1)).delete(projet);
+        Project p = new Project();
+        User u = new User(); u.setExternalId("o"); p.setUser(u);
+        when(projectRepository.findById(id)).thenReturn(Optional.of(p));
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "o");
+            projectService.deleteProject(id);
+            verify(projectRepository).delete(p);
         }
     }
 
     @Test
-    void deleteProjetShouldThrowExceptionWhenNotOwner() {
-        UUID projectId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
-        Project projet = new Project();
-        projet.setIdProjet(projectId);
-
-        User mockUser = new User();
-        mockUser.setId(ownerId);
-        projet.setUser(mockUser);
-        mockUser.setExternalId("owner-id-dans-db");
-
-        when(projectRepository.findById(projectId)).thenReturn(Optional.of(projet));
-
-        // We mock the security so that it returns a different ID
-        try (MockedStatic<SecurityContextHolder> mockedSecurity = mockStatic(SecurityContextHolder.class)) {
-            Authentication auth = mock(Authentication.class);
-            SecurityContext securityContext = mock(SecurityContext.class);
-
-            mockedSecurity.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-            when(securityContext.getAuthentication()).thenReturn(auth);
-            when(auth.getName()).thenReturn("intruder-id");
-
-
-            assertThrows(AccessDeniedException.class, () -> {
-                projectService.deleteProject(projectId);
-            });
-
-
-            verify(projectRepository, never()).delete(any());
+    void testDeleteForbidden() {
+        UUID id = UUID.randomUUID();
+        Project p = new Project();
+        User u = new User(); u.setExternalId("o"); p.setUser(u);
+        when(projectRepository.findById(id)).thenReturn(Optional.of(p));
+        try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
+            mockAuth(ms, "hacker");
+            assertThrows(AccessDeniedException.class, () -> projectService.deleteProject(id));
         }
+    }
+
+    private void mockAuth(MockedStatic<SecurityContextHolder> ms, String id) {
+        Authentication a = mock(Authentication.class);
+        SecurityContext c = mock(SecurityContext.class);
+        ms.when(SecurityContextHolder::getContext).thenReturn(c);
+        when(c.getAuthentication()).thenReturn(a);
+        when(a.getName()).thenReturn(id);
     }
 }

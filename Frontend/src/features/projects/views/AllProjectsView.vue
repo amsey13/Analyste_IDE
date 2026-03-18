@@ -1,200 +1,248 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import ProjectService from '../api/ProjectService'
+import { ref, computed, onMounted } from 'vue';
+import { ProjectService } from '../api/ProjectService.js';
+import { useRouter } from 'vue-router';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
-const router = useRouter()
+import Card from 'primevue/card';
+import Button from 'primevue/button';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Toast from 'primevue/toast';
+import Drawer from 'primevue/drawer';
+import Paginator from 'primevue/paginator';
+
+
+const router = useRouter();
+const confirm = useConfirm();
+const toast = useToast();
 
 const projects = ref([])
-const loading = ref(false)
+const isLoading = ref(false)
 
-const fetchProjects = async () => {
-  loading.value = true
+const drawerVisible = ref(false);
+const selectedProject = ref(null);
+
+const first = ref(0)
+const rows = ref(6)
+
+onMounted(async () => {
+  isLoading.value = true
   try {
-    const response = await ProjectService.getProjects()
-    projects.value = response.data || []
+    const data = await ProjectService.getProjects()
+    projects.value = data.map((p) => ({
+      ...p,
+      id: p.id || p.idProject,
+      name: p.name,
+      project_type: p.project_type || p.typeProjet || p.type,
+      description: p.description || ''
+    }));
+    if(data.length > 0){
+      console.log("Structure du premier projet :", data[0]);
+      console.log("Clés disponibles :", Object.keys(data[0]));
+    }
   } catch (error) {
-    console.error('Erreur lors du chargement des projets :', error)
+    console.error('Erreur lors du chargement des projets :', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de récupérer les projets'
+    });
   } finally {
-    loading.value = false
+    isLoading.value = false
   }
-}
+});
+
+const paginatedProjects = computed(() => {
+  return projects.value.slice(first.value, first.value + rows.value);
+});
+
+const formatProjectType = (type) => {
+  if (!type) return 'Non défini';
+  if (type === 'audit') return 'Audit';
+  if (type === 'accompagnement') return 'Accompagnement';
+  return type;
+};
+
+const onPageChange = (event) => {
+  first.value = event.first;
+  rows.value = event.rows;
+};
+
+const openProjectDrawer = (project) => {
+  selectedProject.value = project;
+  drawerVisible.value = true;
+};
+
+const goToProject = () => {
+  if (!selectedProject.value?.idProject) return;
+
+  drawerVisible.value = false;
+
+  router.push({
+    name: 'project-dashboard',
+    params: { id: selectedProject.value.idProject }
+  });
+};
 
 const goBack = () => {
-  router.push('/app/projets')
+  router.push('/app/projects')
 }
 
 const goToCreateProject = () => {
-  router.push('/app/projet/create')
+  router.push('/app/project/create')
 }
 
-const goToProject = (projectId) => {
-  router.push(`/app/projet/${projectId}`)
-}
+const deleteProject = (id) => {
+  confirm.require({
+    message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    accept: async () => {
+      try {
+        await ProjectService.deleteProject(id);
+        projects.value = projects.value.filter((p) => p.id !== id);
 
-const deleteProject = async (projectId) => {
-  try {
-    await ProjectService.deleteProject(projectId)
-    projects.value = projects.value.filter((p) => p.id !== projectId)
-  } catch (error) {
-    console.error('Erreur lors de la suppression du projet :', error)
-  }
-}
+        if (first.value >= projects.value.length && first.value > 0) {
+          first.value = Math.max(0, first.value - rows.value);
+        }
 
-onMounted(() => {
-  fetchProjects()
-})
+        toast.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'Projet supprimé'
+        });
+      } catch (e) {
+        console.error('Erreur suppression projet', e);
+        toast.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Suppression échouée'
+        });
+      }
+    }
+  });
+};
 </script>
 
 <template>
-  <div class="all-projects-page">
-    <div class="page-header">
+  <Toast />
+  <ConfirmDialog />
+
+  <div class="all-projects-view">
+    <div class="header">
       <div>
-        <h1 class="page-title">Tous les projets</h1>
-        <p class="page-subtitle">Liste complète de vos projets existants.</p>
+        <h1>Tous les projets</h1>
+        <p>Liste complète des projets disponibles.</p>
       </div>
 
       <div class="header-actions">
-        <button class="secondary-btn" @click="goBack">
-          Retour
-        </button>
-        <button class="primary-btn" @click="goToCreateProject">
-          Nouveau Projet
-        </button>
+        <Button label="Nouveau projet" icon="pi pi-plus" @click="goToCreateProject" />
+        <Button label="Retour" icon="pi pi-arrow-left" outlined @click="goBack" />
       </div>
     </div>
 
-    <div v-if="loading" class="loading-state">
-      Chargement des projets...
+    <div v-if="isLoading">
+      Chargement...
     </div>
 
-    <div v-else-if="projects.length === 0" class="empty-state">
-      <div class="empty-card">
-        <h3>Aucun projet trouvé</h3>
-        <p>Vous n’avez pas encore créé de projet.</p>
-        <button class="primary-btn" @click="goToCreateProject">
-          Créer un projet
-        </button>
+    <div v-else-if="projects.length === 0">
+      Aucun projet disponible.
+    </div>
+
+    <div v-else>
+      <div class="projects-grid">
+        <Card
+            v-for="project in paginatedProjects"
+            :key="project.idProjet"
+            class="project-card col-12 md:col-6 lg:col-4 h-full cursor-pointer"
+            @click="openProjectDrawer(project)"
+        >
+          <template #content>
+            <h3 class="font-bold mb-3">
+              {{ project.name }}
+            </h3>
+
+            <p class="mb-3">
+              <strong>Type :</strong>
+              {{ formatProjectType(project.project_type) }}
+            </p>
+
+            <p class="mb-3">
+              {{ project.description || 'Pas de description' }}
+            </p>
+
+            <Button
+                label="Supprimer"
+                icon="pi pi-trash"
+                severity="danger"
+                text
+                rounded
+                class="mt-2"
+                @click.stop="deleteProject(project.idProject)"
+            />
+          </template>
+        </Card>
       </div>
-    </div>
 
-    <div v-else class="projects-grid">
-      <div
-          v-for="project in projects"
-          :key="project.id"
-          class="project-card"
-          @click="goToProject(project.id)"
-      >
-        <h3>{{ project.name || 'Sans titre' }}</h3>
-        <p>{{ project.description || 'Pas de description' }}</p>
-
-        <div class="project-status">En cours</div>
-
-        <div class="progress-bar">
-          <div
-              class="progress-fill"
-              :style="{ width: `${project.progress || 50}%` }"
-          ></div>
-        </div>
-
-        <span class="progress-text">{{ project.progress || 50 }}%</span>
-
-        <button class="delete-btn" @click.stop="deleteProject(project.id)">
-          <i class="pi pi-trash"></i>
-        </button>
+      <div v-if="projects.length > rows" class="paginator-wrapper">
+        <Paginator
+            :first="first"
+            :rows="rows"
+            :totalRecords="projects.length"
+            :rowsPerPageOptions="[6, 9, 12]"
+            @page="onPageChange"
+        />
       </div>
+
     </div>
+
+    <Drawer
+        v-model:visible="drawerVisible"
+        position="right"
+        class="!w-full md:!w-30rem lg:!w-[32rem]"
+    >
+      <div v-if="selectedProject" class="flex flex-column gap-4">
+        <h2 class="text-2xl font-bold">
+          {{ selectedProject.name }}
+        </h2>
+
+        <p>
+          <strong>Type :</strong>
+          {{ formatProjectType(selectedProject.project_type) }}
+        </p>
+
+        <p>
+          {{ selectedProject.description || 'Pas de description' }}
+        </p>
+
+        <Button
+            label="Ouvrir ce projet"
+            icon="pi pi-arrow-right"
+            class="w-full"
+            @click="goToProject"
+        />
+      </div>
+    </Drawer>
   </div>
 </template>
 
 <style scoped>
-.all-projects-page {
+.all-projects-view {
   padding: 2rem;
 }
 
-.page-header {
+.header {
+  margin-bottom: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #16325c;
-  margin-bottom: 0.5rem;
-}
-
-.page-subtitle {
-  color: #5b6b82;
-  margin: 0;
 }
 
 .header-actions {
   display: flex;
   gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.primary-btn,
-.secondary-btn {
-  border: none;
-  border-radius: 10px;
-  padding: 0.8rem 1.1rem;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.primary-btn {
-  background: #2563eb;
-  color: white;
-}
-
-.primary-btn:hover {
-  transform: translateY(-1px);
-}
-
-.secondary-btn {
-  background: #e8eef8;
-  color: #16325c;
-}
-
-.secondary-btn:hover {
-  transform: translateY(-1px);
-}
-
-.loading-state {
-  padding: 2rem 0;
-  color: #5b6b82;
-}
-
-.empty-state {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.empty-card {
-  width: 100%;
-  max-width: 420px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.empty-card h3 {
-  color: #2d3e5e;
-  margin-bottom: 0.75rem;
-}
-
-.empty-card p {
-  color: #6b7a90;
-  margin-bottom: 1.25rem;
 }
 
 .projects-grid {
@@ -204,88 +252,25 @@ onMounted(() => {
 }
 
 .project-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.5rem;
-  min-height: 210px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  position: relative;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 12px;
+  min-height: 230px;
 }
 
 .project-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: 0.2s ease;
 }
 
-.project-card h3 {
-  font-size: 1.2rem;
-  color: #2d3e5e;
-  margin-bottom: 0.75rem;
+.paginator-wrapper {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
 }
 
-.project-card p {
-  color: #6b7a90;
-  margin-bottom: 1rem;
-}
-
-.project-status {
-  font-size: 0.95rem;
-  color: #6b7a90;
-  margin-bottom: 0.5rem;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 16px;
-  background: #dbe3ef;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 0.4rem;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #0b5ed7;
-  border-radius: 10px;
-}
-
-.progress-text {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #0b5ed7;
-}
-
-.delete-btn {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  border: none;
-  background: transparent;
-  color: #ff5b5b;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-@media (max-width: 1100px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .projects-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 700px) {
-  .projects-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .header-actions {
-    width: 100%;
-  }
+.drawer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 </style>

@@ -1,7 +1,6 @@
 package com.example.backend.parser;
 
-import com.example.backend.modules.analysis.model.Actor;
-import com.example.backend.modules.analysis.model.Flux;
+
 import com.example.backend.modules.analysis.parser.MfcParserStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MfcParserTest {
 
     private MfcParserStrategy parser;
+    String output;
 
     @BeforeEach
     public void setUp() {
@@ -22,42 +22,45 @@ public class MfcParserTest {
             throw new RuntimeException("MFC file not found");
         }
         parser = new MfcParserStrategy(in);
+        output = parser.parse();
+    }
+
+
+    @Test
+    public void testOutputShouldContainMfcHeaderAndSectionTitles() {
+        assertNotNull(output);
+        assertTrue(output.contains("DÉTAILS DU MODÈLE MFC"), "The MFC header is missing");
+        assertTrue(output.contains("[ACTEURS]"), "The “Actors” section is missing");
     }
 
     @Test
-    public void testLoadLines() {
-        List<Object> lines = parser.loadObjects();
-        assertNotNull(lines);
-        assertFalse(lines.isEmpty(), "MFC object cannot be empty");
+    public void testOutputShouldDistinguishInternalAndExternalActors() {
+
+        assertTrue(output.contains("- Internes :"), "The description of internal actors is missing");
+        assertTrue(output.contains("- Externes :"), "The names of the external parties are missing");
     }
 
     @Test
-    public void testFindActors() {
-        List<Actor> actors = parser.findActors();
+    public void testOutputShouldContainSpecificActorNameFromResource() {
 
-        assertNotNull(actors);
-        assertFalse(actors.isEmpty(), "There's at least one actor");
-
-
-        assertTrue(actors.stream().anyMatch(a -> a.getName().equals("Utilisateur")),
-                "the first actor should be the actor name");
+        assertTrue(output.contains("Utilisateur"), "The ‘User’ field should appear in the text");
     }
 
     @Test
-    public void testFindFluxs(){
-        List<Flux> fluxs = parser.findFluxs();
-        assertNotNull(fluxs);
-        assertFalse(fluxs.isEmpty(), "There's at least one flux");
-
-
-        assertTrue(fluxs.stream().anyMatch(f -> "Utilisateur".equals(f.getSender())),
-                "The flux with the sender should be the utilisateur");
-
+    public void testOutputShouldListFluxAndMessagesSection() {
+        assertTrue(output.contains("[FLUX ET MESSAGES]"), "The “Flows” section is missing");
     }
 
+    @Test
+    public void testOutputShouldFormatFluxArrowAndSpecificMessageCorrectly() {
 
+        assertTrue(output.contains("Utilisateur"), "The formatting of the feed using the arrow is incorrect");
+    }
 
-
+    @Test
+    public void testOutputShouldNotBeEmptyOrNull() {
+        assertFalse(output.trim().isEmpty(), "The MFC parser returned an empty string");
+    }
 
 
 

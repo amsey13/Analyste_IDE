@@ -16,7 +16,7 @@
   const nameTouched = ref(false);
   const featureTouched = ref(false);
 
-  const projet = ref({
+  const project = ref({
     name: '',
     description: '',
     project_type:'',
@@ -25,10 +25,15 @@
     taigaProjectUrl: ''
   });
 
+  const ROUTES_BY_TYPE = {
+    'accompagnement': 'accompagnement',
+    'audit': 'audit'
+  };
+
   watch(
-      () => projet.value.project_type,
+      () => project.value.project_type,
       (newValue) => {
-        if (newValue !== 'audit' && newValue !== 'AUDIT') {
+        if (newValue !== 'audit') {
           taigaEnabled.value = false;
         }
       }
@@ -37,13 +42,13 @@
   const createProject = async () => {
     nameTouched.value = true;
     featureTouched.value = true;
-    if(projet.value.project_type === '') return;
-    if(projet.value.name.trim() === '') return;
+    if(project.value.project_type === '') return;
+    if(project.value.name.trim() === '') return;
 
-    const payload = { ...projet.value };
+    const payload = { ...project.value };
 
 
-    const isAudit = payload.project_type === 'audit' || payload.project_type === 'AUDIT';
+    const isAudit = payload.project_type === 'audit';
     const isTaigaActivated = taigaEnabled.value;
 
     if (!isAudit || !isTaigaActivated) {
@@ -53,15 +58,23 @@
     }
     loading.value = true;
     try {
-      const response = await ProjectService.createProjet(payload);
-      const newProjectId = response.idProjet;
-      router.push({
-        name: 'projet-dashboard',
-        params: { id: newProjectId }
-      });
-      console.log("Projet créé avec succès", response);
+      const response = await ProjectService.createProject(payload);
+      const newProjectId = response.idProject;
+      const targetRouteName = ROUTES_BY_TYPE[payload.project_type];
+
+      if (targetRouteName) {
+        router.push({
+          name: targetRouteName,
+          params: { id: newProjectId }
+        });
+      } else {
+        router.push({
+          name: 'project-dashboard',
+          params: { id: newProjectId }
+        });
+      }
     } catch (e) {
-      console.error("Erreur lors de la création du projet", e);
+      console.error("Erreur lors de la création du project", e);
     } finally {
       loading.value = false;
     }
@@ -82,18 +95,18 @@
 
         <div class="grid formgrid p-fluid">
           <div class="field col-12 md:col-6">
-            <!--<label for="nom">Nom du projet *</label>-->
+            <!--<label for="nom">Nom du project *</label>-->
             <h3 for="nom" class="mt-0 mr-3">Nom du projet</h3>
 
             <InputText
                 id="nom"
-                v-model="projet.name"
+                v-model="project.name"
                 @blur="nameTouched = true"
-                :class="{'p-invalid': nameTouched && projet.name.trim() === ''}"
+                :class="{'p-invalid': nameTouched && project.name.trim() === ''}"
                 required
                 class="w-full block w-full"
             />
-            <small v-if="nameTouched && projet.name.trim() === ''" class="p-error">
+            <small v-if="nameTouched && project.name.trim() === ''" class="p-error">
               Le nom du projet est obligatoire
             </small>
           </div>
@@ -105,7 +118,7 @@
 
               <div class="feature-card flex-1 flex-align-items-center gap-2">
                 <RadioButton
-                    v-model="projet.project_type"
+                    v-model="project.project_type"
                     inputId="audit"
                     name="project_type"
                     value="audit"
@@ -115,7 +128,7 @@
 
               <div class="feature-card flex-1 flex-align-items-center gap-2">
                 <RadioButton
-                    v-model="projet.project_type"
+                    v-model="project.project_type"
                     inputId="accompagnement"
                     name="project_type"
                     value="accompagnement"
@@ -124,7 +137,7 @@
               </div>
             </div>
 
-            <small v-if="featureTouched && projet.project_type === ''" class="p-error">
+            <small v-if="featureTouched && project.project_type === ''" class="p-error">
               Merci de choisir la fonctionnalité que vous voulez utiliser s'il vous plait !
             </small>
           </div>
@@ -137,7 +150,7 @@
             <h3 for="desc" class="mt-0 mr-3">Description du projet</h3>
             <Textarea
                 id="desc"
-                v-model="projet.description"
+                v-model="project.description"
                 autoResize
                 rows="5"
                 class="w-full"
@@ -148,7 +161,7 @@
           <!-- toggle to enable Taiga-->
           <div class="col-12">
             <div
-                v-if="projet.project_type === 'audit'"
+                v-if="project.project_type === 'audit'"
                 class="flex align-items-center justify-content-between mb-3"
             >
               <h3 class="mt-0 mb-0">Intégration Taiga (optionnelle)</h3>
@@ -158,7 +171,7 @@
 
             <Transition name="fade">
               <div
-                  v-if="projet.project_type === 'audit' && taigaEnabled"
+                  v-if="project.project_type === 'audit' && taigaEnabled"
                   class="border-1 surface-border p-4 border-round mt-3 mb-5"
               >
                 <p class="text-sm text-600 mb-4 line-height-3">
@@ -173,7 +186,7 @@
                     </label>
                     <InputText
                         id="taigaUser"
-                        v-model="projet.taigaUserName"
+                        v-model="project.taigaUserName"
                         placeholder="Entrez votre username"
                         class="w-full"
                     />
@@ -185,7 +198,7 @@
                     </label>
                     <Password
                         id="taigaPass"
-                        v-model="projet.taigaPassword"
+                        v-model="project.taigaPassword"
                         placeholder="Entrez votre password"
                         :feedback="false"
                         toggleMask
@@ -198,7 +211,7 @@
                     </label>
                     <InputText
                         id="taigaUrl"
-                        v-model="projet.taigaProjectUrl"
+                        v-model="project.taigaProjectUrl"
                         placeholder="Lien de votre projet Taiga"
                         class="w-full"
                     />
@@ -220,27 +233,27 @@
           <div class="line-height-3 text-700">
             <p class="mb-2">
               <strong>Nom :</strong>
-              <span class="ml-1">{{ projet.name || 'Non renseigné' }}</span>
+              <span class="ml-1">{{ project.name || 'Non renseigné' }}</span>
             </p>
 
             <p class="mb-2">
               <strong>Description :</strong>
-              <span class="ml-1">{{ projet.description.length }} caractères </span>
+              <span class="ml-1">{{ project.description.length }} caractères </span>
             </p>
 
             <p class="mb-0">
               <strong>Taiga :</strong>
               <span
                   class="ml-1"
-                  :class="projet.project_type === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
+                  :class="project.project_type === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
               >
-                      {{ projet.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
+                      {{ project.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
                   </span>
             </p>
 
             <p class="mb-2">
               <strong>Mode :</strong>
-              <span class="ml-1">{{ projet.project_type || 'Non sélectionné' }}</span>
+              <span class="ml-1">{{ project.project_type || 'Non sélectionné' }}</span>
             </p>
 
           </div>
@@ -258,7 +271,7 @@
             label="Créer et Ouvrir"
             icon="pi pi-check"
             :loading="loading"
-            :disabled="projet.name.trim() === '' || projet.project_type === ''"
+            :disabled="project.name.trim() === '' || project.project_type === ''"
             class="p-button-primary w-full md:w-auto"
             @click="createProject"
         />

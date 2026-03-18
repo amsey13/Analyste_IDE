@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = AuditProjectRequestDTO.class, name = "audit"),
-        @JsonSubTypes.Type(value = SupportProjectRequestDTO.class, name = "ACCOMPAGNEMENT")
+        @JsonSubTypes.Type(value = SupportProjectRequestDTO.class, name = "accompagnement")
 })
 
 public class BaseProjectRequestDTO {
