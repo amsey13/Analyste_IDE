@@ -154,7 +154,7 @@ const deleteProject = (id) => {
       <div class="projects-grid">
         <Card
             v-for="project in paginatedProjects"
-            :key="project.idProjet"
+            :key="project.id"
             class="project-card col-12 md:col-6 lg:col-4 h-full cursor-pointer"
             @click="openProjectDrawer(project)"
         >
