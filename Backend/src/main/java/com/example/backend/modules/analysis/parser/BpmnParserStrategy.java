@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.Arrays.stream;
+
 public class BpmnParserStrategy implements ModelParserStrategy {
 
     private final Document document;
@@ -268,8 +270,8 @@ public class BpmnParserStrategy implements ModelParserStrategy {
         return "Inconnu";
     }
 
-    public static java.util.Set<String> extractLinkedUserStories(String bpmnXml) {
-        java.util.Set<String> linkedUsIds = new java.util.HashSet<>();
+    public static Set<String> extractLinkedUserStories(String bpmnXml) {
+        Set<String> linkedUsIds = new java.util.HashSet<>();
 
         if (bpmnXml == null || bpmnXml.trim().isEmpty()) {
             return linkedUsIds;
@@ -287,10 +289,10 @@ public class BpmnParserStrategy implements ModelParserStrategy {
                 String linkedAttr = element.getAttribute("custom:linkedUserStories");
 
                 if (linkedAttr != null && !linkedAttr.isEmpty()) {
-                    String[] ids = linkedAttr.split(",");
-                    for (String id : ids) {
-                        linkedUsIds.add(id.trim());
-                    }
+                            stream(linkedAttr.split(","))
+                            .map(String::trim)
+                            .filter(id -> !id.isEmpty())
+                            .forEach(linkedUsIds::add);
                 }
             }
         } catch (Exception e) {

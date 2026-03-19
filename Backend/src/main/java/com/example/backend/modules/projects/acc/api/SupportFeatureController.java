@@ -1,12 +1,15 @@
 package com.example.backend.modules.projects.acc.api;
 
 import com.example.backend.modules.projects.acc.dto.*;
+import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.service.SupportFeatureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -89,13 +92,59 @@ public class SupportFeatureController {
     }
 
     @PutMapping("/projects/{projectId}/bpmn")
-    public ResponseEntity<Void> saveBpmn(
+    public ResponseEntity<Map<String, Double>> saveBpmn(
             @PathVariable UUID projectId,
             @RequestBody String bpmnXml) {
-        supportService.saveBpmnDiagram(projectId, bpmnXml);
-        return ResponseEntity.ok().build();
+        SupportProject updatedProject = supportService.saveBpmnDiagram(projectId, bpmnXml);
+        Map<String, Double> response = new HashMap<>();
+        response.put("coverageScore", updatedProject.getCoverageScore());
+
+        return ResponseEntity.ok(response);
     }
 
+
+
+    @PostMapping("/projects/{projectId}/dictionary-entries")
+    public ResponseEntity<DictionaryEntryResponseDTO> addDictionaryEntry(
+            @PathVariable UUID projectId,
+            @RequestBody DictionaryEntryRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(supportService.addDictionaryEntry(projectId, dto));
+    }
+
+    @DeleteMapping("/dictionary-entries/{entryId}")
+    public ResponseEntity<Void> deleteDictionaryEntry(@PathVariable UUID entryId) {
+        supportService.deleteDictionaryEntry(entryId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/dictionary-entries/{entryId}/attributes")
+    public ResponseEntity<DictionaryAttributeResponseDTO> addDictionaryAttribute(
+            @PathVariable UUID entryId,
+            @RequestBody DictionaryAttributeRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(supportService.addDictionaryAttribute(entryId, dto));
+    }
+
+    @DeleteMapping("/dictionary-attributes/{attrId}")
+    public ResponseEntity<Void> deleteDictionaryAttribute(@PathVariable UUID attrId) {
+        supportService.deleteDictionaryAttribute(attrId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/dictionary-entries/{entryId}")
+    public ResponseEntity<DictionaryEntryResponseDTO> updateDictionaryEntry(
+            @PathVariable UUID entryId,
+            @RequestBody DictionaryEntryRequestDTO dto) {
+        return ResponseEntity.ok(supportService.updateDictionaryEntry(entryId, dto));
+    }
+
+    @PutMapping("/dictionary-attributes/{attrId}")
+    public ResponseEntity<DictionaryAttributeResponseDTO> updateDictionaryAttribute(
+            @PathVariable UUID attrId,
+            @RequestBody DictionaryAttributeRequestDTO dto) {
+        return ResponseEntity.ok(supportService.updateDictionaryAttribute(attrId, dto));
+    }
 
 
 }
