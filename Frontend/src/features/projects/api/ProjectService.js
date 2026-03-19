@@ -33,7 +33,7 @@ export const ProjectService = {
     },
 
 
-    async deleteProjet(idProject) {
+    async deleteProject(idProject) {
 
         if (!idProject) {
             console.error("projectId est undefined !")

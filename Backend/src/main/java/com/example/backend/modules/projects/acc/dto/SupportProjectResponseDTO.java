@@ -4,13 +4,22 @@ import com.example.backend.modules.projects.acc.entity.Actor;
 import com.example.backend.modules.projects.acc.entity.UserStory;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SupportProjectResponseDTO extends ProjectResponseDTO {
     private String status;
     private String bpmnXml;
-    private String dataDictionary;
     private Double coverageScore;
+    private List<DictionaryEntryResponseDTO> dictionaryEntries = new ArrayList<>();
+
+    public List<DictionaryEntryResponseDTO> getDictionaryEntries() {
+        return dictionaryEntries;
+    }
+
+    public void setDictionaryEntries(List<DictionaryEntryResponseDTO> dictionaryEntries) {
+        this.dictionaryEntries = dictionaryEntries;
+    }
 
     public Double getCoverageScore() {
         return coverageScore;
@@ -39,13 +48,6 @@ public class SupportProjectResponseDTO extends ProjectResponseDTO {
         this.bpmnXml = bpmnXml;
     }
 
-    public String getDataDictionary() {
-        return dataDictionary;
-    }
-
-    public void setDataDictionary(String dataDictionary) {
-        this.dataDictionary = dataDictionary;
-    }
 
     public List<ActorResponseDTO> getActors() {
         return actors;

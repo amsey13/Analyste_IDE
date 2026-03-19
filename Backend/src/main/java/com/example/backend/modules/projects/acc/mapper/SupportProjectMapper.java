@@ -1,11 +1,7 @@
 package com.example.backend.modules.projects.acc.mapper;
 
-import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
-import com.example.backend.modules.projects.acc.dto.SupportProjectResponseDTO;
-import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
-import com.example.backend.modules.projects.acc.entity.Actor;
-import com.example.backend.modules.projects.acc.entity.SupportProject;
-import com.example.backend.modules.projects.acc.entity.UserStory;
+import com.example.backend.modules.projects.acc.dto.*;
+import com.example.backend.modules.projects.acc.entity.*;
 import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
 import com.example.backend.modules.projects.core.entity.Project;
 import com.example.backend.modules.projects.core.mapper.ProjectMapper;
@@ -13,8 +9,12 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE) // On veut qu'il soit testé AVANT le mapper par défaut
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class SupportProjectMapper implements ProjectMapper {
 
     @Override
@@ -26,30 +26,58 @@ public class SupportProjectMapper implements ProjectMapper {
     public ProjectResponseDTO map(Project project) {
         SupportProject support = (SupportProject) project;
         SupportProjectResponseDTO dto = new SupportProjectResponseDTO();
-
-        // On remplit les champs communs via l'interface
         mapBaseFields(support, dto);
-
-        // On remplit les champs spécifiques
         dto.setStatus(support.getStatus() != null ? support.getStatus().name() : null);
         dto.setBpmnXml(support.getBpmnXml());
-        dto.setDataDictionary(support.getDataDictionary());
+        dto.setCoverageScore(support.getCoverageScore());
+        if (support.getDictionaryEntries() != null) {
+            dto.setDictionaryEntries(support.getDictionaryEntries().stream()
+                    .map(this::mapToDictionaryEntryDTO)
+                    .collect(Collectors.toList()));
+        }
 
         if (support.getActors() != null) {
             dto.setActors(support.getActors().stream()
                     .map(this::mapToActorDTO)
-                    .collect(java.util.stream.Collectors.toList()));
+                    .collect(Collectors.toList()));
         }
 
-        // MAPPING DES USER STORIES (La partie cruciale)
         if (support.getUserStories() != null) {
             dto.setUserStories(support.getUserStories().stream()
                     .map(this::mapToUserStoryDTO)
-                    .collect(java.util.stream.Collectors.toList()));
+                    .collect(Collectors.toList()));
         }
-        dto.setCoverageScore(support.getCoverageScore());
+
         return dto;
     }
+
+
+    private DictionaryEntryResponseDTO mapToDictionaryEntryDTO(DictionaryEntry entry) {
+        DictionaryEntryResponseDTO dto = new DictionaryEntryResponseDTO();
+        dto.setId(entry.getId());
+        dto.setName(entry.getName());
+        dto.setDescription(entry.getDescription());
+
+        if (entry.getAttributes() != null) {
+            dto.setAttributes(entry.getAttributes().stream()
+                    .map(this::mapToDictionaryAttributeDTO)
+                    .collect(Collectors.toList()));
+        }
+        return dto;
+    }
+
+    private DictionaryAttributeResponseDTO mapToDictionaryAttributeDTO(DictionaryAttribute attr) {
+        DictionaryAttributeResponseDTO dto = new DictionaryAttributeResponseDTO();
+        dto.setId(attr.getId());
+        dto.setName(attr.getName());
+        dto.setDataType(attr.getDataType());
+        dto.setSize(attr.getSize());
+        dto.setPrimaryKey(attr.getPrimaryKey());
+        dto.setNotNull(attr.getNotNull());
+        dto.setDescription(attr.getDescription());
+        return dto;
+    }
+
     private UserStoryResponseDTO mapToUserStoryDTO(UserStory us) {
         UserStoryResponseDTO dto = new UserStoryResponseDTO();
         dto.setId(us.getId());
