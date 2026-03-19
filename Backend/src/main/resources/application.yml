@@ -11,6 +11,8 @@ spring:
       client:
         registration:
           jumpcloud:
+
+            #christian just added this to connect the time we fix the .env file problem
             client-id: 9c839027-42b2-4219-a0ec-664a896f9813
             client-secret: bJd8zDtWfETF1npFmXm8WoSYym
             client-authentication-method: client_secret_post
