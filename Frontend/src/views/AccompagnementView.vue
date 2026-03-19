@@ -7,6 +7,7 @@ import ActorManager from '../features/projects/components/ActorManager.vue';
 import UserStoryManager from '../features/projects/components/UserStoryManager.vue';
 import BpmnModeler from '../features/projects/components/BpmnModeler.vue';
 import DictionaryManager from '../features/projects/components/DictionaryManager.vue';
+import McdManager from '../features/projects/components/McdManager.vue';
 
 
 import Tabs from 'primevue/tabs';
@@ -76,6 +77,7 @@ onMounted(() => {
           <Tab value="0">1. Acteurs & User Stories</Tab>
           <Tab value="1">2. Modélisation BPMN</Tab>
           <Tab value="2">3. Dictionnaire de Données</Tab>
+          <Tab value="3">4. Modèle Conceptuel (MCD)</Tab>
         </TabList>
 
         <TabPanels class="flex-1 p-0 overflow-y-auto">
@@ -127,6 +129,23 @@ onMounted(() => {
                   :projectId="projectId"
                   :entries="project.dictionaryEntries"
                   @refresh="loadProject"
+              />
+            </div>
+          </TabPanel>
+          <TabPanel value="3" class="h-full">
+            <div class="h-full p-4 overflow-y-auto">
+              <div v-if="project.dictionaryEntries.length === 0" class="flex flex-column align-items-center justify-content-center h-full surface-50 border-round-xl border-1 surface-border p-6 text-center">
+                <i class="pi pi-database text-orange-500 text-6xl mb-4"></i>
+                <h2 class="text-900 font-bold mb-2">Dictionnaire vide</h2>
+                <p class="text-600 max-w-20rem">
+                  Vous devez d'abord définir des entités dans le <b>Dictionnaire de Données</b> avant de pouvoir créer des relations et générer le MCD.
+                </p>
+              </div>
+
+              <McdManager
+                  v-else
+                  :projectId="projectId"
+                  :entries="project.dictionaryEntries"
               />
             </div>
           </TabPanel>

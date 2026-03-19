@@ -84,4 +84,23 @@ export const SupportFeatureService = {
         const response = await apiClient.get(`/support/projects/${projectId}/dictionary-suggestions`);
         return response.data;
     },
+
+    async getAssociations(projectId) {
+        const response = await apiClient.get(`/support/projects/${projectId}/associations`);
+        return response.data;
+    },
+
+    async addAssociation(projectId, association) {
+        const response = await apiClient.post(`/support/projects/${projectId}/associations`, association);
+        return response.data;
+    },
+
+    async updateAssociation(associationId, association) {
+        const response = await apiClient.put(`/support/projects/${associationId}`, association);
+        return response.data;
+    },
+
+    async deleteAssociation(associationId) {
+        await apiClient.delete(`/support/projects/associations/${associationId}`);
+    },
 };
