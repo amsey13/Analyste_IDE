@@ -29,6 +29,14 @@ const displayedProjects = computed(() => {
       : projects.value;
 });
 
+const truncateDescription = (text, maxLength = 40) => {
+  if (!text) return 'Pas de description';
+
+  if (text.length <= maxLength) return text;
+
+  return text.substring(0, maxLength - 3) + '...';
+};
+
 onMounted(async () => {
   loading.value = true;
   try {
@@ -63,7 +71,7 @@ const goToProject = () => {
   if (!selectedProject.value?.idProject) return;
 
   drawerVisible.value = false;
-
+ console.log(selectedProject.value.idProject)
   router.push({
     name: 'project-dashboard',
     params: { id: selectedProject.value.idProject }
@@ -162,19 +170,22 @@ const deleteProject = (idProject) => {
 
             <!-- DESCRIPTION -->
             <p>
-              {{ project.description || 'Pas de description' }}
+              {{ truncateDescription(project.description) }}
             </p>
 
             <!-- DELETE BUTTON -->
-            <Button
-                label="Supprimer"
-                icon="pi pi-trash"
-                severity="danger"
-                text
-                rounded
-                class="mt-2"
-                @click.stop="deleteProject(project.id || project.idProject)"
-            />
+            <div class="project-card-bottom">
+              <Button
+                  label="Supprimer"
+                  icon="pi pi-trash"
+                  severity="danger"
+                  text
+                  rounded
+                  class="mt-2"
+                  @click.stop="deleteProject(project.id || project.idProject)"
+              />
+            </div>
+
           </template>
         </Card>
       </div>
@@ -251,3 +262,12 @@ const deleteProject = (idProject) => {
 
   </div>
 </template>
+
+<style scoped>
+  .project-card-bottom {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+</style>

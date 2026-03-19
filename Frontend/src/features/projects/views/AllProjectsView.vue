@@ -26,6 +26,14 @@ const selectedProject = ref(null);
 const first = ref(0)
 const rows = ref(6)
 
+const truncateDescription = (text, maxLength = 40) => {
+  if (!text) return 'Pas de description';
+
+  if (text.length <= maxLength) return text;
+
+  return text.substring(0, maxLength - 3) + '...';
+};
+
 onMounted(async () => {
   isLoading.value = true
   try {
@@ -154,33 +162,37 @@ const deleteProject = (id) => {
       <div class="projects-grid">
         <Card
             v-for="project in paginatedProjects"
-            :key="project.id"
-            class="project-card col-12 md:col-6 lg:col-4 h-full cursor-pointer"
+            :key="project.idProjet"
+            class="project-card cursor-pointer border-2 border-300 hover:shadow-4"
             @click="openProjectDrawer(project)"
         >
           <template #content>
-            <h3 class="font-bold mb-3">
-              {{ project.name }}
-            </h3>
+            <div class="project-card-content">
+              <div>
+                <h3 class="project-title">
+                  {{ project.name }}
+                </h3>
 
-            <p class="mb-3">
-              <strong>Type :</strong>
-              {{ formatProjectType(project.project_type) }}
-            </p>
+                <p class="project-type">
+                  <strong>Type :</strong>
+                  {{ formatProjectType(project.project_type) }}
+                </p>
+                <p class="project-description">
+                  {{ truncateDescription(project.description) }}
+                </p>
+              </div>
 
-            <p class="mb-3">
-              {{ project.description || 'Pas de description' }}
-            </p>
-
-            <Button
-                label="Supprimer"
-                icon="pi pi-trash"
-                severity="danger"
-                text
-                rounded
-                class="mt-2"
-                @click.stop="deleteProject(project.idProject)"
-            />
+              <div class="project-card-bottom">
+                <Button
+                    label="Supprimer"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    text
+                    rounded
+                    @click.stop="deleteProject(project.idProject)"
+                />
+              </div>
+            </div>
           </template>
         </Card>
       </div>
@@ -228,6 +240,101 @@ const deleteProject = (id) => {
 </template>
 
 <style scoped>
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.project-card {
+  height: 280px;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  transition: 0.2s ease;
+}
+
+.project-card :deep(.p-card) {
+  height: 100%;
+}
+
+.project-card :deep(.p-card-body) {
+  height: 100%;
+}
+
+.project-card :deep(.p-card-content) {
+  height: 100%;
+  padding: 0;
+}
+
+.project-card-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+.project-card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.project-card-bottom {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.project-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-type {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.project-description {
+  margin: 0;
+  line-height: 1.5;
+  color: #475569;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* hoặc 3 nếu muốn */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-type {
+  margin: 0 0 0.75rem 0;
+}
+
+.project-description {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* hoặc 3 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .all-projects-view {
   padding: 2rem;
 }
