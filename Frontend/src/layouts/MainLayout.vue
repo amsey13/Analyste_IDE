@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { UserService } from '../features/users/api/UserService';
 import Button from 'primevue/button';
@@ -7,70 +7,55 @@ import Button from 'primevue/button';
 const user = ref(null);
 const route = useRoute();
 
+// État du sidebar : réduit ou étendu
 const isSidebarCollapsed = ref(false);
-
-const currentProjectId = computed(() => route.params.id || null);
-
-const menuItems = computed(() => [
-  {
-    label: 'Accueil',
-    icon: 'pi pi-home',
-    to: '/app/projects',
-    exact: false
-  },
-  {
-    label: 'Accompagnement',
-    icon: 'pi pi-users',
-    to: currentProjectId.value ? `/app/accompagnement/${currentProjectId.value}` : '/app/projects',
-    disabled: !currentProjectId.value
-  },
-  {
-    label: 'Audit Qualité',
-    icon: 'pi pi-check-circle',
-    to: currentProjectId.value ? `/app/audit/${currentProjectId.value}` : '/app/projects',
-    disabled: !currentProjectId.value
-  }
-]);
 
 onMounted(async () => {
   try {
+    // Récupération de l'utilisateur connecté
     user.value = await UserService.getCurrentUser();
   } catch (error) {
+    // En cas de session absente/invalide
     console.error('Session introuvable, retour à l’accueil');
   }
 
+  // Restauration de l'état du sidebar depuis le navigateur
   const savedSidebarState = localStorage.getItem('sidebar-collapsed');
   if (savedSidebarState !== null) {
     isSidebarCollapsed.value = savedSidebarState === 'true';
   }
 });
 
+// Sauvegarde automatique de l'état du sidebar
 watch(isSidebarCollapsed, (value) => {
   localStorage.setItem('sidebar-collapsed', String(value));
 });
 
+// Ouvre / réduit le sidebar
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
 };
 
+// Déconnexion utilisateur
 const logout = () => {
   window.location.href = 'http://localhost:8080/logout';
 };
 
+// Gestion simple de l'état actif des liens du menu
 const isActiveRoute = (path) => {
   if (path === '/app/projects') {
     return route.path === '/app/projects' || route.path === '/app/projects/all' || route.path === '/app/project/create';
   }
 
-  return route.path.startsWith(path.split('/:')[0]) || route.path.startsWith(path);
+  return route.path.startsWith(path);
 };
 </script>
 
 <template>
   <div class="app-shell">
-    <aside
-        :class="['sidebar', { 'sidebar--collapsed': isSidebarCollapsed }]"
-    >
+    <!-- Sidebar principal -->
+    <aside :class="['sidebar', { 'sidebar--collapsed': isSidebarCollapsed }]">
+      <!-- Marque / logo -->
       <div class="sidebar__brand">
         <div class="sidebar__brand-left">
           <i class="pi pi-chart-bar sidebar__brand-icon"></i>
@@ -78,48 +63,40 @@ const isActiveRoute = (path) => {
         </div>
       </div>
 
+      <!-- Navigation -->
       <nav class="sidebar__nav">
+        <!-- Accueil conservé -->
         <router-link
-            v-for="item in menuItems"
-            :key="item.label"
-            :to="item.to"
+            to="/app/projects"
             class="sidebar__link"
-            :class="{
-            'sidebar__link--active': isActiveRoute(item.to),
-            'sidebar__link--disabled': item.disabled
-          }"
-            :title="isSidebarCollapsed ? item.label : ''"
+            :class="{ 'sidebar__link--active': isActiveRoute('/app/projects') }"
+            :title="isSidebarCollapsed ? 'Accueil' : ''"
         >
-          <i :class="[item.icon, 'sidebar__link-icon']"></i>
-          <span v-if="!isSidebarCollapsed" class="sidebar__link-text">
-            {{ item.label }}
-          </span>
+          <i class="pi pi-home sidebar__link-icon"></i>
+          <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accueil</span>
         </router-link>
 
+        <!-- Section Modes -->
         <div v-if="!isSidebarCollapsed" class="sidebar__section-title">
           Modes
         </div>
 
+        <!-- Mode Accompagnement : route fixe vers la liste -->
         <router-link
-            :to="currentProjectId ? `/app/accompagnement/${currentProjectId}` : '/app/projects'"
+            to="/app/accompagnement"
             class="sidebar__link"
-            :class="{
-            'sidebar__link--active': route.path.startsWith('/app/accompagnement'),
-            'sidebar__link--disabled': !currentProjectId
-          }"
+            :class="{ 'sidebar__link--active': route.path.startsWith('/app/accompagnement') }"
             :title="isSidebarCollapsed ? 'Accompagnement' : ''"
         >
           <i class="pi pi-users sidebar__link-icon"></i>
           <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accompagnement</span>
         </router-link>
 
+        <!-- Mode Audit : route fixe vers la liste -->
         <router-link
-            :to="currentProjectId ? `/app/audit/${currentProjectId}` : '/app/projects'"
+            to="/app/audit"
             class="sidebar__link"
-            :class="{
-            'sidebar__link--active': route.path.startsWith('/app/audit'),
-            'sidebar__link--disabled': !currentProjectId
-          }"
+            :class="{ 'sidebar__link--active': route.path.startsWith('/app/audit') }"
             :title="isSidebarCollapsed ? 'Audit Qualité' : ''"
         >
           <i class="pi pi-check-circle sidebar__link-icon"></i>
@@ -127,6 +104,7 @@ const isActiveRoute = (path) => {
         </router-link>
       </nav>
 
+      <!-- Pied du sidebar -->
       <div class="sidebar__footer">
         <Button
             :label="isSidebarCollapsed ? '' : 'Déconnexion'"
@@ -140,9 +118,11 @@ const isActiveRoute = (path) => {
       </div>
     </aside>
 
+    <!-- Zone de contenu principale -->
     <div class="content-area">
       <header class="topbar">
         <div class="topbar__left">
+          <!-- Bouton hamburger -->
           <Button
               icon="pi pi-bars"
               text
@@ -154,6 +134,7 @@ const isActiveRoute = (path) => {
           <span class="topbar__title">IDE d'Analyse Fonctionnelle - AnalytiQ</span>
         </div>
 
+        <!-- Infos utilisateur -->
         <div v-if="user" class="topbar__user">
           <span class="topbar__user-name">{{ user.fullName }}</span>
           <div class="topbar__avatar">
@@ -178,9 +159,9 @@ const isActiveRoute = (path) => {
 }
 
 .sidebar {
-  width: 18rem;
-  min-width: 18rem;
-  max-width: 18rem;
+  width: 16.2rem;
+  min-width: 16.2rem;
+  max-width: 16.2rem;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -191,48 +172,48 @@ const isActiveRoute = (path) => {
 }
 
 .sidebar--collapsed {
-  width: 5rem;
-  min-width: 5rem;
-  max-width: 5rem;
+  width: 4.5rem;
+  min-width: 4.5rem;
+  max-width: 4.5rem;
 }
 
 .sidebar__brand {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 72px;
-  padding: 1rem 1.25rem;
+  min-height: 65px;
+  padding: 0.9rem 1.125rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar__brand-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.675rem;
   overflow: hidden;
   white-space: nowrap;
 }
 
 .sidebar__brand-icon {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   color: var(--accent-color);
 }
 
 .sidebar__brand-text {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
 }
 
 .sidebar__nav {
   flex: 1;
-  padding: 1rem 0.75rem;
+  padding: 0.9rem 0.675rem;
   overflow-y: auto;
 }
 
 .sidebar__section-title {
-  margin: 1rem 0 0.5rem;
-  padding: 0 0.75rem;
-  font-size: 0.75rem;
+  margin: 0.9rem 0 0.45rem;
+  padding: 0 0.675rem;
+  font-size: 0.675rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -242,10 +223,10 @@ const isActiveRoute = (path) => {
 .sidebar__link {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
-  padding: 0.9rem 0.95rem;
-  margin-bottom: 0.35rem;
-  border-radius: 12px;
+  gap: 0.7875rem;
+  padding: 0.81rem 0.855rem;
+  margin-bottom: 0.315rem;
+  border-radius: 10.8px;
   color: #dbe7ff;
   text-decoration: none;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -263,17 +244,14 @@ const isActiveRoute = (path) => {
   color: white;
 }
 
-.sidebar__link--disabled {
-  opacity: 0.7;
-}
-
 .sidebar__link-icon {
-  font-size: 1.1rem;
-  min-width: 1.25rem;
+  font-size: 0.99rem;
+  min-width: 1.125rem;
   text-align: center;
 }
 
 .sidebar__link-text {
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
@@ -284,7 +262,7 @@ const isActiveRoute = (path) => {
 }
 
 .sidebar__footer {
-  padding: 0.75rem;
+  padding: 0.675rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -292,6 +270,7 @@ const isActiveRoute = (path) => {
   width: 100%;
   justify-content: flex-start;
   color: white !important;
+  font-size: 0.9rem;
 }
 
 .sidebar--collapsed :deep(.sidebar__logout-btn) {
@@ -307,20 +286,20 @@ const isActiveRoute = (path) => {
 }
 
 .topbar {
-  height: 4rem;
+  height: 3.6rem;
   background: white;
   border-bottom: 1px solid var(--border-color);
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 1.35rem;
 }
 
 .topbar__left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.675rem;
   min-width: 0;
 }
 
@@ -329,6 +308,7 @@ const isActiveRoute = (path) => {
 }
 
 .topbar__title {
+  font-size: 0.9rem;
   font-weight: 600;
   color: #4b5563;
   white-space: nowrap;
@@ -339,30 +319,32 @@ const isActiveRoute = (path) => {
 .topbar__user {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-left: 1rem;
+  gap: 0.675rem;
+  margin-left: 0.9rem;
 }
 
 .topbar__user-name {
+  font-size: 0.9rem;
   font-weight: 500;
   color: #111827;
 }
 
 .topbar__avatar {
-  width: 2rem;
-  height: 2rem;
+  width: 1.8rem;
+  height: 1.8rem;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--primary-color);
   color: white;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
 .page-content {
   flex: 1;
-  padding: 1.5rem;
+  padding: 1.35rem;
   overflow-y: auto;
 }
 </style>
