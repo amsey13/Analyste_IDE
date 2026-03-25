@@ -16,6 +16,7 @@ public class DictionaryAssociationResponseDTO {
     private String sourceMultiplicity;
     private String targetMultiplicity;
     private Boolean isRelative;
+    private Boolean isCif ;
 
 
 
@@ -87,5 +88,13 @@ public class DictionaryAssociationResponseDTO {
     }
     public void setIsRelative(Boolean isRelative) {
         this.isRelative = isRelative;
+    }
+
+    public Boolean getIsCif() {
+        return isCif;
+    }
+
+    public void setIsCif(Boolean cif) {
+        isCif = cif;
     }
 }

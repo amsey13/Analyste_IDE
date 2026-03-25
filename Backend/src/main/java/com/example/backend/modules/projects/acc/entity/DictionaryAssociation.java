@@ -41,6 +41,9 @@ public class DictionaryAssociation {
     @Column(name = "is_relative", nullable = false)
     private Boolean isRelative = false;
 
+    @Column(name = "is_cif", nullable = false)
+    private Boolean isCif = false;
+
 
 
     public UUID getId() {
@@ -97,5 +100,13 @@ public class DictionaryAssociation {
 
     public void setRelative(Boolean relative) {
         isRelative = relative;
+    }
+
+    public Boolean getCif() {
+        return isCif;
+    }
+
+    public void setCif(Boolean cif) {
+        isCif = cif;
     }
 }

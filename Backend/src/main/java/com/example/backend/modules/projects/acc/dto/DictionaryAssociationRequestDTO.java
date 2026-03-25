@@ -25,6 +25,8 @@ public class DictionaryAssociationRequestDTO {
 
     private Boolean isRelative;
 
+    private Boolean isCif = false;
+
 
     public UUID getSourceId() {
         return sourceId;
@@ -70,5 +72,13 @@ public class DictionaryAssociationRequestDTO {
     }
     public void setIsRelative(Boolean isRelative) {
         this.isRelative = isRelative;
+    }
+
+    public Boolean getIsCif() {
+        return isCif;
+    }
+
+    public void setIsCif(Boolean cif) {
+        isCif = cif;
     }
 }
