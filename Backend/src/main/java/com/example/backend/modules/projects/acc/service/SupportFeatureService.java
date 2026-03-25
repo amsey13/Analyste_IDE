@@ -90,7 +90,9 @@ public class SupportFeatureService {
     public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String desc, String benefit, String crit) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
         Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
-
+        if (actor.getProject() == null || !actor.getProject().getIdProject().equals(projectId)) {
+            throw new UnauthorizedAccessException("L'acteur spécifié n'appartient pas à ce projet.");
+        }
         UserStory us = new UserStory();
         us.setDescription(desc);
         us.setBenefit(benefit);
