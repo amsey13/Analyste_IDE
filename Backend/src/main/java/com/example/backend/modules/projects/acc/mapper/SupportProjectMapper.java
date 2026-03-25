@@ -116,6 +116,7 @@ public class SupportProjectMapper implements ProjectMapper {
         dto.setTargetMultiplicity(entity.getTargetMultiplicity());
         dto.setIsRelative(entity.getRelative());
         dto.setIsCif(entity.getCif());
+        dto.setIsInheritance(entity.getIsInheritance());
         return dto;
     }
 }

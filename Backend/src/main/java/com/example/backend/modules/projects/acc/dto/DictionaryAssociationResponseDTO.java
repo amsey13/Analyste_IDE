@@ -17,6 +17,7 @@ public class DictionaryAssociationResponseDTO {
     private String targetMultiplicity;
     private Boolean isRelative;
     private Boolean isCif ;
+    private Boolean isInheritance;
 
 
 
@@ -96,5 +97,11 @@ public class DictionaryAssociationResponseDTO {
 
     public void setIsCif(Boolean cif) {
         isCif = cif;
+    }
+    public Boolean getIsInheritance() {
+        return isInheritance;
+    }
+    public void setIsInheritance(Boolean isInheritance) {
+        this.isInheritance = isInheritance;
     }
 }
