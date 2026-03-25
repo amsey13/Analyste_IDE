@@ -119,4 +119,9 @@ export const SupportFeatureService = {
     async deleteBusinessRule(ruleId) {
         await apiClient.delete(`${BASE_URL}/business-rules/${ruleId}`);
     },
+
+    async generateMcdWithAi(projectId) {
+        const response = await apiClient.post(`${BASE_URL}/projects/${projectId}/generate-mcd`);
+        return response.data;
+    },
 };

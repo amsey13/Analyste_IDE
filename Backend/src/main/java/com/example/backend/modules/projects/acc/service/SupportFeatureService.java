@@ -15,11 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 @Service
 public class SupportFeatureService {
@@ -333,5 +332,110 @@ public class SupportFeatureService {
                 .orElseThrow(() -> new EntityNotFoundException("Règle introuvable"));
         getProjectAndCheckOwnership(rule.getProject().getIdProject());
         businessRuleRepository.delete(rule);
+    }
+
+    // --- GÉNÉRATION IA DU MCD ---
+    @Transactional
+    public void generateMcdFromBusinessRules(UUID projectId) throws IOException {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        // 1. Récupérer les règles
+        List<BusinessRule> rules = businessRuleRepository.findByProject_Id(projectId);
+        if (rules.isEmpty()) {
+            throw new IllegalArgumentException("Aucune règle de gestion trouvée pour générer le MCD.");
+        }
+
+        // 2. Construire le texte pour l'IA (version Stream élégante)
+        String rulesContent = rules.stream()
+                .map(r -> r.getCode() + " : " + r.getDescription())
+                .collect(Collectors.joining("\n"));
+
+        // 3. Appeler Mistral
+        McdSuggestionDTO suggestion = mistralService.suggestMcdFromBusinessRules(rulesContent);
+
+        // 4. Sauvegarder les Entités et Attributs
+        Map<String, DictionaryEntry> savedEntities = new HashMap<>();
+
+        // Utilisation d'Optional pour éviter le "if (suggestion.getEntries() != null)"
+        ofNullable(suggestion.getEntries())
+                .orElse(java.util.Collections.emptyList())
+                .forEach(entryDto -> {
+
+                    DictionaryEntry entry = new DictionaryEntry();
+                    entry.setName(entryDto.getName());
+                    entry.setDescription(entryDto.getDescription());
+                    entry.setProject(project);
+                    final DictionaryEntry savedEntry = dictionaryEntryRepository.save(entry);
+
+                    savedEntities.put(savedEntry.getName().toLowerCase(), savedEntry);
+
+                    // Boucle sur les attributs sans le "if != null"
+                    ofNullable(entryDto.getAttributes())
+                            .orElse(java.util.Collections.emptyList())
+                            .forEach(attrDto -> {
+                                DictionaryAttribute attr = new DictionaryAttribute();
+                                attr.setName(attrDto.getName());
+                                attr.setDataType(attrDto.getDataType());
+                                attr.setSize(attrDto.getSize());
+                                // Astuce Clean Code : Boolean.TRUE.equals() gère les nulls tout seul
+                                attr.setPrimaryKey(Boolean.TRUE.equals(attrDto.getPrimaryKey()));
+                                attr.setNotNull(Boolean.TRUE.equals(attrDto.getNotNull()));
+                                attr.setDescription(attrDto.getDescription());
+                                attr.setDictionaryEntry(savedEntry);
+                                dictionaryAttributeRepository.save(attr);
+                            });
+                });
+
+        // 5. Sauvegarder les Associations
+        ofNullable(suggestion.getAssociations())
+                .orElse(java.util.Collections.emptyList())
+                .forEach(assocDto -> {
+
+                    if (assocDto.getSourceName() == null || assocDto.getTargetName() == null) return;
+
+                    DictionaryEntry source = savedEntities.get(assocDto.getSourceName().toLowerCase());
+                    DictionaryEntry target = savedEntities.get(assocDto.getTargetName().toLowerCase());
+
+                    if (source != null && target != null) {
+                        DictionaryAssociation assoc = new DictionaryAssociation();
+                        assoc.setSource(source);
+                        assoc.setTarget(target);
+                        assoc.setName(assocDto.getName());
+                        assoc.setSourceMultiplicity(assocDto.getSourceMultiplicity());
+                        assoc.setTargetMultiplicity(assocDto.getTargetMultiplicity());
+                        assoc.setRelative(false);
+                        assoc.setCif(false);
+                        assoc.setIsInheritance(false);
+
+                        // On lie l'association à la règle de gestion de façon concise
+                        if (assocDto.getRuleCode() != null) {
+                            rules.stream()
+                                    .filter(r -> r.getCode().equalsIgnoreCase(assocDto.getRuleCode()))
+                                    .findFirst()
+                                    .ifPresent(assoc::setBusinessRule);
+                        }
+
+                        // ⚠️ MODIFICATION ICI : On récupère l'association sauvegardée
+                        final DictionaryAssociation savedAssoc = associationRepository.save(assoc);
+
+                        // NOUVEAU : On boucle pour sauvegarder les attributs portés par la relation !
+                        ofNullable(assocDto.getAttributes())
+                                .orElse(java.util.Collections.emptyList())
+                                .forEach(attrDto -> {
+                                    DictionaryAttribute attr = new DictionaryAttribute();
+                                    attr.setName(attrDto.getName());
+                                    attr.setDataType(attrDto.getDataType());
+                                    attr.setSize(attrDto.getSize());
+                                    attr.setPrimaryKey(Boolean.TRUE.equals(attrDto.getPrimaryKey()));
+                                    attr.setNotNull(Boolean.TRUE.equals(attrDto.getNotNull()));
+                                    attr.setDescription(attrDto.getDescription());
+
+                                    // On l'attache à l'association, pas à l'entité !
+                                    attr.setDictionaryAssociation(savedAssoc);
+
+                                    dictionaryAttributeRepository.save(attr);
+                                });
+                    }
+                });
     }
 }

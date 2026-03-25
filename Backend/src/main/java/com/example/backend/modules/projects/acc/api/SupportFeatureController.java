@@ -202,4 +202,16 @@ public class SupportFeatureController {
         supportService.deleteBusinessRule(ruleId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/projects/{projectId}/generate-mcd")
+    public ResponseEntity<Void> generateMcdFromRules(@PathVariable UUID projectId) {
+        try {
+            supportService.generateMcdFromBusinessRules(projectId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

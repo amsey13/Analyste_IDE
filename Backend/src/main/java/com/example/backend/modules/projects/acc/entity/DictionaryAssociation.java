@@ -2,6 +2,9 @@ package com.example.backend.modules.projects.acc.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -51,6 +54,8 @@ public class DictionaryAssociation {
     @JoinColumn(name = "rule_id", nullable = true)
     private BusinessRule businessRule;
 
+    @OneToMany(mappedBy = "dictionaryAssociation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DictionaryAttribute> attributes = new ArrayList<>();
 
     public UUID getId() {
         return id;
@@ -127,5 +132,13 @@ public class DictionaryAssociation {
     }
     public void setBusinessRule(BusinessRule businessRule) {
         this.businessRule = businessRule;
+    }
+
+    public List<DictionaryAttribute> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<DictionaryAttribute> attributes) {
+        this.attributes = attributes;
     }
 }

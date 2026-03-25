@@ -48,6 +48,7 @@ const loadProject = async () => {
     console.error("Erreur lors du chargement du projet", error);
   } finally {
     isLoading.value = false;
+    refreshKey.value += 1;
   }
 };
 
@@ -136,6 +137,7 @@ onMounted(() => {
           <TabPanel value="3" class="h-full">
             <div class="h-full p-4 overflow-y-auto">
               <DictionaryManager
+                  :key="'dict-' + refreshKey"
                   :projectId="projectId"
                   :entries="project.dictionaryEntries"
                   @refresh="loadProject"
@@ -154,6 +156,7 @@ onMounted(() => {
 
               <McdManager
                   v-else
+                  :key="'dict-' + refreshKey"
                   :projectId="projectId"
                   :entries="project.dictionaryEntries"
                   @refresh="loadProject"
