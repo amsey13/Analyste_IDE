@@ -1,5 +1,6 @@
 package com.example.backend.modules.analysis.exporter;
 
+import com.example.backend.modules.projects.acc.dto.DictionaryEntryRequestDTO;
 import com.example.backend.modules.projects.audit.dto.AnomalyDTO;
 import com.example.backend.modules.projects.audit.entity.Report;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -281,8 +283,77 @@ public class MistralService {
         }
     }
 
+    private String buildDictionaryPrompt(String usContent) {
+        return """
+        Tu es un architecte logiciel expert en modélisation de bases de données.
+        Voici les User Stories d'un projet :
+        
+        %s
+        
+        Ton objectif est d'extraire les entités métiers principales et leurs attributs probables pour créer un Dictionnaire de Données.
+        
+        CONSIGNES STRICTES :
+        1. Ne génère que les entités pertinentes pour une base de données (ignore les acteurs qui ne sont pas stockés).
+        2. Réponds UNIQUEMENT au format JSON strict avec la structure exacte ci-dessous.
+        3. Ne mets aucun texte d'introduction ou de conclusion.
+        
+        STRUCTURE JSON ATTENDUE :
+        {
+          "entries": [
+            {
+              "name": "Nom de l'entité (ex: Client)",
+              "description": "Rôle de l'entité dans le système",
+              "attributes": [
+                {
+                  "name": "nom_attribut (en snake_case ou camelCase)",
+                  "dataType": "VARCHAR ou INT ou BOOLEAN ou DATE ou DATETIME ou DECIMAL ou TEXT",
+                  "size": "255 (ou vide si non applicable)",
+                  "primaryKey": true ou false,
+                  "notNull": true ou false,
+                  "description": "Description de ce que stocke cet attribut"
+                }
+              ]
+            }
+          ]
+        }
+        """.formatted(usContent);
+    }
 
+    /**
+     * Analyse les User Stories via Mistral et suggère un dictionnaire de données.
+     */
+    public List<DictionaryEntryRequestDTO> suggestDictionaryFromUserStories(String usContent) throws IOException {
+        if (usContent == null || usContent.isBlank()) {
+            return Collections.emptyList();
+        }
 
+        String prompt = this.buildDictionaryPrompt(usContent);
+        String response = this.askQuestion(prompt);
+
+        // Nettoyage ultra-propre avec Regex (adieu les if/else)
+        String cleanedResponse = response.replaceFirst("^```(json)?\\s*", "")
+                .replaceFirst("\\s*```$", "")
+                .trim();
+
+        try {
+            JsonNode root = mapper.readTree(cleanedResponse);
+            JsonNode entries = root.path("entries");
+
+            if (entries.isMissingNode() || !entries.isArray()) {
+                throw new IOException("La clé 'entries' est absente de la réponse de l'IA.");
+            }
+
+            this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
+
+            // On convertit directement le JSON en liste de DTOs
+            return mapper.readValue(
+                    entries.toString(),
+                    new TypeReference<List<DictionaryEntryRequestDTO>>() {}
+            );
+        } catch (Exception e) {
+            throw new IOException("Erreur lors du parsing des suggestions IA: " + e.getMessage());
+        }
+    }
 }
 
 

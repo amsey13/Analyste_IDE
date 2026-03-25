@@ -1,10 +1,8 @@
 package com.example.backend.modules.projects.acc.service;
 
+import com.example.backend.modules.analysis.exporter.MistralService;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
-import com.example.backend.modules.projects.acc.dao.ActorRepository;
-import com.example.backend.modules.projects.acc.dao.DictionaryAttributeRepository;
-import com.example.backend.modules.projects.acc.dao.DictionaryEntryRepository;
-import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
+import com.example.backend.modules.projects.acc.dao.*;
 import com.example.backend.modules.projects.acc.dto.*;
 import com.example.backend.modules.projects.acc.entity.*;
 import com.example.backend.modules.projects.acc.mapper.SupportProjectMapper;
@@ -16,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -29,79 +29,54 @@ public class SupportFeatureService {
     private final SupportProjectMapper supportProjectMapper;
     private final DictionaryEntryRepository dictionaryEntryRepository;
     private final DictionaryAttributeRepository dictionaryAttributeRepository;
+    private final MistralService mistralService;
+    private final DictionaryAssociationRepository associationRepository;
 
     public SupportFeatureService(ActorRepository actorRepository,
                                  UserStoryRepository userStoryRepository,
                                  ProjectRepository projectRepository,
                                  SupportProjectMapper supportProjectMapper,
-                                DictionaryEntryRepository dictionaryEntryRepository,
-                                 DictionaryAttributeRepository dictionaryAttributeRepository) {
+                                 DictionaryEntryRepository dictionaryEntryRepository,
+                                 DictionaryAttributeRepository dictionaryAttributeRepository,
+                                 MistralService mistralService,
+                                 DictionaryAssociationRepository associationRepository) {
         this.actorRepository = actorRepository;
         this.userStoryRepository = userStoryRepository;
         this.projectRepository = projectRepository;
         this.supportProjectMapper = supportProjectMapper;
         this.dictionaryEntryRepository = dictionaryEntryRepository;
         this.dictionaryAttributeRepository = dictionaryAttributeRepository;
-    }
-    private UserStoryResponseDTO mapToDTO(UserStory us) {
-        UserStoryResponseDTO dto = new UserStoryResponseDTO();
-        dto.setId(us.getId());
-        dto.setIdentifier(us.getIdentifier());
-        dto.setDescription(us.getDescription());
-        dto.setBenefit(us.getBenefit());
-        dto.setAcceptanceCriteria(us.getAcceptanceCriteria());
-        if (us.getActor() != null) {
-            dto.setActorId(us.getActor().getId());
-            dto.setActorName(us.getActor().getName());
-        }
-        return dto;
+        this.mistralService = mistralService;
+        this.associationRepository = associationRepository;
     }
 
-    private ActorResponseDTO mapToActorDTO(Actor actor) {
-        ActorResponseDTO dto = new ActorResponseDTO();
-        dto.setId(actor.getId());
-        dto.setName(actor.getName());
-        return dto;
-    }
-    /**
-     * Méthode de sécurité interne pour vérifier que l'utilisateur connecté
-     * est bien le propriétaire du projet qu'il tente de modifier.
-     */
     private SupportProject getProjectAndCheckOwnership(UUID projectId) {
         String currentExternalId = SecurityContextHolder.getContext().getAuthentication().getName();
-
         SupportProject project = (SupportProject) projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectNotFoundException("Projet introuvable avec l'ID : " + projectId));
+                .orElseThrow(() -> new ProjectNotFoundException("Projet introuvable"));
 
         if (!project.getUser().getExternalId().equals(currentExternalId)) {
-            throw new UnauthorizedAccessException("Accès refusé : vous n'êtes pas le propriétaire de ce projet.");
+            throw new UnauthorizedAccessException("Accès refusé");
         }
-
         return project;
     }
 
-    // --- Gestion des Acteurs ---
-
+    // --- Acteurs ---
     @Transactional
     public ActorResponseDTO addActor(UUID projectId, String name) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
-
         Actor actor = new Actor();
         actor.setName(name);
-        actor.setProject(project); //
-        return mapToActorDTO(actorRepository.save(actor));
+        actor.setProject(project);
+        return supportProjectMapper.toActorDTO(actorRepository.save(actor));
     }
 
     @Transactional
     public ActorResponseDTO updateActor(UUID actorId, String newName) {
-        Actor actor = actorRepository.findById(actorId)
-                .orElseThrow(() -> new ProjectNotFoundException("Acteur introuvable"));
-
-        // Vérification de sécurité via le projet rattaché à l'acteur
+        Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(actor.getProject().getIdProject());
-
         actor.setName(newName);
-        return mapToActorDTO(actorRepository.save(actor));
+        return supportProjectMapper.toActorDTO(actorRepository.save(actor));
     }
 
     @Transactional
@@ -110,87 +85,61 @@ public class SupportFeatureService {
         actorRepository.deleteById(actorId);
     }
 
-    // --- Gestion des User Stories ---
-
+    // --- User Stories ---
     @Transactional
-    public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String description, String benefit, String acceptanceCriteria) {
+    public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String desc, String benefit, String crit) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
-
-        Actor actor = actorRepository.findById(actorId)
-                .orElseThrow(() -> new ProjectNotFoundException("Acteur introuvable"));
-
-        // Sécurité supplémentaire : on vérifie que l'acteur appartient bien au bon projet
-        if (!actor.getProject().getIdProject().equals(projectId)) {
+        Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
+        if (actor.getProject() == null || !actor.getProject().getIdProject().equals(projectId)) {
             throw new UnauthorizedAccessException("L'acteur spécifié n'appartient pas à ce projet.");
         }
-
         UserStory us = new UserStory();
-        us.setDescription(description);
-        us.setAcceptanceCriteria(acceptanceCriteria);
+        us.setDescription(desc);
         us.setBenefit(benefit);
-        us.setActor(actor); //
-        us.setProject(project); //
-        UserStory saved = userStoryRepository.save(us);
-        return mapToDTO(saved);
+        us.setAcceptanceCriteria(crit);
+        us.setActor(actor);
+        us.setProject(project);
+        return supportProjectMapper.toUserStoryDTO(userStoryRepository.save(us));
     }
 
     @Transactional
-    public UserStoryResponseDTO updateUserStory(UUID usId, String description , String benefit, String acceptanceCriteria, UUID actorId) {
-        UserStory us = userStoryRepository.findById(usId)
-                .orElseThrow(() -> new ProjectNotFoundException("User Story introuvable"));
-        Actor actor = actorRepository.findById(actorId)
-                .orElseThrow(() -> new EntityNotFoundException("Acteur non trouvé"));
-
+    public UserStoryResponseDTO updateUserStory(UUID usId, String desc, String ben, String crit, UUID actorId) {
+        UserStory us = userStoryRepository.findById(usId).orElseThrow(() -> new EntityNotFoundException());
+        Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(us.getProject().getIdProject());
 
-        us.setAcceptanceCriteria(acceptanceCriteria);
-        us.setBenefit(benefit);
-        us.setDescription(description);
+        us.setDescription(desc);
+        us.setBenefit(ben);
+        us.setAcceptanceCriteria(crit);
         us.setActor(actor);
-        UserStory saved = userStoryRepository.save(us);
-        return mapToDTO(saved);
+        return supportProjectMapper.toUserStoryDTO(userStoryRepository.save(us));
     }
 
     @Transactional
     public void deleteUserStory(UUID usId) {
-        UserStory us = userStoryRepository.findById(usId)
-                .orElseThrow(() -> new ProjectNotFoundException("User Story introuvable"));
-
+        UserStory us = userStoryRepository.findById(usId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(us.getProject().getIdProject());
-
         userStoryRepository.delete(us);
     }
 
+    // --- BPMN ---
     @Transactional
     public SupportProject saveBpmnDiagram(UUID projectId, String bpmnXml) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
-
         project.setBpmnXml(bpmnXml);
-
         updateCoverageScoreInternal(project);
-
         return projectRepository.save(project);
     }
 
     private void updateCoverageScoreInternal(SupportProject project) {
         List<UserStory> allStories = project.getUserStories();
-
         if (allStories == null || allStories.isEmpty()) {
             project.setCoverageScore(0.0);
             return;
         }
-
-        // On appelle la méthode de manière STATIQUE (voir étape 2)
-        Set<String> linkedUsIdsInBpmn = BpmnParserStrategy.extractLinkedUserStories(project.getBpmnXml());
-
-        long coveredCount = allStories.stream()
-                .filter(us -> linkedUsIdsInBpmn.contains(us.getId().toString()))
-                .count();
-
-        double percentage = (double) coveredCount / allStories.size() * 100;
-        double roundedPercentage = Math.round(percentage * 100.0) / 100.0;
-
-        project.setCoverageScore(roundedPercentage);
+        Set<String> linkedUsIds = BpmnParserStrategy.extractLinkedUserStories(project.getBpmnXml());
+        long covered = allStories.stream().filter(us -> linkedUsIds.contains(us.getId().toString())).count();
+        project.setCoverageScore(Math.round(((double) covered / allStories.size() * 100) * 100.0) / 100.0);
     }
 
     @Transactional(readOnly = true)
@@ -199,8 +148,7 @@ public class SupportFeatureService {
         return (SupportProjectResponseDTO) supportProjectMapper.map(project);
     }
 
-    // --- Gestion du Dictionnaire (Entités) ---
-
+    // --- Dictionnaire (Entités) ---
     @Transactional
     public DictionaryEntryResponseDTO addDictionaryEntry(UUID projectId, DictionaryEntryRequestDTO dto) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -208,37 +156,29 @@ public class SupportFeatureService {
         entry.setName(dto.getName());
         entry.setDescription(dto.getDescription());
         entry.setProject(project);
-        return mapToDictionaryEntryDTO(dictionaryEntryRepository.save(entry));
+        return supportProjectMapper.toDictionaryEntryDTO(dictionaryEntryRepository.save(entry));
     }
 
     @Transactional
     public DictionaryEntryResponseDTO updateDictionaryEntry(UUID entryId, DictionaryEntryRequestDTO dto) {
-        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
-                .orElseThrow(() -> new EntityNotFoundException("Entité introuvable"));
-
-        // Sécurité : on vérifie que l'utilisateur possède bien le projet lié à cette entité
+        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(entry.getProject().getIdProject());
-
         entry.setName(dto.getName());
         entry.setDescription(dto.getDescription());
-
-        return mapToDictionaryEntryDTO(dictionaryEntryRepository.save(entry));
+        return supportProjectMapper.toDictionaryEntryDTO(dictionaryEntryRepository.save(entry));
     }
 
     @Transactional
     public void deleteDictionaryEntry(UUID entryId) {
-        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
-                .orElseThrow(() -> new EntityNotFoundException("Entité introuvable"));
+        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(entry.getProject().getIdProject());
         dictionaryEntryRepository.delete(entry);
     }
 
-// --- Gestion du Dictionnaire (Attributs) ---
-
+    // --- Dictionnaire (Attributs) ---
     @Transactional
     public DictionaryAttributeResponseDTO addDictionaryAttribute(UUID entryId, DictionaryAttributeRequestDTO dto) {
-        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
-                .orElseThrow(() -> new EntityNotFoundException("Entité introuvable"));
+        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(entry.getProject().getIdProject());
 
         DictionaryAttribute attr = new DictionaryAttribute();
@@ -249,20 +189,12 @@ public class SupportFeatureService {
         attr.setNotNull(dto.getNotNull());
         attr.setDescription(dto.getDescription());
         attr.setDictionaryEntry(entry);
-
-        return mapToDictionaryAttributeDTO(dictionaryAttributeRepository.save(attr));
+        return supportProjectMapper.toDictionaryAttributeDTO(dictionaryAttributeRepository.save(attr));
     }
-
-
-
-    // --- Mise à jour du Dictionnaire (Attributs) ---
 
     @Transactional
     public DictionaryAttributeResponseDTO updateDictionaryAttribute(UUID attrId, DictionaryAttributeRequestDTO dto) {
-        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId)
-                .orElseThrow(() -> new EntityNotFoundException("Attribut introuvable"));
-
-        // Sécurité : on remonte jusqu'au projet pour vérifier les droits
+        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
 
         attr.setName(dto.getName());
@@ -271,36 +203,88 @@ public class SupportFeatureService {
         attr.setPrimaryKey(dto.getPrimaryKey());
         attr.setNotNull(dto.getNotNull());
         attr.setDescription(dto.getDescription());
-
-        return mapToDictionaryAttributeDTO(dictionaryAttributeRepository.save(attr));
+        return supportProjectMapper.toDictionaryAttributeDTO(dictionaryAttributeRepository.save(attr));
     }
 
     @Transactional
     public void deleteDictionaryAttribute(UUID attrId) {
-        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId)
-                .orElseThrow(() -> new EntityNotFoundException("Attribut introuvable"));
+        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId).orElseThrow(() -> new EntityNotFoundException());
         getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
         dictionaryAttributeRepository.delete(attr);
     }
 
-    // Petits mappers locaux pour renvoyer des DTO propres :
-    private DictionaryEntryResponseDTO mapToDictionaryEntryDTO(DictionaryEntry entry) {
-        DictionaryEntryResponseDTO dto = new DictionaryEntryResponseDTO();
-        dto.setId(entry.getId());
-        dto.setName(entry.getName());
-        dto.setDescription(entry.getDescription());
-        return dto;
+    // --- IA ---
+    @Transactional(readOnly = true)
+    public List<DictionaryEntryRequestDTO> getDictionarySuggestions(UUID projectId) throws IOException {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+        if (project.getUserStories() == null || project.getUserStories().isEmpty()) return Collections.emptyList();
+
+        StringBuilder usContent = new StringBuilder();
+        for (UserStory us : project.getUserStories()) {
+            usContent.append("- ").append(us.getIdentifier()).append(" : ").append(us.getDescription()).append("\n");
+        }
+        return mistralService.suggestDictionaryFromUserStories(usContent.toString());
     }
 
-    private DictionaryAttributeResponseDTO mapToDictionaryAttributeDTO(DictionaryAttribute attr) {
-        DictionaryAttributeResponseDTO dto = new DictionaryAttributeResponseDTO();
-        dto.setId(attr.getId());
-        dto.setName(attr.getName());
-        dto.setDataType(attr.getDataType());
-        dto.setSize(attr.getSize());
-        dto.setPrimaryKey(attr.getPrimaryKey());
-        dto.setNotNull(attr.getNotNull());
-        dto.setDescription(attr.getDescription());
-        return dto;
+    // --- Associations (MCD) ---
+    @Transactional(readOnly = true)
+    public List<DictionaryAssociationResponseDTO> getAssociationsByProject(UUID projectId) {
+        getProjectAndCheckOwnership(projectId);
+        return associationRepository.findByProjectId(projectId).stream()
+                .map(supportProjectMapper::toDictionaryAssociationDTO)
+                .toList();
+    }
+
+    @Transactional
+    public DictionaryAssociationResponseDTO addAssociation(UUID projectId, DictionaryAssociationRequestDTO request) {
+        getProjectAndCheckOwnership(projectId);
+        DictionaryEntry src = dictionaryEntryRepository.findById(request.getSourceId()).orElseThrow(() -> new IllegalArgumentException());
+        DictionaryEntry tgt = dictionaryEntryRepository.findById(request.getTargetId()).orElseThrow(() -> new IllegalArgumentException());
+
+        DictionaryAssociation assoc = new DictionaryAssociation();
+        assoc.setSource(src);
+        assoc.setTarget(tgt);
+        assoc.setName(request.getName());
+        assoc.setSourceMultiplicity(request.getSourceMultiplicity());
+        assoc.setTargetMultiplicity(request.getTargetMultiplicity());
+        assoc.setRelative(request.getIsRelative() != null ? request.getIsRelative() : false);
+        assoc.setCif(request.getIsCif() != null ? request.getIsCif() : false);
+        assoc.setIsInheritance(request.getIsInheritance() != null ? request.getIsInheritance() : false);
+
+        return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
+    }
+
+    @Transactional
+    public DictionaryAssociationResponseDTO updateAssociation(UUID associationId, DictionaryAssociationRequestDTO request) {
+        DictionaryAssociation assoc = associationRepository.findById(associationId)
+                .orElseThrow(() -> new EntityNotFoundException("Association introuvable"));
+
+        // Sécurité : on vérifie que l'utilisateur a les droits sur le projet
+        getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
+
+        // On récupère les entités (au cas où l'utilisateur change les flèches)
+        DictionaryEntry src = dictionaryEntryRepository.findById(request.getSourceId())
+                .orElseThrow(() -> new EntityNotFoundException("Source introuvable"));
+        DictionaryEntry tgt = dictionaryEntryRepository.findById(request.getTargetId())
+                .orElseThrow(() -> new EntityNotFoundException("Cible introuvable"));
+
+        // Mise à jour des champs
+        assoc.setSource(src);
+        assoc.setTarget(tgt);
+        assoc.setName(request.getName());
+        assoc.setSourceMultiplicity(request.getSourceMultiplicity());
+        assoc.setTargetMultiplicity(request.getTargetMultiplicity());
+        assoc.setRelative(request.getIsRelative() != null ? request.getIsRelative() : false);
+        assoc.setCif(request.getIsCif() != null ? request.getIsCif() : false);
+        assoc.setIsInheritance(request.getIsInheritance() != null ? request.getIsInheritance() : false);
+
+        return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
+    }
+
+    @Transactional
+    public void deleteAssociation(UUID associationId) {
+        DictionaryAssociation assoc = associationRepository.findById(associationId).orElseThrow(() -> new IllegalArgumentException());
+        getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
+        associationRepository.delete(assoc);
     }
 }

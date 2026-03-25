@@ -9,7 +9,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,29 +29,30 @@ public class SupportProjectMapper implements ProjectMapper {
         dto.setStatus(support.getStatus() != null ? support.getStatus().name() : null);
         dto.setBpmnXml(support.getBpmnXml());
         dto.setCoverageScore(support.getCoverageScore());
+
         if (support.getDictionaryEntries() != null) {
             dto.setDictionaryEntries(support.getDictionaryEntries().stream()
-                    .map(this::mapToDictionaryEntryDTO)
+                    .map(this::toDictionaryEntryDTO)
                     .collect(Collectors.toList()));
         }
 
         if (support.getActors() != null) {
             dto.setActors(support.getActors().stream()
-                    .map(this::mapToActorDTO)
+                    .map(this::toActorDTO)
                     .collect(Collectors.toList()));
         }
 
         if (support.getUserStories() != null) {
             dto.setUserStories(support.getUserStories().stream()
-                    .map(this::mapToUserStoryDTO)
+                    .map(this::toUserStoryDTO)
                     .collect(Collectors.toList()));
         }
 
         return dto;
     }
 
-
-    private DictionaryEntryResponseDTO mapToDictionaryEntryDTO(DictionaryEntry entry) {
+    public DictionaryEntryResponseDTO toDictionaryEntryDTO(DictionaryEntry entry) {
+        if (entry == null) return null;
         DictionaryEntryResponseDTO dto = new DictionaryEntryResponseDTO();
         dto.setId(entry.getId());
         dto.setName(entry.getName());
@@ -60,13 +60,14 @@ public class SupportProjectMapper implements ProjectMapper {
 
         if (entry.getAttributes() != null) {
             dto.setAttributes(entry.getAttributes().stream()
-                    .map(this::mapToDictionaryAttributeDTO)
+                    .map(this::toDictionaryAttributeDTO)
                     .collect(Collectors.toList()));
         }
         return dto;
     }
 
-    private DictionaryAttributeResponseDTO mapToDictionaryAttributeDTO(DictionaryAttribute attr) {
+    public DictionaryAttributeResponseDTO toDictionaryAttributeDTO(DictionaryAttribute attr) {
+        if (attr == null) return null;
         DictionaryAttributeResponseDTO dto = new DictionaryAttributeResponseDTO();
         dto.setId(attr.getId());
         dto.setName(attr.getName());
@@ -78,7 +79,8 @@ public class SupportProjectMapper implements ProjectMapper {
         return dto;
     }
 
-    private UserStoryResponseDTO mapToUserStoryDTO(UserStory us) {
+    public UserStoryResponseDTO toUserStoryDTO(UserStory us) {
+        if (us == null) return null;
         UserStoryResponseDTO dto = new UserStoryResponseDTO();
         dto.setId(us.getId());
         dto.setIdentifier(us.getIdentifier());
@@ -93,10 +95,28 @@ public class SupportProjectMapper implements ProjectMapper {
         return dto;
     }
 
-    private ActorResponseDTO mapToActorDTO(Actor actor) {
+    public ActorResponseDTO toActorDTO(Actor actor) {
+        if (actor == null) return null;
         ActorResponseDTO dto = new ActorResponseDTO();
         dto.setId(actor.getId());
         dto.setName(actor.getName());
+        return dto;
+    }
+
+    public DictionaryAssociationResponseDTO toDictionaryAssociationDTO(DictionaryAssociation entity) {
+        if (entity == null) return null;
+        DictionaryAssociationResponseDTO dto = new DictionaryAssociationResponseDTO();
+        dto.setId(entity.getId());
+        dto.setSourceId(entity.getSource().getId());
+        dto.setSourceName(entity.getSource().getName());
+        dto.setTargetId(entity.getTarget().getId());
+        dto.setTargetName(entity.getTarget().getName());
+        dto.setName(entity.getName());
+        dto.setSourceMultiplicity(entity.getSourceMultiplicity());
+        dto.setTargetMultiplicity(entity.getTargetMultiplicity());
+        dto.setIsRelative(entity.getRelative());
+        dto.setIsCif(entity.getCif());
+        dto.setIsInheritance(entity.getIsInheritance());
         return dto;
     }
 }

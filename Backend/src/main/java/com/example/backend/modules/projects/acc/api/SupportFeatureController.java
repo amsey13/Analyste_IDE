@@ -3,12 +3,15 @@ package com.example.backend.modules.projects.acc.api;
 import com.example.backend.modules.projects.acc.dto.*;
 import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.service.SupportFeatureService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -144,6 +147,41 @@ public class SupportFeatureController {
             @PathVariable UUID attrId,
             @RequestBody DictionaryAttributeRequestDTO dto) {
         return ResponseEntity.ok(supportService.updateDictionaryAttribute(attrId, dto));
+    }
+
+    @GetMapping("/projects/{projectId}/dictionary-suggestions")
+    public ResponseEntity<List<DictionaryEntryRequestDTO>> getDictionarySuggestions(@PathVariable UUID projectId) {
+        try {
+            List<DictionaryEntryRequestDTO> suggestions = supportService.getDictionarySuggestions(projectId);
+            return ResponseEntity.ok(suggestions);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/projects/{projectId}/associations")
+    public ResponseEntity<List<DictionaryAssociationResponseDTO>> getAssociations(@PathVariable UUID projectId) {
+        return ResponseEntity.ok(supportService.getAssociationsByProject(projectId));
+    }
+
+    @PostMapping("/projects/{projectId}/associations")
+    public ResponseEntity<DictionaryAssociationResponseDTO> addAssociation(
+            @PathVariable UUID projectId,
+            @RequestBody @Valid DictionaryAssociationRequestDTO request) {
+        return ResponseEntity.ok(supportService.addAssociation(projectId, request));
+    }
+
+    @PutMapping("/associations/{associationId}")
+    public ResponseEntity<DictionaryAssociationResponseDTO> updateAssociation(
+            @PathVariable UUID associationId,
+            @RequestBody @Valid DictionaryAssociationRequestDTO request) {
+        return ResponseEntity.ok(supportService.updateAssociation(associationId, request));
+    }
+
+    @DeleteMapping("/associations/{associationId}")
+    public ResponseEntity<Void> deleteAssociation(@PathVariable UUID associationId) {
+        supportService.deleteAssociation(associationId);
+        return ResponseEntity.noContent().build();
     }
 
 
