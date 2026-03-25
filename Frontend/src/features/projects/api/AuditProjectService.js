@@ -24,9 +24,31 @@ export default{
             console.error("Erreur lors de l'appel à l'Audit API", error);
             throw error;
         }
+    },
 
+    async downloadPdf(reportId) {
+        try {
+            const response = await apiClient.get(`/audit/${reportId}/export/pdf`, {
+                responseType: 'blob'
+            });
 
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `Rapport_Audit.pdf`);
+            document.body.appendChild(link);
+            link.click();
+
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     }
+
+
 
 
 

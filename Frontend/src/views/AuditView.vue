@@ -86,8 +86,17 @@ const startAudit = async () => {
   }
 }
 
-const downloadReport = () => {
-  alert("Téléchargement PDF à implémenter côté backend")
+const downloadReport = async() => {
+  if(!report.value || !report.value.id) {
+    errorMessage.value = "Impossible de trouver l'ID du rapport.";
+  }
+
+  try{
+    await auditProjectService.downloadPdf(report.value.id);
+  }catch(error){
+    alert(errorMessage.value);
+  }
+
 }
 </script>
 
