@@ -23,6 +23,9 @@ public class DictionaryAssociationRequestDTO {
     @NotBlank(message = "La cardinalité cible est obligatoire")
     private String targetMultiplicity; // ex: "1..1"
 
+    private Boolean isRelative;
+
+
     public UUID getSourceId() {
         return sourceId;
     }
@@ -61,5 +64,11 @@ public class DictionaryAssociationRequestDTO {
 
     public void setTargetMultiplicity(String targetMultiplicity) {
         this.targetMultiplicity = targetMultiplicity;
+    }
+    public Boolean getIsRelative() {
+        return isRelative;
+    }
+    public void setIsRelative(Boolean isRelative) {
+        this.isRelative = isRelative;
     }
 }

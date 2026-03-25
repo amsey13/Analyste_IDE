@@ -15,6 +15,9 @@ public class DictionaryAssociationResponseDTO {
     private String name;
     private String sourceMultiplicity;
     private String targetMultiplicity;
+    private Boolean isRelative;
+
+
 
     public UUID getId() {
         return id;
@@ -78,5 +81,11 @@ public class DictionaryAssociationResponseDTO {
 
     public void setTargetMultiplicity(String targetMultiplicity) {
         this.targetMultiplicity = targetMultiplicity;
+    }
+    public Boolean getIsRelative() {
+        return isRelative;
+    }
+    public void setIsRelative(Boolean isRelative) {
+        this.isRelative = isRelative;
     }
 }

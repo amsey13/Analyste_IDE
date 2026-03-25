@@ -96,11 +96,11 @@ export const SupportFeatureService = {
     },
 
     async updateAssociation(associationId, association) {
-        const response = await apiClient.put(`/support/projects/${associationId}`, association);
+        const response = await apiClient.put(`/support/associations/${associationId}`, association);
         return response.data;
     },
 
     async deleteAssociation(associationId) {
-        await apiClient.delete(`/support/projects/associations/${associationId}`);
+        await apiClient.delete(`/support/associations/${associationId}`);
     },
 };
