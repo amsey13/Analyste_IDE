@@ -254,6 +254,11 @@ public class SupportFeatureService {
         assoc.setRelative(request.getIsRelative() != null ? request.getIsRelative() : false);
         assoc.setCif(request.getIsCif() != null ? request.getIsCif() : false);
         assoc.setIsInheritance(request.getIsInheritance() != null ? request.getIsInheritance() : false);
+        if (request.getRuleId() != null) {
+            BusinessRule rule = businessRuleRepository.findById(request.getRuleId())
+                    .orElseThrow(() -> new EntityNotFoundException("Règle de gestion introuvable"));
+            assoc.setBusinessRule(rule);
+        }
 
         return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
     }
@@ -281,6 +286,13 @@ public class SupportFeatureService {
         assoc.setRelative(request.getIsRelative() != null ? request.getIsRelative() : false);
         assoc.setCif(request.getIsCif() != null ? request.getIsCif() : false);
         assoc.setIsInheritance(request.getIsInheritance() != null ? request.getIsInheritance() : false);
+        if (request.getRuleId() != null) {
+            BusinessRule rule = businessRuleRepository.findById(request.getRuleId())
+                    .orElseThrow(() -> new EntityNotFoundException("Règle de gestion introuvable"));
+            assoc.setBusinessRule(rule);
+        } else {
+            assoc.setBusinessRule(null); // On permet de retirer la règle
+        }
 
         return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
     }

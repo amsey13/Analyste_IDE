@@ -104,7 +104,9 @@ public class SupportProjectMapper implements ProjectMapper {
     }
 
     public DictionaryAssociationResponseDTO toDictionaryAssociationDTO(DictionaryAssociation entity) {
-        if (entity == null) return null;
+        if (entity == null) {
+            return null;
+        }
         DictionaryAssociationResponseDTO dto = new DictionaryAssociationResponseDTO();
         dto.setId(entity.getId());
         dto.setSourceId(entity.getSource().getId());
@@ -117,6 +119,10 @@ public class SupportProjectMapper implements ProjectMapper {
         dto.setIsRelative(entity.getRelative());
         dto.setIsCif(entity.getCif());
         dto.setIsInheritance(entity.getIsInheritance());
+        if (entity.getBusinessRule() != null) {
+            dto.setRuleId(entity.getBusinessRule().getId());
+            dto.setRuleCode(entity.getBusinessRule().getCode());
+        }
         return dto;
     }
 

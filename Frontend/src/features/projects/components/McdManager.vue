@@ -18,6 +18,7 @@ const props = defineProps({
 
 const toast = useToast();
 const associations = ref([]);
+const rules = ref([]);
 const loading = ref(false);
 
 // Formulaire pour une nouvelle association
@@ -29,7 +30,8 @@ const newAssoc = ref({
   targetMultiplicity: '1..1',
   isRelative: false,
   isCif: false,
-  isInheritance: false
+  isInheritance: false,
+  ruleId: null
 });
 
 const multiplicities = [
@@ -45,12 +47,18 @@ mermaid.initialize({
   themeVariables: { primaryColor: '#6366f1', edgeLabelBackground:'#ffffff' }
 });
 
-const loadAssociations = async () => {
+// On charge les associations ET les règles
+const loadInitialData = async () => {
   try {
-    associations.value = await SupportFeatureService.getAssociations(props.projectId);
+    const [assocsData, rulesData] = await Promise.all([
+      SupportFeatureService.getAssociations(props.projectId),
+      SupportFeatureService.getBusinessRules(props.projectId)
+    ]);
+    associations.value = assocsData || [];
+    rules.value = rulesData || [];
     renderMcd();
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les relations' });
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données',life: 4000 });
   }
 };
 
@@ -61,7 +69,7 @@ const saveAssociation = async () => {
     newAssoc.value.targetMultiplicity = "1..1";
   }
   if (!newAssoc.value.sourceId || !newAssoc.value.targetId || !newAssoc.value.name) {
-    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir les entités source et cible.' });
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir les entités source et cible et le verbe/nom.',life: 3000 });
     return;
   }
 
@@ -73,12 +81,16 @@ const saveAssociation = async () => {
     newAssoc.value.isRelative = false;
     newAssoc.value.isCif = false;
     newAssoc.value.isInheritance = false;
+    newAssoc.value.ruleId = null;
 
-    await loadAssociations();
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée avec succès' });
+    // On recharge juste les associations
+    associations.value = await SupportFeatureService.getAssociations(props.projectId);
+    renderMcd();
+
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée avec succès',life: 3000 });
   } catch (e) {
     console.error(e);
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'ajout' });
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'ajout',life: 4000 });
   } finally {
     loading.value = false;
   }
@@ -86,7 +98,9 @@ const saveAssociation = async () => {
 
 const deleteAssoc = async (id) => {
   await SupportFeatureService.deleteAssociation(id);
-  await loadAssociations();
+  //  On recharge juste les associations
+  associations.value = await SupportFeatureService.getAssociations(props.projectId);
+  renderMcd();
 };
 
 const renderMcd = async () => {
@@ -170,7 +184,8 @@ const renderMcd = async () => {
   }
 };
 
-onMounted(loadAssociations);
+//  Appel de la nouvelle fonction de chargement
+onMounted(loadInitialData);
 </script>
 
 <template>
@@ -209,6 +224,22 @@ onMounted(loadAssociations);
             <div class="field mb-3">
               <label class="font-bold text-sm mb-1 block text-600">Entité Cible <span v-if="newAssoc.isInheritance" class="text-yellow-600">(Parent)</span></label>
               <Dropdown v-model="newAssoc.targetId" :options="entries" optionLabel="name" optionValue="id" placeholder="Ex: Produit" class="w-full" />
+            </div>
+
+            <div class="field mb-3 border-top-1 surface-border pt-3">
+              <label class="font-bold text-sm mb-1 block text-600">
+                <i class="pi pi-book text-primary mr-1"></i> Règle de Gestion associée <span class="text-400 font-normal">(Optionnel)</span>
+              </label>
+              <Dropdown v-model="newAssoc.ruleId" :options="rules" optionLabel="code" optionValue="id" placeholder="Lier à une règle (Ex: RG-01)" class="w-full" showClear>
+                <template #option="slotProps">
+                  <div class="flex flex-column">
+                    <span class="font-bold">{{ slotProps.option.code }}</span>
+                    <span class="text-sm text-500 overflow-hidden white-space-nowrap text-overflow-ellipsis" style="max-width: 200px;">
+                      {{ slotProps.option.description }}
+                    </span>
+                  </div>
+                </template>
+              </Dropdown>
             </div>
 
             <div class="flex flex-column gap-2 mb-4 mt-2">
@@ -258,26 +289,34 @@ onMounted(loadAssociations);
             </template>
             <Column header="Détails de la relation">
               <template #body="sp">
-                <div class="flex align-items-center gap-2 text-sm">
+                <div class="flex flex-column gap-1">
+                  <div class="flex align-items-center gap-2 text-sm">
 
-                  <template v-if="sp.data.isInheritance">
-                    <span class="font-semibold">{{ sp.data.sourceName }}</span>
-                    <span class="text-yellow-600 font-bold mx-2">──Δ──></span>
-                    <span class="font-semibold">{{ sp.data.targetName }}</span>
-                    <span class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 border-round font-bold" title="Héritage"> (Héritage)</span>
-                  </template>
+                    <template v-if="sp.data.isInheritance">
+                      <span class="font-semibold">{{ sp.data.sourceName }}</span>
+                      <span class="text-yellow-600 font-bold mx-2">──Δ──></span>
+                      <span class="font-semibold">{{ sp.data.targetName }}</span>
+                      <span class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 border-round font-bold" title="Héritage"> (Héritage)</span>
+                    </template>
 
-                  <template v-else>
-                    <span class="font-semibold">{{ sp.data.sourceName }}</span>
-                    <span class="text-500">({{ sp.data.sourceMultiplicity.replace('..', ',') }})</span>
-                    <span class="text-primary font-italic">{{ sp.data.name }}</span>
-                    <span class="text-500">({{ sp.data.targetMultiplicity.replace('..', ',') }})</span>
-                    <span class="font-semibold">{{ sp.data.targetName }}</span>
+                    <template v-else>
+                      <span class="font-semibold">{{ sp.data.sourceName }}</span>
+                      <span class="text-500">({{ sp.data.sourceMultiplicity.replace('..', ',') }})</span>
+                      <span class="text-primary font-italic">{{ sp.data.name }}</span>
+                      <span class="text-500">({{ sp.data.targetMultiplicity.replace('..', ',') }})</span>
+                      <span class="font-semibold">{{ sp.data.targetName }}</span>
 
-                    <span v-if="sp.data.isRelative" class="ml-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 border-round font-bold" title="Identification Relative"> (R)</span>
-                    <span v-if="sp.data.isCif" class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 border-round font-bold" title="Contrainte d'Intégrité Fonctionnelle"> (CIF)</span>
-                  </template>
+                      <span v-if="sp.data.isRelative" class="ml-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 border-round font-bold" title="Identification Relative"> (R)</span>
+                      <span v-if="sp.data.isCif" class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 border-round font-bold" title="Contrainte d'Intégrité Fonctionnelle"> (CIF)</span>
+                    </template>
 
+                  </div>
+
+                  <div v-if="sp.data.ruleCode" class="mt-1">
+                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 border-round font-bold inline-flex align-items-center gap-1">
+                      <i class="pi pi-link text-xs"></i> Justifié par : {{ sp.data.ruleCode }}
+                    </span>
+                  </div>
                 </div>
               </template>
             </Column>

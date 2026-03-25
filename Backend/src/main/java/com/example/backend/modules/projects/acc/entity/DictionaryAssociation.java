@@ -47,8 +47,9 @@ public class DictionaryAssociation {
     @Column(name = "is_inheritance", nullable = false)
     private Boolean isInheritance = false;
 
-
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rule_id", nullable = true)
+    private BusinessRule businessRule;
 
 
     public UUID getId() {
@@ -119,5 +120,12 @@ public class DictionaryAssociation {
     }
     public void setIsInheritance(Boolean isInheritance) {
         this.isInheritance = isInheritance;
+    }
+
+    public BusinessRule getBusinessRule() {
+        return businessRule;
+    }
+    public void setBusinessRule(BusinessRule businessRule) {
+        this.businessRule = businessRule;
     }
 }

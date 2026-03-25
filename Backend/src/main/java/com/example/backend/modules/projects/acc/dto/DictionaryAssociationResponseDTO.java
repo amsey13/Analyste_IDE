@@ -18,6 +18,10 @@ public class DictionaryAssociationResponseDTO {
     private Boolean isRelative;
     private Boolean isCif ;
     private Boolean isInheritance;
+    private UUID ruleId;
+    private String ruleCode; // Très utile pour l'afficher facilement côté Vue.js
+
+
 
 
 
@@ -103,5 +107,19 @@ public class DictionaryAssociationResponseDTO {
     }
     public void setIsInheritance(Boolean isInheritance) {
         this.isInheritance = isInheritance;
+    }
+
+    public UUID getRuleId() {
+        return ruleId;
+    }
+    public void setRuleId(UUID ruleId) {
+        this.ruleId = ruleId;
+    }
+
+    public String getRuleCode() {
+        return ruleCode;
+    }
+    public void setRuleCode(String ruleCode) {
+        this.ruleCode = ruleCode;
     }
 }
