@@ -44,6 +44,11 @@ public class DictionaryAssociation {
     @Column(name = "is_cif", nullable = false)
     private Boolean isCif = false;
 
+    @Column(name = "is_inheritance", nullable = false)
+    private Boolean isInheritance = false;
+
+
+
 
 
     public UUID getId() {
@@ -108,5 +113,11 @@ public class DictionaryAssociation {
 
     public void setCif(Boolean cif) {
         isCif = cif;
+    }
+    public Boolean getIsInheritance() {
+        return isInheritance;
+    }
+    public void setIsInheritance(Boolean isInheritance) {
+        this.isInheritance = isInheritance;
     }
 }

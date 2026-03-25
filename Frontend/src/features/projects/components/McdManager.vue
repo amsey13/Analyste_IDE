@@ -28,7 +28,8 @@ const newAssoc = ref({
   sourceMultiplicity: '0..N',
   targetMultiplicity: '1..1',
   isRelative: false,
-  isCif: false // <-- Ajout du champ CIF
+  isCif: false,
+  isInheritance: false
 });
 
 const multiplicities = [
@@ -54,17 +55,29 @@ const loadAssociations = async () => {
 };
 
 const saveAssociation = async () => {
-  if (!newAssoc.value.sourceId || !newAssoc.value.targetId || !newAssoc.value.name) return;
+  if (newAssoc.value.isInheritance) {
+    newAssoc.value.name = "est un";
+    newAssoc.value.sourceMultiplicity = "0..1";
+    newAssoc.value.targetMultiplicity = "1..1";
+  }
+  if (!newAssoc.value.sourceId || !newAssoc.value.targetId || !newAssoc.value.name) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir les entités source et cible.' });
+    return;
+  }
 
   loading.value = true;
   try {
     await SupportFeatureService.addAssociation(props.projectId, newAssoc.value);
+
     newAssoc.value.name = '';
     newAssoc.value.isRelative = false;
     newAssoc.value.isCif = false;
+    newAssoc.value.isInheritance = false;
+
     await loadAssociations();
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée' });
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée avec succès' });
   } catch (e) {
+    console.error(e);
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'ajout' });
   } finally {
     loading.value = false;
@@ -87,7 +100,7 @@ const renderMcd = async () => {
   code += "  classDef assocClass fill:#fff,stroke:#333,stroke-width:2px,color:#000;\n";
   // Style spécial pour la CIF (Bordure rouge/violette pour la distinguer)
   code += "  classDef cifClass fill:#fff,stroke:#d946ef,stroke-width:3px,color:#d946ef;\n";
-
+  code += "  classDef inheritClass fill:#fef08a,stroke:#ca8a04,stroke-width:2px,color:#854d0e;\n";
   // Dessiner les Entités
   props.entries.forEach(e => {
     const entityNodeId = `ent_${e.name.replace(/\s+/g, '_')}`;
@@ -98,40 +111,54 @@ const renderMcd = async () => {
   associations.value.forEach(a => {
     const srcNodeId = `ent_${a.sourceName.replace(/\s+/g, '_')}`;
     const tgtNodeId = `ent_${a.targetName.replace(/\s+/g, '_')}`;
-    const assocNodeId = `assoc_${a.name.replace(/\s+/g, '_')}_${a.id.replace(/-/g, '_')}`;
 
-    let srcCardText = multiplicities.find(m => m.value === a.sourceMultiplicity)?.text || '0,N';
-    let tgtCardText = multiplicities.find(m => m.value === a.targetMultiplicity)?.text || '1,1';
+    // --- 1. CAS DE L'HÉRITAGE (SPÉCIALISATION) ---
+    if (a.isInheritance) {
+      const inheritNodeId = `inh_${a.id.replace(/-/g, '_')}`;
 
-    if (a.isRelative) {
-      if (a.sourceMultiplicity.includes('1')) srcCardText += ' (R)';
-      if (a.targetMultiplicity.includes('1')) tgtCardText += ' (R)';
+      // On crée un hexagone/triangle (Δ) jaune pour représenter l'héritage
+      code += `  ${inheritNodeId}{{"Δ"}}:::inheritClass;\n`;
+
+      // Lien : L'enfant (Source) va vers le triangle...
+      code += `  ${srcNodeId} --- ${inheritNodeId};\n`;
+      // ... et le triangle pointe vers le parent (Cible) avec une flèche
+      code += `  ${inheritNodeId} --> ${tgtNodeId};\n`;
+
     }
+    // --- 2. CAS CLASSIQUE (ASSOCIATION, CIF, RELATIF) ---
+    else {
+      const assocNodeId = `assoc_${a.name.replace(/\s+/g, '_')}_${a.id.replace(/-/g, '_')}`;
 
-    // --- LOGIQUE CIF ---
-    let nodeClass = a.isCif ? "cifClass" : "assocClass";
-    let nodeLabel = a.isCif ? `${a.name}<br><b>(CIF)</b>` : a.name;
+      let srcCardText = multiplicities.find(m => m.value === a.sourceMultiplicity)?.text || '0,N';
+      let tgtCardText = multiplicities.find(m => m.value === a.targetMultiplicity)?.text || '1,1';
 
-    // Création du rond
-    code += `  ${assocNodeId}(("${nodeLabel}")):::${nodeClass};\n`;
+      if (a.isRelative) {
+        if (a.sourceMultiplicity.includes('1')) srcCardText += ' (R)';
+        if (a.targetMultiplicity.includes('1')) tgtCardText += ' (R)';
+      }
 
-    // Dessin du lien Source <--> Association
-    // Si c'est une CIF et que la source est "1,1" ou "0,1", la flèche pointe vers la source
-    if (a.isCif && a.sourceMultiplicity.endsWith('1')) {
-      code += `  ${assocNodeId} -->|"${srcCardText}"| ${srcNodeId};\n`;
-    } else {
-      code += `  ${srcNodeId} ---|"${srcCardText}"| ${assocNodeId};\n`;
-    }
+      // --- LOGIQUE CIF ---
+      let nodeClass = a.isCif ? "cifClass" : "assocClass";
+      let nodeLabel = a.isCif ? `${a.name}<br><b>(CIF)</b>` : a.name;
 
-    // Dessin du lien Association <--> Cible
-    // Si c'est une CIF et que la cible est "1,1" ou "0,1", la flèche pointe vers la cible
-    if (a.isCif && a.targetMultiplicity.endsWith('1')) {
-      code += `  ${assocNodeId} -->|"${tgtCardText}"| ${tgtNodeId};\n`;
-    } else {
-      code += `  ${assocNodeId} ---|"${tgtCardText}"| ${tgtNodeId};\n`;
+      // Création du rond
+      code += `  ${assocNodeId}(("${nodeLabel}")):::${nodeClass};\n`;
+
+      // Dessin du lien Source <--> Association
+      if (a.isCif && a.sourceMultiplicity.endsWith('1')) {
+        code += `  ${assocNodeId} -->|"${srcCardText}"| ${srcNodeId};\n`;
+      } else {
+        code += `  ${srcNodeId} ---|"${srcCardText}"| ${assocNodeId};\n`;
+      }
+
+      // Dessin du lien Association <--> Cible
+      if (a.isCif && a.targetMultiplicity.endsWith('1')) {
+        code += `  ${assocNodeId} -->|"${tgtCardText}"| ${tgtNodeId};\n`;
+      } else {
+        code += `  ${assocNodeId} ---|"${tgtCardText}"| ${tgtNodeId};\n`;
+      }
     }
   });
-
   try {
     container.removeAttribute('data-processed');
     container.innerHTML = "";
@@ -160,11 +187,11 @@ onMounted(loadAssociations);
         <template #content>
           <div class="p-fluid">
             <div class="field mb-3">
-              <label class="font-bold text-sm mb-1 block text-600">Entité Source</label>
+              <label class="font-bold text-sm mb-1 block text-600">Entité Source <span v-if="newAssoc.isInheritance" class="text-yellow-600">(Enfant)</span></label>
               <Dropdown v-model="newAssoc.sourceId" :options="entries" optionLabel="name" optionValue="id" placeholder="Ex: Utilisateur" class="w-full" />
             </div>
 
-            <div class="grid formgrid mb-3">
+            <div v-if="!newAssoc.isInheritance" class="grid formgrid mb-3">
               <div class="col-3">
                 <label class="font-bold text-sm mb-1 block text-600">Card.</label>
                 <Dropdown v-model="newAssoc.sourceMultiplicity" :options="multiplicities" optionLabel="text" optionValue="value" class="w-full" />
@@ -180,24 +207,33 @@ onMounted(loadAssociations);
             </div>
 
             <div class="field mb-3">
-              <label class="font-bold text-sm mb-1 block text-600">Entité Cible</label>
+              <label class="font-bold text-sm mb-1 block text-600">Entité Cible <span v-if="newAssoc.isInheritance" class="text-yellow-600">(Parent)</span></label>
               <Dropdown v-model="newAssoc.targetId" :options="entries" optionLabel="name" optionValue="id" placeholder="Ex: Produit" class="w-full" />
             </div>
 
             <div class="flex flex-column gap-2 mb-4 mt-2">
-              <div class="field-checkbox flex align-items-center bg-orange-50 p-2 border-round m-0">
+
+              <div class="field-checkbox flex align-items-center bg-yellow-50 p-2 border-round m-0">
+                <Checkbox v-model="newAssoc.isInheritance" inputId="isInheritance" :binary="true" />
+                <label for="isInheritance" class="ml-2 mb-0 font-bold text-yellow-800 text-sm cursor-pointer">
+                  Héritage / Spécialisation (Δ)
+                </label>
+              </div>
+
+              <div v-if="!newAssoc.isInheritance" class="field-checkbox flex align-items-center bg-orange-50 p-2 border-round m-0">
                 <Checkbox v-model="newAssoc.isRelative" inputId="isRelative" :binary="true" />
                 <label for="isRelative" class="ml-2 mb-0 font-bold text-orange-800 text-sm cursor-pointer">
                   Identification relative (R)
                 </label>
               </div>
 
-              <div class="field-checkbox flex align-items-center bg-purple-50 p-2 border-round m-0">
+              <div v-if="!newAssoc.isInheritance" class="field-checkbox flex align-items-center bg-purple-50 p-2 border-round m-0">
                 <Checkbox v-model="newAssoc.isCif" inputId="isCif" :binary="true" />
                 <label for="isCif" class="ml-2 mb-0 font-bold text-purple-800 text-sm cursor-pointer">
                   Contrainte d'Intégrité Fonctionnelle (CIF)
                 </label>
               </div>
+
             </div>
 
             <Button label="Créer la relation" icon="pi pi-plus" @click="saveAssociation" :loading="loading" severity="primary" class="w-full" />
@@ -223,14 +259,25 @@ onMounted(loadAssociations);
             <Column header="Détails de la relation">
               <template #body="sp">
                 <div class="flex align-items-center gap-2 text-sm">
-                  <span class="font-semibold">{{ sp.data.sourceName }}</span>
-                  <span class="text-500">({{ sp.data.sourceMultiplicity.replace('..', ',') }})</span>
-                  <span class="text-primary font-italic">{{ sp.data.name }}</span>
-                  <span class="text-500">({{ sp.data.targetMultiplicity.replace('..', ',') }})</span>
-                  <span class="font-semibold">{{ sp.data.targetName }}</span>
 
-                  <span v-if="sp.data.isRelative" class="ml-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 border-round font-bold" title="Identification Relative"> (R)</span>
-                  <span v-if="sp.data.isCif" class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 border-round font-bold" title="Contrainte d'Intégrité Fonctionnelle"> (CIF)</span>
+                  <template v-if="sp.data.isInheritance">
+                    <span class="font-semibold">{{ sp.data.sourceName }}</span>
+                    <span class="text-yellow-600 font-bold mx-2">──Δ──></span>
+                    <span class="font-semibold">{{ sp.data.targetName }}</span>
+                    <span class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 border-round font-bold" title="Héritage"> (Héritage)</span>
+                  </template>
+
+                  <template v-else>
+                    <span class="font-semibold">{{ sp.data.sourceName }}</span>
+                    <span class="text-500">({{ sp.data.sourceMultiplicity.replace('..', ',') }})</span>
+                    <span class="text-primary font-italic">{{ sp.data.name }}</span>
+                    <span class="text-500">({{ sp.data.targetMultiplicity.replace('..', ',') }})</span>
+                    <span class="font-semibold">{{ sp.data.targetName }}</span>
+
+                    <span v-if="sp.data.isRelative" class="ml-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 border-round font-bold" title="Identification Relative"> (R)</span>
+                    <span v-if="sp.data.isCif" class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 border-round font-bold" title="Contrainte d'Intégrité Fonctionnelle"> (CIF)</span>
+                  </template>
+
                 </div>
               </template>
             </Column>
@@ -269,7 +316,6 @@ onMounted(loadAssociations);
     </div>
   </div>
 </template>
-
 <style scoped>
 .mcd-viewer {
   background-image: radial-gradient(var(--surface-border) 1px, transparent 1px);

@@ -249,6 +249,7 @@ public class SupportFeatureService {
         assoc.setTargetMultiplicity(request.getTargetMultiplicity());
         assoc.setRelative(request.getIsRelative() != null ? request.getIsRelative() : false);
         assoc.setCif(request.getIsCif() != null ? request.getIsCif() : false);
+        assoc.setIsInheritance(request.getIsInheritance() != null ? request.getIsInheritance() : false);
 
         return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
     }
@@ -275,6 +276,7 @@ public class SupportFeatureService {
         assoc.setTargetMultiplicity(request.getTargetMultiplicity());
         assoc.setRelative(request.getIsRelative() != null ? request.getIsRelative() : false);
         assoc.setCif(request.getIsCif() != null ? request.getIsCif() : false);
+        assoc.setIsInheritance(request.getIsInheritance() != null ? request.getIsInheritance() : false);
 
         return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
     }

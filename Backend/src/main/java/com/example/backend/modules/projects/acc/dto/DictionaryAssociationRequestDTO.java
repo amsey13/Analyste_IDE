@@ -27,6 +27,9 @@ public class DictionaryAssociationRequestDTO {
 
     private Boolean isCif = false;
 
+    private Boolean isInheritance = false;
+
+
 
     public UUID getSourceId() {
         return sourceId;
@@ -80,5 +83,11 @@ public class DictionaryAssociationRequestDTO {
 
     public void setIsCif(Boolean cif) {
         isCif = cif;
+    }
+    public Boolean getIsInheritance() {
+        return isInheritance;
+    }
+    public void setIsInheritance(Boolean isInheritance) {
+        this.isInheritance = isInheritance;
     }
 }
