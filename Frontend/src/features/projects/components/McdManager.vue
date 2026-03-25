@@ -9,6 +9,7 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Checkbox from 'primevue/checkbox'; // <-- Nouvel import pour la case à cocher
 
 const props = defineProps({
   projectId: { type: String, required: true },
@@ -25,7 +26,8 @@ const newAssoc = ref({
   targetId: null,
   name: '',
   sourceMultiplicity: '0..N',
-  targetMultiplicity: '1..1'
+  targetMultiplicity: '1..1',
+  isRelative: false // <-- Ajout du champ isRelative
 });
 
 const multiplicities = [
@@ -57,7 +59,8 @@ const saveAssociation = async () => {
   loading.value = true;
   try {
     await SupportFeatureService.addAssociation(props.projectId, newAssoc.value);
-    newAssoc.value.name = ''; // Reset champ
+    newAssoc.value.name = '';
+    newAssoc.value.isRelative = false; // <-- On reset la checkbox après l'ajout
     await loadAssociations();
     toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée' });
   } catch (e) {
@@ -77,49 +80,45 @@ const renderMcd = async () => {
   const container = document.getElementById('mermaid-mcd');
   if (!container) return;
 
-  // 1. On démarre un Flowchart (orientation Left-to-Right)
   let code = "flowchart LR\n";
-
-  // 2. Définition des styles (Merise strict : rectangles bleus, ronds blancs)
   code += "  classDef entityClass fill:#eef,stroke:#333,stroke-width:1px,rx:5,ry:5;\n";
   code += "  classDef assocClass fill:#fff,stroke:#333,stroke-width:2px,color:#000;\n";
 
-  // 3. Dessiner les Entités (rectangles)
+  // Dessiner les Entités
   props.entries.forEach(e => {
-    // Remplacer les espaces par underscores pour les IDs de nœuds Mermaid
     const entityNodeId = `ent_${e.name.replace(/\s+/g, '_')}`;
     code += `  ${entityNodeId}[${e.name}]:::entityClass;\n`;
   });
 
-  // 4. Dessiner les Associations (ronds) et les connections avec cardinalités
+  // Dessiner les Associations
   associations.value.forEach(a => {
     const srcNodeId = `ent_${a.sourceName.replace(/\s+/g, '_')}`;
     const tgtNodeId = `ent_${a.targetName.replace(/\s+/g, '_')}`;
-    // Créer un ID unique pour le rond de l'association
     const assocNodeId = `assoc_${a.name.replace(/\s+/g, '_')}_${a.id.replace(/-/g, '_')}`;
 
-    // Récupérer le texte de cardinalité Merise (ex: 0,N)
-    const srcCardText = multiplicities.find(m => m.value === a.sourceMultiplicity)?.text || '0,N';
-    const tgtCardText = multiplicities.find(m => m.value === a.targetMultiplicity)?.text || '1,1';
+    let srcCardText = multiplicities.find(m => m.value === a.sourceMultiplicity)?.text || '0,N';
+    let tgtCardText = multiplicities.find(m => m.value === a.targetMultiplicity)?.text || '1,1';
 
-    // A. Définir le rond de l'association
+    // --- MAGIE DU RELATIF ---
+    // Si la relation est relative, on ajoute la mention (R) sur la patte 1,1 ou 0,1
+    if (a.isRelative) {
+      if (a.sourceMultiplicity.includes('1')) srcCardText += ' (R)';
+      if (a.targetMultiplicity.includes('1')) tgtCardText += ' (R)';
+    }
+
     code += `  ${assocNodeId}((${a.name})):::assocClass;\n`;
-
-    // B. Créer la connection 1 : Entité Source ---|Card| Rond
-    code += `  ${srcNodeId} ---|${srcCardText}| ${assocNodeId};\n`;
-
-    // C. Créer la connection 2 : Rond ---|Card| Entité Cible
-    code += `  ${assocNodeId} ---|${tgtCardText}| ${tgtNodeId};\n`;
+    code += `  ${srcNodeId} ---|"${srcCardText}"| ${assocNodeId};\n`;
+    code += `  ${assocNodeId} ---|"${tgtCardText}"| ${tgtNodeId};\n`;
   });
 
   try {
     container.removeAttribute('data-processed');
-    container.innerHTML = ""; // Vider le conteneur
+    container.innerHTML = "";
     const { svg } = await mermaid.render('svg-mcd-merise-' + props.projectId, code);
     container.innerHTML = svg;
   } catch (error) {
     console.error("Mermaid Render Error", error);
-    container.innerHTML = `<div class="p-4 text-red-500">Erreur de rendu du MCD Merise. Vérifiez les noms de vos entités.</div>`;
+    container.innerHTML = `<div class="p-4 text-red-500">Erreur de rendu du MCD Merise.</div>`;
   }
 };
 
@@ -127,56 +126,86 @@ onMounted(loadAssociations);
 </script>
 
 <template>
-  <div class="grid p-fluid">
-    <div class="col-12 lg:col-4">
-      <Card class="mb-4">
-        <template #title>Nouvelle Relation</template>
+  <div class="grid">
+    <div class="col-12 lg:col-4 flex flex-column gap-4">
+
+      <Card class="shadow-2 border-round-xl">
+        <template #title>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-link text-primary text-xl"></i>
+            <span>Nouvelle Relation</span>
+          </div>
+        </template>
         <template #content>
-          <div class="flex flex-column gap-3">
-            <div>
-              <label class="font-bold block mb-2">Source (De)</label>
-              <Dropdown v-model="newAssoc.sourceId" :options="entries" optionLabel="name" optionValue="id" placeholder="Choisir l'entité" />
+          <div class="p-fluid">
+            <div class="field mb-3">
+              <label class="font-bold text-sm mb-1 block text-600">Entité Source</label>
+              <Dropdown v-model="newAssoc.sourceId" :options="entries" optionLabel="name" optionValue="id" placeholder="Ex: Utilisateur" class="w-full" />
             </div>
 
-            <div class="grid">
-              <div class="col-6">
-                <label class="font-bold block mb-2">Card. Source</label>
-                <Dropdown v-model="newAssoc.sourceMultiplicity" :options="multiplicities" optionLabel="label" optionValue="value" />
+            <div class="grid formgrid mb-3">
+              <div class="col-3">
+                <label class="font-bold text-sm mb-1 block text-600">Card.</label>
+                <Dropdown v-model="newAssoc.sourceMultiplicity" :options="multiplicities" optionLabel="text" optionValue="value" class="w-full" />
               </div>
               <div class="col-6">
-                <label class="font-bold block mb-2">Card. Cible</label>
-                <Dropdown v-model="newAssoc.targetMultiplicity" :options="multiplicities" optionLabel="label" optionValue="value" />
+                <label class="font-bold text-sm mb-1 block text-600 text-center">Verbe</label>
+                <InputText v-model="newAssoc.name" placeholder="ex: possède" class="text-center font-bold text-primary w-full" />
+              </div>
+              <div class="col-3">
+                <label class="font-bold text-sm mb-1 block text-600 text-right">Card.</label>
+                <Dropdown v-model="newAssoc.targetMultiplicity" :options="multiplicities" optionLabel="text" optionValue="value" class="w-full" />
               </div>
             </div>
 
-            <div>
-              <label class="font-bold block mb-2">Verbe / Nom</label>
-              <InputText v-model="newAssoc.name" placeholder="ex: possède, contient..." />
+            <div class="field mb-3">
+              <label class="font-bold text-sm mb-1 block text-600">Entité Cible</label>
+              <Dropdown v-model="newAssoc.targetId" :options="entries" optionLabel="name" optionValue="id" placeholder="Ex: Produit" class="w-full" />
             </div>
 
-            <div>
-              <label class="font-bold block mb-2">Cible (Vers)</label>
-              <Dropdown v-model="newAssoc.targetId" :options="entries" optionLabel="name" optionValue="id" placeholder="Choisir l'entité" />
+            <div class="field-checkbox mb-4 mt-2 flex align-items-center bg-blue-50 p-2 border-round">
+              <Checkbox v-model="newAssoc.isRelative" inputId="isRelative" :binary="true" />
+              <label for="isRelative" class="ml-2 mb-0 font-bold text-blue-800 text-sm cursor-pointer">
+                Identification relative (Entité faible)
+              </label>
             </div>
 
-            <Button label="Ajouter la relation" icon="pi pi-plus" @click="saveAssociation" :loading="loading" />
+            <Button label="Créer la relation" icon="pi pi-plus" @click="saveAssociation" :loading="loading" severity="primary" class="w-full" />
           </div>
         </template>
       </Card>
 
-      <Card>
-        <template #title>Relations existantes</template>
+      <Card class="shadow-2 border-round-xl">
+        <template #title>
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-list text-primary text-xl"></i>
+            <span>Relations établies</span>
+          </div>
+        </template>
         <template #content>
           <DataTable :value="associations" class="p-datatable-sm" responsiveLayout="scroll">
-            <template #empty>Aucune relation définie.</template>
-            <Column header="Relation">
+            <template #empty>
+              <div class="text-center p-3 text-500">
+                <i class="pi pi-inbox text-3xl mb-2"></i>
+                <p class="m-0">Aucune relation définie.</p>
+              </div>
+            </template>
+            <Column header="Détails de la relation">
               <template #body="sp">
-                <small>{{ sp.data.sourceName }} <b>{{ sp.data.name }}</b> {{ sp.data.targetName }}</small>
+                <div class="flex align-items-center gap-2 text-sm">
+                  <span class="font-semibold">{{ sp.data.sourceName }}</span>
+                  <span class="text-500">({{ sp.data.sourceMultiplicity.replace('..', ',') }})</span>
+                  <span class="text-primary font-italic">{{ sp.data.name }}</span>
+                  <span class="text-500">({{ sp.data.targetMultiplicity.replace('..', ',') }})</span>
+                  <span class="font-semibold">{{ sp.data.targetName }}</span>
+
+                  <span v-if="sp.data.isRelative" class="ml-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 border-round font-bold" title="Identification Relative"> (R)</span>
+                </div>
               </template>
             </Column>
             <Column style="width: 3rem">
               <template #body="sp">
-                <Button icon="pi pi-trash" severity="danger" text rounded @click="deleteAssoc(sp.data.id)" />
+                <Button icon="pi pi-times" severity="danger" text rounded aria-label="Supprimer" @click="deleteAssoc(sp.data.id)" />
               </template>
             </Column>
           </DataTable>
@@ -185,11 +214,26 @@ onMounted(loadAssociations);
     </div>
 
     <div class="col-12 lg:col-8">
-      <Card class="h-full">
-        <template #title>Aperçu du MCD</template>
+      <Card class="h-full shadow-2 border-round-xl">
+        <template #title>
+          <div class="flex align-items-center justify-content-between">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-share-alt text-primary text-xl"></i>
+              <span>Modèle Conceptuel de Données</span>
+            </div>
+            <span class="text-xs bg-primary-100 text-primary-700 px-2 py-1 border-round">Mermaid.js</span>
+          </div>
+        </template>
         <template #content>
-          <div class="mcd-viewer border-round surface-100 p-4 flex justify-content-center align-items-center shadow-inner" style="min-height: 500px;">
-            <div id="mermaid-mcd"></div>
+          <div class="mcd-viewer border-round surface-50 p-4 flex justify-content-center align-items-center border-1 border-300 relative" style="min-height: 600px;">
+
+            <div v-if="associations.length === 0" class="text-center text-400 absolute">
+              <i class="pi pi-sitemap" style="font-size: 4rem;"></i>
+              <p class="mt-3 font-semibold text-lg">Votre canevas est vide</p>
+              <p class="text-sm">Ajoutez votre première relation à gauche pour générer le diagramme.</p>
+            </div>
+
+            <div id="mermaid-mcd" class="w-full"></div>
           </div>
         </template>
       </Card>

@@ -1,0 +1,1 @@
+ALTER TABLE dictionary_associations ADD COLUMN is_relative BOOLEAN DEFAULT FALSE NOT NULL;

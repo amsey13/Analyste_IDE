@@ -38,6 +38,11 @@ public class DictionaryAssociation {
     @Column(nullable = false, length = 10)
     private String targetMultiplicity;
 
+    @Column(name = "is_relative", nullable = false)
+    private Boolean isRelative = false;
+
+
+
     public UUID getId() {
         return id;
     }
@@ -84,5 +89,13 @@ public class DictionaryAssociation {
 
     public void setTargetMultiplicity(String targetMultiplicity) {
         this.targetMultiplicity = targetMultiplicity;
+    }
+
+    public Boolean getRelative() {
+        return isRelative;
+    }
+
+    public void setRelative(Boolean relative) {
+        isRelative = relative;
     }
 }
