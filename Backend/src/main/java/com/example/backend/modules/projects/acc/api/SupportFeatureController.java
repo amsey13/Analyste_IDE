@@ -184,5 +184,22 @@ public class SupportFeatureController {
         return ResponseEntity.noContent().build();
     }
 
+    // --- ROUTES RÈGLES DE GESTION ---
+    @GetMapping("/projects/{projectId}/business-rules") // <-- Ajout de /projects/
+    public ResponseEntity<List<BusinessRuleResponseDTO>> getBusinessRules(@PathVariable UUID projectId) {
+        return ResponseEntity.ok(supportService.getBusinessRules(projectId));
+    }
 
+    @PostMapping("/projects/{projectId}/business-rules") // <-- Ajout de /projects/
+    public ResponseEntity<BusinessRuleResponseDTO> addBusinessRule(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody BusinessRuleRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(supportService.addBusinessRule(projectId, request));
+    }
+
+    @DeleteMapping("/business-rules/{ruleId}")
+    public ResponseEntity<Void> deleteBusinessRule(@PathVariable UUID ruleId) {
+        supportService.deleteBusinessRule(ruleId);
+        return ResponseEntity.noContent().build();
+    }
 }

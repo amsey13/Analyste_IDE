@@ -29,6 +29,10 @@ public class DictionaryAssociationRequestDTO {
 
     private Boolean isInheritance = false;
 
+    private UUID ruleId;
+
+
+
 
 
     public UUID getSourceId() {
@@ -89,5 +93,11 @@ public class DictionaryAssociationRequestDTO {
     }
     public void setIsInheritance(Boolean isInheritance) {
         this.isInheritance = isInheritance;
+    }
+    public UUID getRuleId() {
+        return ruleId;
+    }
+    public void setRuleId(UUID ruleId) {
+        this.ruleId = ruleId;
     }
 }
