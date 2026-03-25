@@ -88,6 +88,7 @@ public class MistralService {
         JsonNode responseNode = mapper.readTree(response);
         return responseNode.path("outputs").get(0).path("content").asText();
 
+
     }
 
 
@@ -202,6 +203,22 @@ public class MistralService {
         ACTEUR_PASSIF, DONNEE_NON_MODELISE, OBJECT_SANS_ATTRIBUT, TACHE_SANS_US, 
         LIBELLE_NON_CONFORME, INCOHERENCE_LOGIQUE, REDONDANCE_SÉMANTIQUE, IMPASSE_LOGIQUE.
         
+        [LIEN ENTRE SEVERITE ET ANOMALIE]
+        IMPASSE_LOGIQUE - CRITICAL
+        INCOHERENCE_LOGIQUE - CRITICAL
+        TACHE_SANS_US - CRITICAL
+        REDONDANCE_SÉMANTIQUE - HIGH
+        OBJECT_SANS_ATTRIBUT - HIGH
+        LIBELLE_NON_CONFORME - LOW
+        ACTEUR_PASSIF - LOW
+        
+        
+        
+        
+        
+        
+        
+        
         [CONTENU DES MODÈLES]
         %s
         
@@ -260,6 +277,12 @@ public class MistralService {
             cleanedResponse = cleanedResponse.substring(0, cleanedResponse.lastIndexOf("```"));
         }
         cleanedResponse = cleanedResponse.trim();
+        cleanedResponse = cleanedResponse
+                .replace("‘", "'")
+                .replace("’", "'")
+                .replace("“", "\"")
+                .replace("”", "\"")
+                .replace("\\'", "'");
 
 
         try{
@@ -271,6 +294,9 @@ public class MistralService {
                 throw new IOException("La clé 'anomalies' est absente ou n'est pas un tableau. Réponse brute : " + response );
             }
             this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
+            this.mapper.configure(JsonReadFeature.ALLOW_SINGLE_QUOTES.mappedFeature(), true);
+            this.mapper.configure(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER.mappedFeature(), true);
+
 
 
 
@@ -279,7 +305,8 @@ public class MistralService {
                     new TypeReference<List<AnomalyDTO>>(){}
             );
         } catch(Exception e){
-            throw new IOException("Erreur API Mistral: " + response + " " + e.getMessage());
+            System.err.println("JSON défectueux : " + cleanedResponse);
+            throw new IOException("Erreur parsing JSON: " + e.getMessage());
         }
     }
 

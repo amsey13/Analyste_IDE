@@ -1,8 +1,12 @@
 package com.example.backend.modules.projects.audit.api;
 
+import com.example.backend.modules.projects.audit.dao.ReportRepository;
 import com.example.backend.modules.projects.audit.entity.Report;
 import com.example.backend.modules.projects.audit.service.AuditService;
+import com.example.backend.modules.projects.audit.service.PdfReportService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +20,10 @@ public class AuditController {
 
     @Autowired
     private AuditService auditService;
+    @Autowired
+    private ReportRepository  reportRepository;
+    @Autowired
+    private PdfReportService pdfReportService;
 
 
     @PostMapping("/{projectId}/analyze")
@@ -35,6 +43,27 @@ public class AuditController {
 
         }
     }
+
+    @GetMapping("/{reportId}/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(@PathVariable UUID reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Rapport introuvable"));
+
+        try {
+            byte[] pdfContents = pdfReportService.generateAuditPdf(report);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Rapport_Audit_" + reportId + ".pdf\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentLength(pdfContents.length)
+                    .body(pdfContents);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+
 
 
 
