@@ -9,7 +9,7 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Checkbox from 'primevue/checkbox'; // <-- Nouvel import pour la case à cocher
+import Checkbox from 'primevue/checkbox';
 
 const props = defineProps({
   projectId: { type: String, required: true },
@@ -27,7 +27,8 @@ const newAssoc = ref({
   name: '',
   sourceMultiplicity: '0..N',
   targetMultiplicity: '1..1',
-  isRelative: false // <-- Ajout du champ isRelative
+  isRelative: false,
+  isCif: false // <-- Ajout du champ CIF
 });
 
 const multiplicities = [
@@ -37,7 +38,6 @@ const multiplicities = [
   { label: '1..1', value: '1..1', text: '1,1' }
 ];
 
-// Initialisation Mermaid
 mermaid.initialize({
   startOnLoad: false,
   theme: 'base',
@@ -60,7 +60,8 @@ const saveAssociation = async () => {
   try {
     await SupportFeatureService.addAssociation(props.projectId, newAssoc.value);
     newAssoc.value.name = '';
-    newAssoc.value.isRelative = false; // <-- On reset la checkbox après l'ajout
+    newAssoc.value.isRelative = false;
+    newAssoc.value.isCif = false;
     await loadAssociations();
     toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée' });
   } catch (e) {
@@ -81,8 +82,11 @@ const renderMcd = async () => {
   if (!container) return;
 
   let code = "flowchart LR\n";
+  // Styles Merise
   code += "  classDef entityClass fill:#eef,stroke:#333,stroke-width:1px,rx:5,ry:5;\n";
   code += "  classDef assocClass fill:#fff,stroke:#333,stroke-width:2px,color:#000;\n";
+  // Style spécial pour la CIF (Bordure rouge/violette pour la distinguer)
+  code += "  classDef cifClass fill:#fff,stroke:#d946ef,stroke-width:3px,color:#d946ef;\n";
 
   // Dessiner les Entités
   props.entries.forEach(e => {
@@ -99,16 +103,33 @@ const renderMcd = async () => {
     let srcCardText = multiplicities.find(m => m.value === a.sourceMultiplicity)?.text || '0,N';
     let tgtCardText = multiplicities.find(m => m.value === a.targetMultiplicity)?.text || '1,1';
 
-    // --- MAGIE DU RELATIF ---
-    // Si la relation est relative, on ajoute la mention (R) sur la patte 1,1 ou 0,1
     if (a.isRelative) {
       if (a.sourceMultiplicity.includes('1')) srcCardText += ' (R)';
       if (a.targetMultiplicity.includes('1')) tgtCardText += ' (R)';
     }
 
-    code += `  ${assocNodeId}((${a.name})):::assocClass;\n`;
-    code += `  ${srcNodeId} ---|"${srcCardText}"| ${assocNodeId};\n`;
-    code += `  ${assocNodeId} ---|"${tgtCardText}"| ${tgtNodeId};\n`;
+    // --- LOGIQUE CIF ---
+    let nodeClass = a.isCif ? "cifClass" : "assocClass";
+    let nodeLabel = a.isCif ? `${a.name}<br><b>(CIF)</b>` : a.name;
+
+    // Création du rond
+    code += `  ${assocNodeId}(("${nodeLabel}")):::${nodeClass};\n`;
+
+    // Dessin du lien Source <--> Association
+    // Si c'est une CIF et que la source est "1,1" ou "0,1", la flèche pointe vers la source
+    if (a.isCif && a.sourceMultiplicity.endsWith('1')) {
+      code += `  ${assocNodeId} -->|"${srcCardText}"| ${srcNodeId};\n`;
+    } else {
+      code += `  ${srcNodeId} ---|"${srcCardText}"| ${assocNodeId};\n`;
+    }
+
+    // Dessin du lien Association <--> Cible
+    // Si c'est une CIF et que la cible est "1,1" ou "0,1", la flèche pointe vers la cible
+    if (a.isCif && a.targetMultiplicity.endsWith('1')) {
+      code += `  ${assocNodeId} -->|"${tgtCardText}"| ${tgtNodeId};\n`;
+    } else {
+      code += `  ${assocNodeId} ---|"${tgtCardText}"| ${tgtNodeId};\n`;
+    }
   });
 
   try {
@@ -149,7 +170,7 @@ onMounted(loadAssociations);
                 <Dropdown v-model="newAssoc.sourceMultiplicity" :options="multiplicities" optionLabel="text" optionValue="value" class="w-full" />
               </div>
               <div class="col-6">
-                <label class="font-bold text-sm mb-1 block text-600 text-center">Verbe</label>
+                <label class="font-bold text-sm mb-1 block text-600 text-center">Verbe / Nom</label>
                 <InputText v-model="newAssoc.name" placeholder="ex: possède" class="text-center font-bold text-primary w-full" />
               </div>
               <div class="col-3">
@@ -163,11 +184,20 @@ onMounted(loadAssociations);
               <Dropdown v-model="newAssoc.targetId" :options="entries" optionLabel="name" optionValue="id" placeholder="Ex: Produit" class="w-full" />
             </div>
 
-            <div class="field-checkbox mb-4 mt-2 flex align-items-center bg-blue-50 p-2 border-round">
-              <Checkbox v-model="newAssoc.isRelative" inputId="isRelative" :binary="true" />
-              <label for="isRelative" class="ml-2 mb-0 font-bold text-blue-800 text-sm cursor-pointer">
-                Identification relative (Entité faible)
-              </label>
+            <div class="flex flex-column gap-2 mb-4 mt-2">
+              <div class="field-checkbox flex align-items-center bg-orange-50 p-2 border-round m-0">
+                <Checkbox v-model="newAssoc.isRelative" inputId="isRelative" :binary="true" />
+                <label for="isRelative" class="ml-2 mb-0 font-bold text-orange-800 text-sm cursor-pointer">
+                  Identification relative (R)
+                </label>
+              </div>
+
+              <div class="field-checkbox flex align-items-center bg-purple-50 p-2 border-round m-0">
+                <Checkbox v-model="newAssoc.isCif" inputId="isCif" :binary="true" />
+                <label for="isCif" class="ml-2 mb-0 font-bold text-purple-800 text-sm cursor-pointer">
+                  Contrainte d'Intégrité Fonctionnelle (CIF)
+                </label>
+              </div>
             </div>
 
             <Button label="Créer la relation" icon="pi pi-plus" @click="saveAssociation" :loading="loading" severity="primary" class="w-full" />
@@ -200,6 +230,7 @@ onMounted(loadAssociations);
                   <span class="font-semibold">{{ sp.data.targetName }}</span>
 
                   <span v-if="sp.data.isRelative" class="ml-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 border-round font-bold" title="Identification Relative"> (R)</span>
+                  <span v-if="sp.data.isCif" class="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 border-round font-bold" title="Contrainte d'Intégrité Fonctionnelle"> (CIF)</span>
                 </div>
               </template>
             </Column>
@@ -226,13 +257,11 @@ onMounted(loadAssociations);
         </template>
         <template #content>
           <div class="mcd-viewer border-round surface-50 p-4 flex justify-content-center align-items-center border-1 border-300 relative" style="min-height: 600px;">
-
             <div v-if="associations.length === 0" class="text-center text-400 absolute">
               <i class="pi pi-sitemap" style="font-size: 4rem;"></i>
               <p class="mt-3 font-semibold text-lg">Votre canevas est vide</p>
               <p class="text-sm">Ajoutez votre première relation à gauche pour générer le diagramme.</p>
             </div>
-
             <div id="mermaid-mcd" class="w-full"></div>
           </div>
         </template>
