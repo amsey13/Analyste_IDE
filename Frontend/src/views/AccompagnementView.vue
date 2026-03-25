@@ -8,6 +8,7 @@ import UserStoryManager from '../features/projects/components/UserStoryManager.v
 import BpmnModeler from '../features/projects/components/BpmnModeler.vue';
 import DictionaryManager from '../features/projects/components/DictionaryManager.vue';
 import McdManager from '../features/projects/components/McdManager.vue';
+import BusinessRulesManager from '../features/projects/components/BusinessRulesManager.vue';
 
 
 import Tabs from 'primevue/tabs';
@@ -76,8 +77,9 @@ onMounted(() => {
         <TabList>
           <Tab value="0">1. Acteurs & User Stories</Tab>
           <Tab value="1">2. Modélisation BPMN</Tab>
-          <Tab value="2">3. Dictionnaire de Données</Tab>
-          <Tab value="3">4. Modèle Conceptuel (MCD)</Tab>
+          <Tab value="2">3. Règles de Gestion</Tab>
+          <Tab value="3">4. Dictionnaire de Données</Tab>
+          <Tab value="4">5. Modèle Conceptuel (MCD)</Tab>
         </TabList>
 
         <TabPanels class="flex-1 p-0 overflow-y-auto">
@@ -125,6 +127,14 @@ onMounted(() => {
           </TabPanel>
           <TabPanel value="2" class="h-full">
             <div class="h-full p-4 overflow-y-auto">
+              <BusinessRulesManager
+                  :projectId="projectId"
+                  @refresh="loadProject"
+              />
+            </div>
+          </TabPanel>
+          <TabPanel value="3" class="h-full">
+            <div class="h-full p-4 overflow-y-auto">
               <DictionaryManager
                   :projectId="projectId"
                   :entries="project.dictionaryEntries"
@@ -132,7 +142,7 @@ onMounted(() => {
               />
             </div>
           </TabPanel>
-          <TabPanel value="3" class="h-full">
+          <TabPanel value="4" class="h-full">
             <div class="h-full p-4 overflow-y-auto">
               <div v-if="project.dictionaryEntries.length === 0" class="flex flex-column align-items-center justify-content-center h-full surface-50 border-round-xl border-1 surface-border p-6 text-center">
                 <i class="pi pi-database text-orange-500 text-6xl mb-4"></i>
@@ -146,6 +156,7 @@ onMounted(() => {
                   v-else
                   :projectId="projectId"
                   :entries="project.dictionaryEntries"
+                  @refresh="loadProject"
               />
             </div>
           </TabPanel>

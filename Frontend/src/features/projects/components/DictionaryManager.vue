@@ -128,6 +128,8 @@ const confirmDeleteEntry = (entry) => {
     message: `Voulez-vous vraiment supprimer l'entité "${entry.name}" et tous ses attributs ?`,
     header: 'Confirmation',
     icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: 'Annuler', severity: 'secondary', outlined: true },
+    acceptProps: { label: 'Supprimer', severity: 'danger' },
     accept: async () => {
       try {
         await SupportFeatureService.deleteDictionaryEntry(entry.id);

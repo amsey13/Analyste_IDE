@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class SupportFeatureService {
@@ -31,6 +32,7 @@ public class SupportFeatureService {
     private final DictionaryAttributeRepository dictionaryAttributeRepository;
     private final MistralService mistralService;
     private final DictionaryAssociationRepository associationRepository;
+    private final BusinessRuleRepository businessRuleRepository;
 
     public SupportFeatureService(ActorRepository actorRepository,
                                  UserStoryRepository userStoryRepository,
@@ -39,7 +41,8 @@ public class SupportFeatureService {
                                  DictionaryEntryRepository dictionaryEntryRepository,
                                  DictionaryAttributeRepository dictionaryAttributeRepository,
                                  MistralService mistralService,
-                                 DictionaryAssociationRepository associationRepository) {
+                                 DictionaryAssociationRepository associationRepository,
+                                 BusinessRuleRepository businessRuleRepository) {
         this.actorRepository = actorRepository;
         this.userStoryRepository = userStoryRepository;
         this.projectRepository = projectRepository;
@@ -48,6 +51,7 @@ public class SupportFeatureService {
         this.dictionaryAttributeRepository = dictionaryAttributeRepository;
         this.mistralService = mistralService;
         this.associationRepository = associationRepository;
+        this.businessRuleRepository = businessRuleRepository;
     }
 
     private SupportProject getProjectAndCheckOwnership(UUID projectId) {
@@ -286,5 +290,36 @@ public class SupportFeatureService {
         DictionaryAssociation assoc = associationRepository.findById(associationId).orElseThrow(() -> new IllegalArgumentException());
         getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
         associationRepository.delete(assoc);
+    }
+    // --- GESTION DES RÈGLES DE GESTION ---
+
+    @Transactional(readOnly = true)
+    public List<BusinessRuleResponseDTO> getBusinessRules(UUID projectId) {
+        getProjectAndCheckOwnership(projectId);
+        return businessRuleRepository.findByProject_Id(projectId).stream()
+                .map(supportProjectMapper::toBusinessRuleResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public BusinessRuleResponseDTO addBusinessRule(UUID projectId, BusinessRuleRequestDTO request) {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        BusinessRule rule = new BusinessRule();
+        rule.setProject(project);
+        rule.setCode(request.getCode());
+        rule.setDescription(request.getDescription());
+
+        rule = businessRuleRepository.save(rule);
+
+        return supportProjectMapper.toBusinessRuleResponseDTO(rule);
+    }
+
+    @Transactional
+    public void deleteBusinessRule(UUID ruleId) {
+        BusinessRule rule = businessRuleRepository.findById(ruleId)
+                .orElseThrow(() -> new EntityNotFoundException("Règle introuvable"));
+        getProjectAndCheckOwnership(rule.getProject().getIdProject());
+        businessRuleRepository.delete(rule);
     }
 }

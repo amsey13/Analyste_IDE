@@ -2,8 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.core.auth.entity.User;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
-import com.example.backend.modules.projects.acc.dao.ActorRepository;
-import com.example.backend.modules.projects.acc.dao.UserStoryRepository;
+import com.example.backend.modules.projects.acc.dao.*;
 import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
 import com.example.backend.modules.projects.acc.entity.Actor;
@@ -15,9 +14,6 @@ import com.example.backend.modules.projects.core.exception.UnauthorizedAccessExc
 import com.example.backend.modules.projects.acc.mapper.SupportProjectMapper;
 
 // Remplace ces imports par les vrais chemins de ton projet si nécessaire
-import com.example.backend.modules.projects.acc.dao.DictionaryEntryRepository;
-import com.example.backend.modules.projects.acc.dao.DictionaryAttributeRepository;
-import com.example.backend.modules.projects.acc.dao.DictionaryAssociationRepository;
 import com.example.backend.modules.analysis.exporter.MistralService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +44,7 @@ public class SupportFeatureServiceTest {
     @Mock private DictionaryEntryRepository dictionaryEntryRepository;
     @Mock private DictionaryAttributeRepository dictionaryAttributeRepository;
     @Mock private DictionaryAssociationRepository associationRepository;
+    @Mock private BusinessRuleRepository businessRuleRepository;
     @Mock private MistralService mistralService;
 
     // 2. Le service à tester (SANS @InjectMocks !)
@@ -66,7 +63,8 @@ public class SupportFeatureServiceTest {
                 dictionaryEntryRepository,
                 dictionaryAttributeRepository,
                 mistralService,
-                associationRepository
+                associationRepository,
+                businessRuleRepository
         );
     }
 

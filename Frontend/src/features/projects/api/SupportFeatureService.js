@@ -103,4 +103,20 @@ export const SupportFeatureService = {
     async deleteAssociation(associationId) {
         await apiClient.delete(`/support/associations/${associationId}`);
     },
+
+    // --- RÈGLES DE GESTION ---
+
+    async getBusinessRules(projectId) {
+        const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/business-rules`);
+        return response.data;
+    },
+
+    async addBusinessRule(projectId, ruleData) {
+        const response = await apiClient.post(`${BASE_URL}/projects/${projectId}/business-rules`, ruleData);
+        return response.data;
+    },
+
+    async deleteBusinessRule(ruleId) {
+        await apiClient.delete(`${BASE_URL}/business-rules/${ruleId}`);
+    },
 };

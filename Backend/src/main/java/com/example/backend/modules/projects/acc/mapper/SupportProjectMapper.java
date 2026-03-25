@@ -119,4 +119,13 @@ public class SupportProjectMapper implements ProjectMapper {
         dto.setIsInheritance(entity.getIsInheritance());
         return dto;
     }
+
+    public BusinessRuleResponseDTO toBusinessRuleResponseDTO(BusinessRule entity) {
+        if (entity == null) return null;
+        BusinessRuleResponseDTO dto = new BusinessRuleResponseDTO();
+        dto.setId(entity.getId());
+        dto.setCode(entity.getCode());
+        dto.setDescription(entity.getDescription());
+        return dto;
+    }
 }
