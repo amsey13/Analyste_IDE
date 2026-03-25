@@ -28,6 +28,7 @@ public class SupportProjectMapper implements ProjectMapper {
         SupportProjectResponseDTO dto = new SupportProjectResponseDTO();
         mapBaseFields(support, dto);
         dto.setStatus(support.getStatus() != null ? support.getStatus().name() : null);
+        dto.setProjectType("accompagnement");
         dto.setBpmnXml(support.getBpmnXml());
         dto.setCoverageScore(support.getCoverageScore());
         if (support.getDictionaryEntries() != null) {

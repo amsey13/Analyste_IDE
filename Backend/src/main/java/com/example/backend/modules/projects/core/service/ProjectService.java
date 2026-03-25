@@ -141,6 +141,7 @@ public class ProjectService {
 
         AuditProject audit = this.prepareProject(new AuditProject(), dto);
 
+
         if(this.hasTaigaInformation(dto)){
             this.takeTaigaInformation(dto, audit);
         }

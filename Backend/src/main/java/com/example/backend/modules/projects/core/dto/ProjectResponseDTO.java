@@ -11,8 +11,16 @@ public class ProjectResponseDTO {
     private String description;
     private LocalDateTime creationDate;
     private LocalDateTime updateDate;
+    private String projectType;
 
 
+    public String getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(String projectType) {
+        this.projectType = projectType;
+    }
 
     public String getDescription() {
         return description;
