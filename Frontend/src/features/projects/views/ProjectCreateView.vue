@@ -241,13 +241,13 @@
               <span class="ml-1">{{ project.description.length }} caractères </span>
             </p>
 
-            <p class="mb-0">
+            <p v-if="project.project_type === 'audit'" class="mb-0">
               <strong>Taiga :</strong>
               <span
                   class="ml-1"
-                  :class="project.project_type === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
+                  :class="taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
               >
-                      {{ project.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
+                      {{ taigaEnabled ? 'Activé' : 'Désactivé' }}
                   </span>
             </p>
 
