@@ -124,4 +124,14 @@ export const SupportFeatureService = {
         const response = await apiClient.post(`${BASE_URL}/projects/${projectId}/generate-mcd`);
         return response.data;
     },
+
+    async generateAudit(projectId) {
+        const response = await apiClient.post(`${BASE_URL}/projects/${projectId}/audit`);
+        return response.data;
+    },
+
+    async getAudit(projectId) {
+        const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/audit`);
+        return response.data;
+    }
 };

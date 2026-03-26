@@ -26,6 +26,11 @@ public class SupportProject extends Project {
     @Column(name = "coverage_score")
     private Double coverageScore = 0.0;
 
+    @Column(name = "last_audit_report", columnDefinition = "TEXT")
+    private String lastAuditReport;
+
+
+
     public Double getCoverageScore() {
         return coverageScore;
     }
@@ -82,5 +87,13 @@ public class SupportProject extends Project {
 
     public void setUserStories(List<UserStory> userStories) {
         this.userStories = userStories;
+    }
+
+    public String getLastAuditReport() {
+        return lastAuditReport;
+    }
+
+    public void setLastAuditReport(String lastAuditReport) {
+        this.lastAuditReport = lastAuditReport;
     }
 }
