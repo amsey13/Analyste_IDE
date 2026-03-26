@@ -93,13 +93,39 @@ const openProjectDrawer = (project) => {
 
 // Ouvre le dashboard du projet
 const goToProject = () => {
-  if (!selectedProject.value?.idProject) return;
+  const project = selectedProject.value;
+
+  console.log('PROJECT:', project);
+
+  if (!project) return;
+
+  const id = project.idProject || project.id;
+
+  if (!id) {
+    console.error('ID du projet manquant ');
+    return;
+  }
+
+  const type = project.project_type?.toLowerCase()?.trim();
+
+  console.log('TYPE:', type);
+  console.log('ID:', id);
 
   drawerVisible.value = false;
-  router.push({
-    name: 'project-dashboard',
-    params: { id: selectedProject.value.idProject }
-  });
+
+  if (type === 'audit') {
+    router.push({
+      name: 'audit',
+      params: { id }
+    });
+  } else if (type === 'accompagnement') {
+    router.push({
+      name: 'accompagnement',
+      params: { id }
+    });
+  } else {
+    console.warn('Type inconnu:', type);
+  }
 };
 
 const goToAllProjects = () => {
