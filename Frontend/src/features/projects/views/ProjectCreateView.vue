@@ -1,5 +1,5 @@
 <script setup>
-  import { ref,watch } from 'vue';
+import {computed, ref, watch} from 'vue';
   import { useRouter } from 'vue-router';
   import {ProjectService} from '../api/ProjectService.js';
   import Button from 'primevue/button';
@@ -15,6 +15,9 @@
   const taigaEnabled = ref(false);
   const nameTouched = ref(false);
   const featureTouched = ref(false);
+  const nameIsValid = computed(() => {
+    return /^[a-zA-ZÀ-ÿ\s]+$/.test(project.value.name.trim())
+  })
 
   const project = ref({
     name: '',
@@ -102,12 +105,15 @@
                 id="nom"
                 v-model="project.name"
                 @blur="nameTouched = true"
-                :class="{'p-invalid': nameTouched && project.name.trim() === ''}"
+                :class="{'p-invalid': nameTouched && !nameIsValid}"
                 required
                 class="w-full block w-full"
             />
             <small v-if="nameTouched && project.name.trim() === ''" class="p-error">
               Le nom du projet est obligatoire
+            </small>
+            <small v-else-if="nameTouched && !nameIsValid" class="p-error">
+              Le nom du projet ne doit contenir que des lettres
             </small>
           </div>
 
@@ -271,7 +277,7 @@
             label="Créer et Ouvrir"
             icon="pi pi-check"
             :loading="loading"
-            :disabled="project.name.trim() === '' || project.project_type === ''"
+            :disabled="!nameIsValid || project.name.trim() === '' || project.project_type === ''"
             class="p-button-primary w-full md:w-auto"
             @click="createProject"
         />
@@ -279,3 +285,4 @@
     </div>
   </div>
 </template>
+
