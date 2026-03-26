@@ -28,6 +28,8 @@ const toast = useToast();
 const project = ref(null);
 const isLoading = ref(true);
 const refreshKey = ref(0);
+const hasExistingAudit = ref(false);
+
 const coverageBadgeClass = computed(() => {
   if (!project.value) return 'bg-gray-100 text-gray-800';
 
@@ -77,9 +79,27 @@ const runAudit = async () => {
     isAuditing.value = false;
   }
 };
+const checkExistingAudit = async () => {
+  try {
+    const report = await SupportFeatureService.getAudit(projectId);
+    // Si on a un rapport avec un score, c'est qu'il existe !
+    if (report && report.score !== undefined) {
+      hasExistingAudit.value = true;
+    }
+  } catch (e) {
+    // On ignore l'erreur silencieusement (ça veut juste dire "pas de rapport")
+    console.log("Aucun audit précédent trouvé.");
+  }
+};
+
+// NOUVELLE FONCTION : Redirige sans relancer l'IA
+const viewLastAudit = () => {
+  router.push(`/project/${projectId}/audit-result`);
+};
 
 onMounted(() => {
   loadProject();
+  checkExistingAudit();
 });
 </script>
 
@@ -91,7 +111,18 @@ onMounted(() => {
         <h1 class="m-0 text-2xl text-900">{{ project.name }}</h1>
         <p class="m-0 mt-1 text-500">Espace de modélisation</p>
       </div>
-      <div class="text-right flex align-items-center gap-4">
+      <div class="text-right flex align-items-center gap-3">
+
+        <Button
+            v-if="hasExistingAudit"
+            icon="pi pi-history"
+            label="Voir le dernier rapport"
+            severity="info"
+            outlined
+            rounded
+            class="font-bold bg-white"
+            @click="viewLastAudit"
+        />
 
         <Button
             icon="pi pi-sparkles"
@@ -104,7 +135,7 @@ onMounted(() => {
             @click="runAudit"
         />
 
-        <span :class="['inline-block px-4 py-2 border-round-3xl font-bold text-lg shadow-1', coverageBadgeClass]">
+        <span :class="['inline-block px-4 py-2 border-round-3xl font-bold text-lg shadow-1 ml-2', coverageBadgeClass]">
           Couverture : {{ project.coverageScore }}%
         </span>
       </div>
