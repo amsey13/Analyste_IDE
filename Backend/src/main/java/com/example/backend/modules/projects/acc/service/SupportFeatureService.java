@@ -2,6 +2,8 @@ package com.example.backend.modules.projects.acc.service;
 
 import com.example.backend.modules.analysis.exporter.MistralService;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
+import com.example.backend.modules.analytics.dao.LogExecutionRepository;
+import com.example.backend.modules.analytics.entity.LogExecution;
 import com.example.backend.modules.projects.acc.dao.*;
 import com.example.backend.modules.projects.acc.dto.*;
 import com.example.backend.modules.projects.acc.entity.*;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,7 @@ public class SupportFeatureService {
     private final MistralService mistralService;
     private final DictionaryAssociationRepository associationRepository;
     private final BusinessRuleRepository businessRuleRepository;
+    private final LogExecutionRepository logExecutionRepository;
 
     public SupportFeatureService(ActorRepository actorRepository,
                                  UserStoryRepository userStoryRepository,
@@ -42,7 +46,8 @@ public class SupportFeatureService {
                                  DictionaryAttributeRepository dictionaryAttributeRepository,
                                  MistralService mistralService,
                                  DictionaryAssociationRepository associationRepository,
-                                 BusinessRuleRepository businessRuleRepository) {
+                                 BusinessRuleRepository businessRuleRepository,
+                                 LogExecutionRepository logExecutionRepository) {
         this.actorRepository = actorRepository;
         this.userStoryRepository = userStoryRepository;
         this.projectRepository = projectRepository;
@@ -52,6 +57,7 @@ public class SupportFeatureService {
         this.mistralService = mistralService;
         this.associationRepository = associationRepository;
         this.businessRuleRepository = businessRuleRepository;
+        this.logExecutionRepository = logExecutionRepository;
     }
 
     private SupportProject getProjectAndCheckOwnership(UUID projectId) {
@@ -444,6 +450,8 @@ public class SupportFeatureService {
     @Transactional
     public ProjectAuditResponseDTO auditProject(UUID projectId) throws IOException {
         SupportProject project = getProjectAndCheckOwnership(projectId);
+        long startMillis = System.currentTimeMillis();
+        LocalDateTime startTime = LocalDateTime.now();
 
         // 1. On rassemble toutes les pièces du puzzle
         StringBuilder contextBuilder = new StringBuilder();
@@ -500,15 +508,46 @@ public class SupportFeatureService {
 
         contextBuilder.append("\n--- DIAGRAMME BPMN (Format XML) ---\n");
         contextBuilder.append(project.getBpmnXml()).append("\n");
+        try {
+            ProjectAuditResponseDTO report = mistralService.auditProjectComplete(contextBuilder.toString());
 
-        ProjectAuditResponseDTO report = mistralService.auditProjectComplete(contextBuilder.toString());
+            long duration = System.currentTimeMillis() - startMillis;
+            int score = report.getScore();
+            int nbAnomalies = (report.getInconsistencies() != null) ? report.getInconsistencies().size() : 0;
 
-        //On transforme le DTO en JSON texte et on le sauvegarde en base !
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new ObjectMapper();
-        project.setLastAuditReport(mapper.writeValueAsString(report));
-        projectRepository.save(project);
+            LogExecution log = new LogExecution();
+            log.setOperation("AUDIT_IA");
+            log.setStartTime(startTime);
+            log.setEndTime(LocalDateTime.now());
+            log.setDurationMs(duration);
+            log.setStatus("SUCCESS");
+            log.setProjectId(projectId);
+            String detailsJson = String.format("{\"score\": %d, \"anomalies\": %d}", score, nbAnomalies);
+            log.setDetails(detailsJson);
 
-        return report;
+            logExecutionRepository.save(log);
+
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new ObjectMapper();
+            project.setLastAuditReport(mapper.writeValueAsString(report));
+            projectRepository.save(project);
+
+            return report;
+
+        } catch (Exception e) {
+            // LOG D'ÉCHEC (Pour surveiller si Mistral plante)
+            LogExecution log = new LogExecution();
+            log.setOperation("AUDIT_IA");
+            log.setStartTime(startTime);
+            log.setEndTime(LocalDateTime.now());
+            log.setDurationMs(System.currentTimeMillis() - startMillis);
+            log.setStatus("ERROR");
+            log.setProjectId(projectId);
+            log.setDetails("{\"error\": \"Erreur de l'API IA\"}");
+            logExecutionRepository.save(log);
+
+            throw e;
+        }
+
     }
 
     @Transactional(readOnly = true)

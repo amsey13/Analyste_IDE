@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.core.auth.entity.User;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
+import com.example.backend.modules.analytics.dao.LogExecutionRepository;
 import com.example.backend.modules.projects.acc.dao.*;
 import com.example.backend.modules.projects.acc.dto.ActorResponseDTO;
 import com.example.backend.modules.projects.acc.dto.UserStoryResponseDTO;
@@ -45,6 +46,7 @@ public class SupportFeatureServiceTest {
     @Mock private DictionaryAttributeRepository dictionaryAttributeRepository;
     @Mock private DictionaryAssociationRepository associationRepository;
     @Mock private BusinessRuleRepository businessRuleRepository;
+    @Mock private LogExecutionRepository logExecutionRepository;
     @Mock private MistralService mistralService;
 
     // 2. Le service à tester (SANS @InjectMocks !)
@@ -59,12 +61,15 @@ public class SupportFeatureServiceTest {
                 actorRepository,
                 userStoryRepository,
                 projectRepository,
-                realMapper, // <-- C'est ça qui corrige tes NullPointerException !
+                realMapper,
                 dictionaryEntryRepository,
                 dictionaryAttributeRepository,
                 mistralService,
                 associationRepository,
-                businessRuleRepository
+                businessRuleRepository,
+                logExecutionRepository
+
+
         );
     }
 
