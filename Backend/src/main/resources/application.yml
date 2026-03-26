@@ -11,8 +11,8 @@ spring:
       client:
         registration:
           jumpcloud:
-            client-id: ${JUMPCLOUD_CLIENT_ID}
-            client-secret: ${JUMPCLOUD_CLIENT_SECRET}
+            client-id: 9c839027-42b2-4219-a0ec-664a896f9813
+            client-secret: bJd8zDtWfETF1npFmXm8WoSYym
             client-authentication-method: client_secret_post
             scope:
               - openid

@@ -26,14 +26,19 @@ const first = ref(0);
 const rows = ref(6);
 
 // Normalisation des données projet pour éviter les différences de structure
-const normalizeProject = (project) => ({
-  ...project,
-  id: project.id || project.idProject,
-  idProject: project.idProject || project.id,
-  name: project.name || 'Sans titre',
-  project_type: project.project_type || project.typeProjet || project.type || '',
-  description: project.description || ''
-});
+const normalizeProject = (project) => {
+
+  const type = project.projectType || '';
+
+  return{
+    ...project,
+    idProject: project.idProject || project.id, // Supporte les deux variantes
+    name: project.name || 'Sans titre',
+    project_type: type.toLowerCase(), // On force la minuscule pour le CSS
+    description: project.description || ''
+  };
+};
+
 
 // Tronque la description pour garder des cartes compactes et homogènes
 const truncateDescription = (text, maxLength = 70) => {
@@ -68,8 +73,11 @@ const paginatedProjects = computed(() => {
 // Format d'affichage lisible pour le type du projet
 const formatProjectType = (type) => {
   if (!type) return 'Non défini';
-  if (type === 'audit') return 'Audit';
-  if (type === 'accompagnement') return 'Accompagnement';
+
+  const t = type.toLowerCase();
+  if (t.includes('audit')) return 'Audit';
+  if (t.includes('accompagnement') || t.includes('support')) return 'Accompagnement';
+
   return type;
 };
 
@@ -235,6 +243,10 @@ const deleteProject = (idProject) => {
         />
       </div>
     </Drawer>
+  </div>
+
+  <div style="color: red; font-weight: bold;">
+    DEBUG : {{ project.projectType || 'CLEF ABSENTE' }}
   </div>
 </template>
 

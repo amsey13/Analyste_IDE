@@ -16,6 +16,6 @@ public interface ProjectMapper {
         target.setName(source.getName());
         target.setDescription(source.getDescription());
         target.setCreationDate(source.getDateCreation());
-        target.setUpdateDateDate(source.getUpdatedAt());
+        target.setUpdateDate(source.getUpdatedAt());
     }
 }
