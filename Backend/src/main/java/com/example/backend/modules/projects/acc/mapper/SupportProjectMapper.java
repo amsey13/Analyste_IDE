@@ -123,6 +123,12 @@ public class SupportProjectMapper implements ProjectMapper {
             dto.setRuleId(entity.getBusinessRule().getId());
             dto.setRuleCode(entity.getBusinessRule().getCode());
         }
+        if (entity.getAttributes() != null && !entity.getAttributes().isEmpty()) {
+            List<DictionaryAttributeResponseDTO> mappedAttributes = entity.getAttributes().stream()
+                    .map(this::toDictionaryAttributeDTO) // Fait appel à ta méthode existante pour mapper un attribut
+                    .toList();
+            dto.setAttributes(mappedAttributes);
+        }
         return dto;
     }
 

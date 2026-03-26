@@ -14,6 +14,7 @@ import ConfirmDialog from 'primevue/confirmdialog';
 const props = defineProps({
   projectId: { type: String, required: true }
 });
+const emit = defineEmits(['refresh']);
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -83,6 +84,32 @@ const generateAutoCode = () => {
   newRule.value.code = `RG-${count.toString().padStart(2, '0')}`;
 };
 
+const generatingAi = ref(false);
+
+const generateMcdAi = async () => {
+  generatingAi.value = true;
+  try {
+    await SupportFeatureService.generateMcdWithAi(props.projectId);
+    emit('refresh');
+    toast.add({
+      severity: 'success',
+      summary: 'Magie opérée 🪄',
+      detail: 'Le Dictionnaire et le MCD ont été générés ! Allez voir les onglets suivants.',
+      life: 6000
+    });
+  } catch (e) {
+    console.error(e);
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur IA',
+      detail: 'Impossible de générer les modèles. Veuillez réessayer.',
+      life: 5000
+    });
+  } finally {
+    generatingAi.value = false;
+  }
+};
+
 onMounted(loadRules);
 </script>
 
@@ -126,9 +153,22 @@ onMounted(loadRules);
     <div class="col-12 lg:col-8">
       <Card class="shadow-2 border-round-xl h-full">
         <template #title>
-          <div class="flex align-items-center gap-2 border-bottom-1 surface-border pb-3">
-            <i class="pi pi-list text-primary text-2xl"></i>
-            <span class="text-xl font-bold">Référentiel des Règles de Gestion</span>
+          <div class="flex align-items-center justify-content-between border-bottom-1 surface-border pb-3">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-list text-primary text-2xl"></i>
+              <span class="text-xl font-bold">Référentiel des Règles de Gestion</span>
+            </div>
+
+            <Button
+                v-if="rules.length > 0"
+                icon="pi pi-sparkles"
+                label="Générer Dictionnaire & MCD (IA)"
+                severity="help"
+                class="shadow-2 font-bold"
+                :loading="generatingAi"
+                @click="generateMcdAi"
+                title="Analyse vos règles avec Mistral AI pour construire la base de données"
+            />
           </div>
         </template>
         <template #content>

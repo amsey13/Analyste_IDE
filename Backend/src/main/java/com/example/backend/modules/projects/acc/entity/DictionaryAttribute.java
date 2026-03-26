@@ -29,10 +29,13 @@ public class DictionaryAttribute {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Lien vers l'entité parente du dictionnaire
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "entry_id", nullable = false)
+    @JoinColumn(name = "entry_id", nullable = true)
     private DictionaryEntry dictionaryEntry;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "association_id", nullable = true)
+    private DictionaryAssociation dictionaryAssociation;
 
     public UUID getId() {
         return id;
@@ -96,5 +99,13 @@ public class DictionaryAttribute {
 
     public void setDictionaryEntry(DictionaryEntry dictionaryEntry) {
         this.dictionaryEntry = dictionaryEntry;
+    }
+
+    public DictionaryAssociation getDictionaryAssociation() {
+        return dictionaryAssociation;
+    }
+
+    public void setDictionaryAssociation(DictionaryAssociation dictionaryAssociation) {
+        this.dictionaryAssociation = dictionaryAssociation;
     }
 }

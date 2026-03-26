@@ -1,6 +1,7 @@
 package com.example.backend.modules.analysis.exporter;
 
 import com.example.backend.modules.projects.acc.dto.DictionaryEntryRequestDTO;
+import com.example.backend.modules.projects.acc.dto.McdSuggestionDTO;
 import com.example.backend.modules.projects.audit.dto.AnomalyDTO;
 import com.example.backend.modules.projects.audit.entity.Report;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
@@ -379,6 +380,79 @@ public class MistralService {
             );
         } catch (Exception e) {
             throw new IOException("Erreur lors du parsing des suggestions IA: " + e.getMessage());
+        }
+    }
+    private String buildMcdPrompt(String rulesContent) {
+        return """
+        Tu es un architecte logiciel expert en méthode Merise.
+        Voici les Règles de Gestion métier d'un projet :
+        
+        %s
+        
+        Ton objectif est de concevoir le Modèle Conceptuel de Données (MCD) complet. 
+        Tu dois extraire les entités pertinentes (avec leurs attributs) ET les associations entre ces entités.
+        
+        CONSIGNES STRICTES :
+        1. Les cardinalités (multiplicités) doivent OBLIGATOIREMENT être choisies parmi ces 4 valeurs : "0..N", "1..N", "0..1", "1..1".
+        2. Le champ "ruleCode" doit contenir le code de la règle de gestion qui justifie cette association (ex: "RG-01").
+        3. Si une association porte des données (ex: une quantité, une date d'achat dans une relation 0..N / 0..N), ajoute ces attributs dans le tableau "attributes" de l'association.
+        4. Réponds UNIQUEMENT au format JSON strict avec la structure exacte ci-dessous. Ne rajoute AUCUN texte d'introduction ou de conclusion.
+        
+        STRUCTURE JSON ATTENDUE :
+        {
+          "entries": [
+            {
+              "name": "Nom de l'entité (ex: Client)",
+              "description": "...",
+              "attributes": [
+                { "name": "...", "dataType": "VARCHAR", "size": "255", "primaryKey": true, "notNull": true, "description": "..." }
+              ]
+            }
+          ],
+          "associations": [
+            {
+              "sourceName": "Nom exact de l'entité source",
+              "targetName": "Nom exact de l'entité cible",
+              "name": "verbe de relation (ex: passe)",
+              "sourceMultiplicity": "0..N",
+              "targetMultiplicity": "1..1",
+              "ruleCode": "RG-01",
+              "attributes": [
+                 { "name": "quantite", "dataType": "INT", "size": "", "primaryKey": false, "notNull": true, "description": "Quantité commandée" }
+              ]
+            }
+          ]
+        }
+        """.formatted(rulesContent);
+    }
+    public McdSuggestionDTO suggestMcdFromBusinessRules(String rulesContent) throws IOException {
+        if (rulesContent == null || rulesContent.isBlank()) {
+            return new McdSuggestionDTO(); // On retourne un objet vide si pas de règles
+        }
+
+        String prompt = this.buildMcdPrompt(rulesContent);
+        String response = this.askQuestion(prompt);
+
+        // Nettoyage de la réponse (retirer les balises Markdown ```json si Mistral en a mis)
+        String cleanedResponse = response.replaceFirst("^```(json)?\\s*", "")
+                .replaceFirst("\\s*```$", "")
+                .trim();
+
+        try {
+            JsonNode root = mapper.readTree(cleanedResponse);
+
+            // Vérification de sécurité
+            if (!root.has("entries") || !root.has("associations")) {
+                throw new IOException("La réponse de l'IA ne contient pas les clés attendues ('entries' et 'associations').");
+            }
+
+            this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
+
+            // On mappe directement le JSON dans notre super objet DTO !
+            return mapper.readValue(cleanedResponse, McdSuggestionDTO.class);
+
+        } catch (Exception e) {
+            throw new IOException("Erreur lors du parsing de la suggestion MCD IA: " + e.getMessage());
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.backend.modules.projects.acc.dto;
 
+import java.util.List;
 import java.util.UUID;
 
 public class DictionaryAssociationResponseDTO {
@@ -19,10 +20,8 @@ public class DictionaryAssociationResponseDTO {
     private Boolean isCif ;
     private Boolean isInheritance;
     private UUID ruleId;
-    private String ruleCode; // Très utile pour l'afficher facilement côté Vue.js
-
-
-
+    private String ruleCode;
+    private List<DictionaryAttributeResponseDTO> attributes;
 
 
     public UUID getId() {
@@ -121,5 +120,13 @@ public class DictionaryAssociationResponseDTO {
     }
     public void setRuleCode(String ruleCode) {
         this.ruleCode = ruleCode;
+    }
+
+    public List<DictionaryAttributeResponseDTO> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(java.util.List<DictionaryAttributeResponseDTO> attributes) {
+        this.attributes = attributes;
     }
 }

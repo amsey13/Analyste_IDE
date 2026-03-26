@@ -21,8 +21,9 @@ const associations = ref([]);
 const rules = ref([]);
 const loading = ref(false);
 
-// Formulaire pour une nouvelle association
+// Formulaire pour une nouvelle association (ou modification)
 const newAssoc = ref({
+  id: null, // NOUVEAU: Permet de savoir si on est en mode édition
   sourceId: null,
   targetId: null,
   name: '',
@@ -31,7 +32,8 @@ const newAssoc = ref({
   isRelative: false,
   isCif: false,
   isInheritance: false,
-  ruleId: null
+  ruleId: null,
+  attributes: [] // NOUVEAU: Liste des données portées
 });
 
 const multiplicities = [
@@ -62,6 +64,28 @@ const loadInitialData = async () => {
   }
 };
 
+// --- NOUVEAU : Gestion des attributs dans le formulaire ---
+const addAttributeToAssoc = () => {
+  newAssoc.value.attributes.push({ name: '', dataType: 'VARCHAR', size: '255', primaryKey: false, notNull: false });
+};
+
+const removeAttributeFromAssoc = (index) => {
+  newAssoc.value.attributes.splice(index, 1);
+};
+
+// --- NOUVEAU : Préparer le formulaire pour la modification ---
+const editAssociation = (assoc) => {
+  newAssoc.value = {
+    ...assoc,
+    attributes: assoc.attributes ? JSON.parse(JSON.stringify(assoc.attributes)) : [] // Deep copy pour éviter de modifier la table en direct
+  };
+};
+
+// --- NOUVEAU : Réinitialiser le formulaire ---
+const resetForm = () => {
+  newAssoc.value = { id: null, sourceId: null, targetId: null, name: '', sourceMultiplicity: '0..N', targetMultiplicity: '1..1', isRelative: false, isCif: false, isInheritance: false, ruleId: null, attributes: [] };
+};
+
 const saveAssociation = async () => {
   if (newAssoc.value.isInheritance) {
     newAssoc.value.name = "est un";
@@ -75,22 +99,25 @@ const saveAssociation = async () => {
 
   loading.value = true;
   try {
-    await SupportFeatureService.addAssociation(props.projectId, newAssoc.value);
+    if (newAssoc.value.id) {
+      // MODE MODIFICATION (Assure-toi d'avoir cette méthode dans ton Service côté JS)
+      await SupportFeatureService.updateAssociation(newAssoc.value.id, newAssoc.value);
+      toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation modifiée avec succès',life: 3000 });
+    } else {
+      // MODE CRÉATION
+      await SupportFeatureService.addAssociation(props.projectId, newAssoc.value);
+      toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée avec succès',life: 3000 });
+    }
 
-    newAssoc.value.name = '';
-    newAssoc.value.isRelative = false;
-    newAssoc.value.isCif = false;
-    newAssoc.value.isInheritance = false;
-    newAssoc.value.ruleId = null;
+    resetForm();
 
     // On recharge juste les associations
     associations.value = await SupportFeatureService.getAssociations(props.projectId);
     renderMcd();
 
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée avec succès',life: 3000 });
   } catch (e) {
     console.error(e);
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'ajout',life: 4000 });
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'opération',life: 4000 });
   } finally {
     loading.value = false;
   }
@@ -109,12 +136,11 @@ const renderMcd = async () => {
   if (!container) return;
 
   let code = "flowchart LR\n";
-  // Styles Merise
   code += "  classDef entityClass fill:#eef,stroke:#333,stroke-width:1px,rx:5,ry:5;\n";
   code += "  classDef assocClass fill:#fff,stroke:#333,stroke-width:2px,color:#000;\n";
-  // Style spécial pour la CIF (Bordure rouge/violette pour la distinguer)
   code += "  classDef cifClass fill:#fff,stroke:#d946ef,stroke-width:3px,color:#d946ef;\n";
   code += "  classDef inheritClass fill:#fef08a,stroke:#ca8a04,stroke-width:2px,color:#854d0e;\n";
+
   // Dessiner les Entités
   props.entries.forEach(e => {
     const entityNodeId = `ent_${e.name.replace(/\s+/g, '_')}`;
@@ -126,20 +152,12 @@ const renderMcd = async () => {
     const srcNodeId = `ent_${a.sourceName.replace(/\s+/g, '_')}`;
     const tgtNodeId = `ent_${a.targetName.replace(/\s+/g, '_')}`;
 
-    // --- 1. CAS DE L'HÉRITAGE (SPÉCIALISATION) ---
     if (a.isInheritance) {
       const inheritNodeId = `inh_${a.id.replace(/-/g, '_')}`;
-
-      // On crée un hexagone/triangle (Δ) jaune pour représenter l'héritage
       code += `  ${inheritNodeId}{{"Δ"}}:::inheritClass;\n`;
-
-      // Lien : L'enfant (Source) va vers le triangle...
       code += `  ${srcNodeId} --- ${inheritNodeId};\n`;
-      // ... et le triangle pointe vers le parent (Cible) avec une flèche
       code += `  ${inheritNodeId} --> ${tgtNodeId};\n`;
-
     }
-    // --- 2. CAS CLASSIQUE (ASSOCIATION, CIF, RELATIF) ---
     else {
       const assocNodeId = `assoc_${a.name.replace(/\s+/g, '_')}_${a.id.replace(/-/g, '_')}`;
 
@@ -151,21 +169,24 @@ const renderMcd = async () => {
         if (a.targetMultiplicity.includes('1')) tgtCardText += ' (R)';
       }
 
-      // --- LOGIQUE CIF ---
       let nodeClass = a.isCif ? "cifClass" : "assocClass";
-      let nodeLabel = a.isCif ? `${a.name}<br><b>(CIF)</b>` : a.name;
+      let nodeLabel = a.isCif ? `<b>${a.name}</b><br/><i>(CIF)</i>` : `<b>${a.name}</b>`;
 
-      // Création du rond
-      code += `  ${assocNodeId}(("${nodeLabel}")):::${nodeClass};\n`;
+      if (a.attributes && a.attributes.length > 0) {
+        nodeLabel += `<br/>---`;
+        a.attributes.forEach(attr => {
+          nodeLabel += `<br/>${attr.name}`;
+        });
+      }
 
-      // Dessin du lien Source <--> Association
+      code += `  ${assocNodeId}(["${nodeLabel}"]):::${nodeClass};\n`;
+
       if (a.isCif && a.sourceMultiplicity.endsWith('1')) {
         code += `  ${assocNodeId} -->|"${srcCardText}"| ${srcNodeId};\n`;
       } else {
         code += `  ${srcNodeId} ---|"${srcCardText}"| ${assocNodeId};\n`;
       }
 
-      // Dessin du lien Association <--> Cible
       if (a.isCif && a.targetMultiplicity.endsWith('1')) {
         code += `  ${assocNodeId} -->|"${tgtCardText}"| ${tgtNodeId};\n`;
       } else {
@@ -173,6 +194,7 @@ const renderMcd = async () => {
       }
     }
   });
+
   try {
     container.removeAttribute('data-processed');
     container.innerHTML = "";
@@ -184,7 +206,6 @@ const renderMcd = async () => {
   }
 };
 
-//  Appel de la nouvelle fonction de chargement
 onMounted(loadInitialData);
 </script>
 
@@ -196,7 +217,7 @@ onMounted(loadInitialData);
         <template #title>
           <div class="flex align-items-center gap-2">
             <i class="pi pi-link text-primary text-xl"></i>
-            <span>Nouvelle Relation</span>
+            <span>{{ newAssoc.id ? 'Modifier Relation' : 'Nouvelle Relation' }}</span>
           </div>
         </template>
         <template #content>
@@ -226,7 +247,24 @@ onMounted(loadInitialData);
               <Dropdown v-model="newAssoc.targetId" :options="entries" optionLabel="name" optionValue="id" placeholder="Ex: Produit" class="w-full" />
             </div>
 
-            <div class="field mb-3 border-top-1 surface-border pt-3">
+            <div v-if="!newAssoc.isInheritance" class="field mb-3 border-top-1 border-bottom-1 surface-border py-3 bg-surface-50 px-2 border-round">
+              <div class="flex justify-content-between align-items-center mb-2">
+                <label class="font-bold text-sm text-700 m-0"><i class="pi pi-database text-primary mr-1"></i> Données portées</label>
+                <Button icon="pi pi-plus" label="Ajouter" size="small" outlined @click="addAttributeToAssoc" class="py-1 px-2 text-xs" />
+              </div>
+
+              <p v-if="newAssoc.attributes.length === 0" class="text-xs text-500 italic m-0">
+                Aucune donnée (Ex: Date, Quantité...)
+              </p>
+
+              <div v-for="(attr, index) in newAssoc.attributes" :key="index" class="flex gap-2 align-items-center mt-2">
+                <InputText v-model="attr.name" placeholder="Nom (ex: qte)" class="flex-1 text-sm" />
+                <Dropdown v-model="attr.dataType" :options="['VARCHAR', 'INT', 'DATE', 'BOOLEAN', 'FLOAT']" placeholder="Type" class="w-7rem text-sm" />
+                <Button icon="pi pi-times" severity="danger" text rounded @click="removeAttributeFromAssoc(index)" />
+              </div>
+            </div>
+
+            <div class="field mb-3">
               <label class="font-bold text-sm mb-1 block text-600">
                 <i class="pi pi-book text-primary mr-1"></i> Règle de Gestion associée <span class="text-400 font-normal">(Optionnel)</span>
               </label>
@@ -243,31 +281,31 @@ onMounted(loadInitialData);
             </div>
 
             <div class="flex flex-column gap-2 mb-4 mt-2">
-
               <div class="field-checkbox flex align-items-center bg-yellow-50 p-2 border-round m-0">
                 <Checkbox v-model="newAssoc.isInheritance" inputId="isInheritance" :binary="true" />
                 <label for="isInheritance" class="ml-2 mb-0 font-bold text-yellow-800 text-sm cursor-pointer">
                   Héritage / Spécialisation (Δ)
                 </label>
               </div>
-
               <div v-if="!newAssoc.isInheritance" class="field-checkbox flex align-items-center bg-orange-50 p-2 border-round m-0">
                 <Checkbox v-model="newAssoc.isRelative" inputId="isRelative" :binary="true" />
                 <label for="isRelative" class="ml-2 mb-0 font-bold text-orange-800 text-sm cursor-pointer">
                   Identification relative (R)
                 </label>
               </div>
-
               <div v-if="!newAssoc.isInheritance" class="field-checkbox flex align-items-center bg-purple-50 p-2 border-round m-0">
                 <Checkbox v-model="newAssoc.isCif" inputId="isCif" :binary="true" />
                 <label for="isCif" class="ml-2 mb-0 font-bold text-purple-800 text-sm cursor-pointer">
                   Contrainte d'Intégrité Fonctionnelle (CIF)
                 </label>
               </div>
-
             </div>
 
-            <Button label="Créer la relation" icon="pi pi-plus" @click="saveAssociation" :loading="loading" severity="primary" class="w-full" />
+            <div class="flex gap-2">
+              <Button v-if="newAssoc.id" label="Annuler" icon="pi pi-times" @click="resetForm" severity="secondary" outlined class="flex-1" />
+              <Button :label="newAssoc.id ? 'Modifier' : 'Créer'" :icon="newAssoc.id ? 'pi pi-check' : 'pi pi-plus'" @click="saveAssociation" :loading="loading" severity="primary" class="flex-1" />
+            </div>
+
           </div>
         </template>
       </Card>
@@ -317,12 +355,25 @@ onMounted(loadInitialData);
                       <i class="pi pi-link text-xs"></i> Justifié par : {{ sp.data.ruleCode }}
                     </span>
                   </div>
+
+                  <div v-if="sp.data.attributes && sp.data.attributes.length > 0" class="mt-2 pl-2 border-left-2 border-primary-200">
+                    <span class="text-xs text-500 block mb-1"><i class="pi pi-database text-xs"></i> Données portées :</span>
+                    <div class="flex flex-wrap gap-1">
+                      <span v-for="attr in sp.data.attributes" :key="attr.name" class="text-xs bg-surface-100 text-700 px-2 py-1 border-round font-mono">
+                        {{ attr.name }}
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
               </template>
             </Column>
-            <Column style="width: 3rem">
+            <Column style="width: 6rem">
               <template #body="sp">
-                <Button icon="pi pi-times" severity="danger" text rounded aria-label="Supprimer" @click="deleteAssoc(sp.data.id)" />
+                <div class="flex gap-1 justify-content-end">
+                  <Button icon="pi pi-pencil" severity="warning" text rounded aria-label="Éditer" @click="editAssociation(sp.data)" />
+                  <Button icon="pi pi-trash" severity="danger" text rounded aria-label="Supprimer" @click="deleteAssoc(sp.data.id)" />
+                </div>
               </template>
             </Column>
           </DataTable>
