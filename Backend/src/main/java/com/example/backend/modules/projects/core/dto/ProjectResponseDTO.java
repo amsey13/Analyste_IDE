@@ -1,25 +1,35 @@
 package com.example.backend.modules.projects.core.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ProjectResponseDTO {
     private UUID id;
-
     private String name;
-
     private String description;
     private LocalDateTime creationDate;
     private LocalDateTime updateDate;
+
+    @JsonProperty("projectType")
     private String projectType;
 
-
-    public String getProjectType() {
-        return projectType;
+    // --- Identification ---
+    public UUID getIdProject() {
+        return id;
     }
 
-    public void setProjectType(String projectType) {
-        this.projectType = projectType;
+    public void setIdProject(UUID id) {
+        this.id = id;
+    }
+
+    // --- Infos de base ---
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
@@ -30,36 +40,31 @@ public class ProjectResponseDTO {
         this.description = description;
     }
 
-    public UUID getIdProject() {
-        return id;
-    }
-
-    public void setIdProject(UUID id) {
-        this.id = id;
-    }
-
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    // --- Dates (Noms alignés sur le Mapper) ---
+    public LocalDateTime getCreationDate() {
+        return creationDate;
     }
 
     public void setCreationDate(LocalDateTime creationDate) {
         this.creationDate = creationDate;
     }
 
-    public LocalDateTime getModificationDate() {
+    public LocalDateTime getUpdateDate() {
         return updateDate;
     }
 
-    public void setUpdateDateDate(LocalDateTime modificationDate) {
-        this.updateDate = modificationDate;
+    public void setUpdateDate(LocalDateTime updateDate) {
+        this.updateDate = updateDate;
     }
 
-    public LocalDateTime getCreationDate() {
-        return creationDate;
+    // --- Type (Pour le Front) ---
+    @JsonProperty("projectType")
+    public String getProjectType() {
+        return projectType;
+    }
+
+    @JsonProperty("projectType")
+    public void setProjectType(String projectType) {
+        this.projectType = projectType;
     }
 }
