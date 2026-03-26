@@ -3,6 +3,7 @@ package com.example.backend.modules.analytics.service;
 import com.example.backend.modules.analytics.dto.ProjectKpiDTO;
 import com.example.backend.modules.analytics.entity.LogExecution;
 import com.example.backend.modules.analytics.dao.LogExecutionRepository;
+import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,13 @@ import java.util.UUID;
 public class KpiDashboardService {
 
     private final LogExecutionRepository logExecutionRepository;
+    private final ProjectRepository projectRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    public KpiDashboardService(LogExecutionRepository logExecutionRepository) {
+    public KpiDashboardService(LogExecutionRepository logExecutionRepository,
+                                ProjectRepository projectRepository) {
         this.logExecutionRepository = logExecutionRepository;
+        this.projectRepository = projectRepository;
     }
 
     public ProjectKpiDTO calculateProjectEvolution(UUID projectId) {
@@ -54,5 +58,13 @@ public class KpiDashboardService {
         } catch (Exception e) {
             return new ProjectKpiDTO(0, 0.0);
         }
+    }
+
+    public Double getGlobalAccompagnementRate() {
+        return projectRepository.getAccompagnementAdoptionRate();
+    }
+
+    public Double getAverageIaTime() {
+        return logExecutionRepository.getAverageIaDuration();
     }
 }
