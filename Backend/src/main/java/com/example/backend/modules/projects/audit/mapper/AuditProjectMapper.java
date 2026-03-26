@@ -25,6 +25,7 @@ public class AuditProjectMapper implements ProjectMapper {
 
         // Mapping des champs communs (ID, Name, Desc, Dates)
         mapBaseFields(audit, dto);
+        dto.setProjectType("audit");
 
         // Mapping spécifique à l'Audit
         dto.setProjectSlug(audit.getProjectSlug());

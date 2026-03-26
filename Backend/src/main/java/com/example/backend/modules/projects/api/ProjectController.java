@@ -7,6 +7,7 @@ import com.example.backend.modules.projects.core.dto.ProjectResponseDTO;
 import com.example.backend.modules.projects.core.service.ProjectService;
 import com.example.backend.modules.projects.acc.dto.SupportProjectRequestDTO;
 import com.example.backend.modules.projects.audit.taiga.exception.IncorrectIdentifiersException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ public class ProjectController {
 
     @Autowired
     private ProjectService projectService;
+
 
 
     @GetMapping

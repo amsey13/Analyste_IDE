@@ -47,7 +47,17 @@ public class Project {
     @JsonIgnore
     private List<Report> reports = new ArrayList<>();
 
+    @Column(name = "project_type", insertable = false, updatable = false)
+    private String projectType;
 
+
+    public String getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(String projectType) {
+        this.projectType = projectType;
+    }
 
     public LocalDateTime getDateCreation() {
         return createdAt;
