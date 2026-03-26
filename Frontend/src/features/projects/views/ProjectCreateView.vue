@@ -47,6 +47,7 @@ import {computed, ref, watch} from 'vue';
     featureTouched.value = true;
     if(project.value.project_type === '') return;
     if(project.value.name.trim() === '') return;
+    if(!nameIsValid.value) return;
 
     const payload = { ...project.value };
 
@@ -65,23 +66,25 @@ import {computed, ref, watch} from 'vue';
       const newProjectId = response.idProject;
       const targetRouteName = ROUTES_BY_TYPE[payload.project_type];
 
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       if (targetRouteName) {
-        router.push({
+        await router.push({
           name: targetRouteName,
-          params: { id: newProjectId }
+          params: {id: newProjectId}
         });
       } else {
-        router.push({
+        await router.push({
           name: 'project-dashboard',
-          params: { id: newProjectId }
+          params: {id: newProjectId}
         });
       }
+
     } catch (e) {
       console.error("Erreur lors de la création du project", e);
     } finally {
       loading.value = false;
     }
-
 
   };
 </script>
