@@ -214,4 +214,29 @@ public class SupportFeatureController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @PostMapping("/projects/{projectId}/audit")
+    public ResponseEntity<ProjectAuditResponseDTO> generateAudit(@PathVariable UUID projectId) {
+        try {
+            return ResponseEntity.ok(supportService.auditProject(projectId));
+        } catch (IOException e) {
+            // NOUVEAU : On force l'affichage de l'erreur dans IntelliJ !
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // Récupère simplement le dernier audit enregistré
+    @GetMapping("/projects/{projectId}/audit")
+    public ResponseEntity<ProjectAuditResponseDTO> getAudit(@PathVariable UUID projectId) {
+        try {
+            ProjectAuditResponseDTO report = supportService.getLastAuditReport(projectId);
+            if (report != null) {
+                return ResponseEntity.ok(report);
+            }
+            return ResponseEntity.noContent().build(); // Renvoie 204 si aucun audit n'existe
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

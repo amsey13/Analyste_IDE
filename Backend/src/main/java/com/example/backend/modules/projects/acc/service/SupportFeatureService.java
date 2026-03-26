@@ -9,6 +9,7 @@ import com.example.backend.modules.projects.acc.mapper.SupportProjectMapper;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.exception.ProjectNotFoundException;
 import com.example.backend.modules.projects.core.exception.UnauthorizedAccessException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -437,5 +438,87 @@ public class SupportFeatureService {
                                 });
                     }
                 });
+    }
+
+    // --- AUDIT GLOBAL DU PROJET ---
+    @Transactional
+    public ProjectAuditResponseDTO auditProject(UUID projectId) throws IOException {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        // 1. On rassemble toutes les pièces du puzzle
+        StringBuilder contextBuilder = new StringBuilder();
+        contextBuilder.append("Nom du projet : ").append(project.getName()).append("\n\n");
+
+        // Acteurs
+        contextBuilder.append("--- ACTEURS ---\n");
+        project.getActors().forEach(a ->
+                contextBuilder.append("- ").append(a.getName()).append("\n")
+        );
+
+        // User Stories
+        contextBuilder.append("\n--- USER STORIES ---\n");
+        project.getUserStories().forEach(us -> {
+            String actorName = (us.getActor() != null) ? us.getActor().getName() : "Inconnu";
+            contextBuilder.append("- ").append(us.getIdentifier()).append(" : En tant que ")
+                    .append(actorName).append(", je veux ")
+                    .append(us.getDescription()).append(" afin de ")
+                    .append(us.getBenefit()).append("\n");
+        });
+
+        // Règles de Gestion
+        contextBuilder.append("\n--- RÈGLES DE GESTION ---\n");
+        businessRuleRepository.findByProject_Id(projectId).forEach(r ->
+                contextBuilder.append("- ").append(r.getCode()).append(" : ").append(r.getDescription()).append("\n")
+        );
+
+        // Dictionnaire de Données
+        contextBuilder.append("\n--- DICTIONNAIRE DE DONNÉES ---\n");
+        project.getDictionaryEntries().forEach(entry -> {
+            contextBuilder.append("Entité : ").append(entry.getName()).append("\n");
+            if (entry.getAttributes() != null) {
+                entry.getAttributes().forEach(attr ->
+                        contextBuilder.append("  - Attribut : ").append(attr.getName()).append(" (").append(attr.getDataType()).append(")\n")
+                );
+            }
+        });
+
+        // MCD (Associations)
+        contextBuilder.append("\n--- MODÈLE CONCEPTUEL DE DONNÉES (ASSOCIATIONS) ---\n");
+        associationRepository.findByProjectId(projectId).forEach(assoc -> {
+            contextBuilder.append("- Relation '").append(assoc.getName()).append("' entre ")
+                    .append(assoc.getSource().getName()).append(" (").append(assoc.getSourceMultiplicity()).append(") et ")
+                    .append(assoc.getTarget().getName()).append(" (").append(assoc.getTargetMultiplicity()).append(")");
+
+            if (assoc.getAttributes() != null && !assoc.getAttributes().isEmpty()) {
+                contextBuilder.append(" | Données portées : ");
+                assoc.getAttributes().forEach(attr ->
+                        contextBuilder.append(attr.getName()).append(" (").append(attr.getDataType()).append("), ")
+                );
+            }
+            contextBuilder.append("\n");
+        });
+
+        contextBuilder.append("\n--- DIAGRAMME BPMN (Format XML) ---\n");
+        contextBuilder.append(project.getBpmnXml()).append("\n");
+
+        ProjectAuditResponseDTO report = mistralService.auditProjectComplete(contextBuilder.toString());
+
+        //On transforme le DTO en JSON texte et on le sauvegarde en base !
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new ObjectMapper();
+        project.setLastAuditReport(mapper.writeValueAsString(report));
+        projectRepository.save(project);
+
+        return report;
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectAuditResponseDTO getLastAuditReport(UUID projectId) throws IOException {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        if (project.getLastAuditReport() == null || project.getLastAuditReport().isEmpty()) {
+            return null;
+        }
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        return mapper.readValue(project.getLastAuditReport(), ProjectAuditResponseDTO.class);
     }
 }

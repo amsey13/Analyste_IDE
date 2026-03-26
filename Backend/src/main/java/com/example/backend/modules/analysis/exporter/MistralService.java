@@ -2,6 +2,7 @@ package com.example.backend.modules.analysis.exporter;
 
 import com.example.backend.modules.projects.acc.dto.DictionaryEntryRequestDTO;
 import com.example.backend.modules.projects.acc.dto.McdSuggestionDTO;
+import com.example.backend.modules.projects.acc.dto.ProjectAuditResponseDTO;
 import com.example.backend.modules.projects.audit.dto.AnomalyDTO;
 import com.example.backend.modules.projects.audit.entity.Report;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
@@ -453,6 +454,80 @@ public class MistralService {
 
         } catch (Exception e) {
             throw new IOException("Erreur lors du parsing de la suggestion MCD IA: " + e.getMessage());
+        }
+    }
+
+    // 1. Le Mega-Prompt d'Audit
+    private String buildAuditPrompt(String projectContext) {
+        return """
+        Tu es un Architecte Logiciel Senior et un auditeur qualité extrêmement rigoureux, expert en méthode Merise et Agile (BPMN, User Stories).
+        Voici l'extraction complète d'un projet de conception logiciel :
+        
+        %s
+        
+        Ton objectif est de réaliser une analyse croisée exhaustive de TOUS les artefacts pour détecter la moindre incohérence.
+        Tu DOIS vérifier obligatoirement les points suivants (Matrice d'Audit) :
+        
+        1. COHÉRENCE AGILE & PROCESSUS (Acteurs <-> US <-> BPMN)
+        - Chaque Acteur a-t-il au moins une User Story et un couloir (lane) dans le BPMN ?
+        - Chaque User Story est-elle couverte par une tâche (task) explicite dans le BPMN ?
+        - Y a-t-il des tâches dans le BPMN qui sortent de nulle part (aucune US correspondante) ?
+        
+        2. COHÉRENCE MÉTIER & DONNÉES (RG <-> MCD <-> Dictionnaire)
+        - Les concepts manipulés dans les Règles de Gestion (RG) existent-ils en tant qu'Entités ou Attributs dans le Dictionnaire ?
+        - Les contraintes des RG (ex: unicité, obligation) sont-elles respectées dans le Dictionnaire (ex: NOT NULL, PK) ?
+        - Les cardinalités du MCD respectent-elles strictement la logique dictée par les RG ?
+        
+        3. COHÉRENCE FONCTIONNELLE (US <-> Dictionnaire/MCD)
+        - Les données nécessaires pour réaliser les User Stories (ex: historique, filtres, statuts) sont-elles bien modélisées dans le MCD ?
+        - Le MCD contient-il des entités "fantômes" qui ne sont utilisées par aucune US ni Règle de Gestion ?
+        
+        CONSIGNES STRICTES ET OBLIGATOIRES (RISQUE DE CRASH TECHNIQUE SI NON RESPECTÉES) :
+        1. Calcule un "score" de cohérence globale sur 100 basé sur la gravité des oublis.
+        2. Les champs "inconsistencies" et "corrections" DOIVENT être des tableaux (Arrays) contenant UNIQUEMENT de simples chaînes de caractères (Strings). 
+        3. INTERDICTION ABSOLUE d'utiliser des sous-objets {} ou du formatage Markdown (comme **, * ou -) à l'intérieur ou à l'extérieur des guillemets.
+        4. Fais des phrases claires et directes du type "Artefact A vs Artefact B : description du problème".
+        5. Réponds UNIQUEMENT au format JSON strict. Ne mets aucun texte avant ou après les accolades { }.
+        6. RAPPEL STRICT MERISE : Tu audites un MCD. Il est FORMELLEMENT INTERDIT de parler de "Clé étrangère" (FK), de "Table" ou de "Table de jointure". Utilise uniquement le vocabulaire conceptuel : Entité, Association (qui peut porter des propriétés), Propriété, Identifiant, Cardinalité.
+        
+        STRUCTURE JSON EXACTE ET UNIQUE ATTENDUE :
+        {
+          "score": 85,
+          "inconsistencies": [
+            "BPMN vs US : La tâche 'Valider le panier' n'est reliée à aucune User Story.",
+            "RG vs Dictionnaire : La RG-02 parle d'une facture mais l'entité Facture n'existe pas.",
+            "US vs MCD : L'US-03 permet de voir l'historique des achats mais aucune date n'est stockée dans la relation achete."
+          ],
+          "corrections": [
+            "Ajoutez une User Story pour la validation du panier dans le BPMN.",
+            "Créez une entité Facture dans le dictionnaire avec les attributs de base.",
+            "Ajoutez un attribut date_achat dans la relation achete du MCD."
+          ]
+        }
+        """.formatted(projectContext);
+    }
+
+    // 2. L'appel à l'API
+    public ProjectAuditResponseDTO auditProjectComplete(String projectContext) throws IOException {
+        String prompt = this.buildAuditPrompt(projectContext);
+        String response = this.askQuestion(prompt);
+
+        try {
+            int startIndex = response.indexOf("{");
+            int endIndex = response.lastIndexOf("}");
+
+            if (startIndex == -1 || endIndex == -1) {
+                throw new IOException("Aucun format JSON valide trouvé dans la réponse de l'IA.");
+            }
+
+            String jsonStr = response.substring(startIndex, endIndex + 1);
+            jsonStr = jsonStr.replace("\\'", "'");
+
+            return mapper.readValue(jsonStr, ProjectAuditResponseDTO.class);
+        } catch (Exception e) {
+            // On imprime la vraie réponse de Mistral dans la console pour comprendre le bug !
+            System.err.println("❌ ERREUR DE PARSING IA. Voici ce que Mistral a répondu : \n" + response);
+            throw new IOException("Erreur lors du parsing de l'audit IA: " + e.getMessage());
         }
     }
 }

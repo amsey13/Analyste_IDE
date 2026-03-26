@@ -1,14 +1,17 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute , useRouter } from 'vue-router';
 import { ProjectService } from '../features/projects/api/ProjectService.js';
 import Skeleton from 'primevue/skeleton';
+import Button from 'primevue/button';
+import { useToast } from 'primevue/usetoast';
 import ActorManager from '../features/projects/components/ActorManager.vue';
 import UserStoryManager from '../features/projects/components/UserStoryManager.vue';
 import BpmnModeler from '../features/projects/components/BpmnModeler.vue';
 import DictionaryManager from '../features/projects/components/DictionaryManager.vue';
 import McdManager from '../features/projects/components/McdManager.vue';
 import BusinessRulesManager from '../features/projects/components/BusinessRulesManager.vue';
+import { SupportFeatureService } from '../features/projects/api/SupportFeatureService.js';
 
 
 import Tabs from 'primevue/tabs';
@@ -19,9 +22,12 @@ import TabPanel from 'primevue/tabpanel';
 
 const route = useRoute();
 const projectId = route.params.id;
+const router = useRouter();
+const toast = useToast();
 
 const project = ref(null);
 const isLoading = ref(true);
+const refreshKey = ref(0);
 const coverageBadgeClass = computed(() => {
   if (!project.value) return 'bg-gray-100 text-gray-800';
 
@@ -52,6 +58,26 @@ const loadProject = async () => {
   }
 };
 
+
+const isAuditing = ref(false);
+
+const runAudit = async () => {
+  isAuditing.value = true;
+  try {
+    toast.add({ severity: 'info', summary: 'Analyse en cours', detail: 'Mistral IA génère votre rapport...', life: 5000 });
+
+    await SupportFeatureService.generateAudit(projectId);
+
+    router.push(`/project/${projectId}/audit-result`);
+
+  } catch (error) {
+    console.error("Erreur lors de l'audit", error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'L\'audit a échoué.', life: 4000 });
+  } finally {
+    isAuditing.value = false;
+  }
+};
+
 onMounted(() => {
   loadProject();
 });
@@ -65,8 +91,20 @@ onMounted(() => {
         <h1 class="m-0 text-2xl text-900">{{ project.name }}</h1>
         <p class="m-0 mt-1 text-500">Espace de modélisation</p>
       </div>
-      <div class="text-right">
-        <span :class="['inline-block px-4 py-2 border-round-3xl font-bold text-lg', coverageBadgeClass]">
+      <div class="text-right flex align-items-center gap-4">
+
+        <Button
+            icon="pi pi-sparkles"
+            label="Auditer la conception"
+            severity="help"
+            size="large"
+            class="font-bold shadow-2"
+            rounded
+            :loading="isAuditing"
+            @click="runAudit"
+        />
+
+        <span :class="['inline-block px-4 py-2 border-round-3xl font-bold text-lg shadow-1', coverageBadgeClass]">
           Couverture : {{ project.coverageScore }}%
         </span>
       </div>
