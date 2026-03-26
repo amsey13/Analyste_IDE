@@ -22,11 +22,13 @@ const selectedProject = ref(null);
 
 // Normalisation des données pour garder le même rendu que AllProjectsView
 const normalizeProject = (project) => ({
+
+
   ...project,
   id: project.id || project.idProject,
   idProject: project.idProject || project.id,
   name: project.name || 'Sans titre',
-  project_type: project.project_type || project.typeProjet || project.type || '',
+  project_type: project.projectType || '',
   description: project.description || ''
 });
 
@@ -48,7 +50,14 @@ onMounted(async () => {
 
   try {
     const data = await ProjectService.getProjects();
+    console.log('Données brutes reçues du Backend :', data);
+    if (data.length > 0) {
+      console.log('Clés du premier projet :', Object.keys(data[0]));
+    }
+
     projects.value = data.map(normalizeProject);
+
+    console.log('Projets après normalisation :', projects.value);
   } catch (error) {
     console.error('Erreur de récupération des projets', error);
     toast.add({
@@ -63,8 +72,16 @@ onMounted(async () => {
 
 const formatProjectType = (type) => {
   if (!type) return 'Non défini';
-  if (type === 'audit') return 'Audit';
-  if (type === 'accompagnement') return 'Accompagnement';
+  const lowerType = type.toLowerCase();
+
+  if (lowerType === 'audit') {
+    console.log('Enfaite cest un projet ', lowerType);
+    return 'Audit';
+  }
+  if (lowerType === 'accompagnement') {
+    console.log('Enfaite cest un projet ', lowerType);
+    return 'Accompagnement';
+  }
   return type;
 };
 
