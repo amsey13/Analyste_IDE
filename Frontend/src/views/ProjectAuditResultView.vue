@@ -74,7 +74,10 @@ const initChart = () => {
 
 onMounted(async () => {
   try {
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     const report = await SupportFeatureService.getAudit(projectId);
+
     if (report) {
       auditReport.value = report;
       initChart();
@@ -89,7 +92,25 @@ onMounted(async () => {
   }
 });
 
-const goBack = () => router.push(`/project/${projectId}/accompagnement`);
+// --- FONCTIONS D'EXPORT  ---
+
+const exportJMerise = () => {
+  console.log("TODO: Générer le fichier XML .mcd pour JMerise");
+  // Le dev devra transformer les données du dictionnaire en format XML JMerise
+  // puis créer un Blob() et forcer le téléchargement.
+};
+
+const exportBPMN = () => {
+  console.log("TODO: Télécharger le fichier .bpmn");
+  // Le dev devra récupérer le project.bpmnXml et le mettre dans un Blob() texte.
+};
+
+const exportPDF = () => {
+  console.log("TODO: Générer le PDF du rapport");
+  // Le dev pourra utiliser une librairie comme html2pdf.js pour capturer l'écran de cette page.
+};
+
+const goBack = () => router.push(`/app/accompagnement/${projectId}`);
 </script>
 
 <template>
@@ -107,10 +128,41 @@ const goBack = () => router.push(`/project/${projectId}/accompagnement`);
       </div>
     </div>
 
-    <div v-if="isLoading" class="grid">
-      <div class="col-12 lg:col-6"><Skeleton width="100%" height="20rem" borderRadius="16px"></Skeleton></div>
-      <div class="col-12 lg:col-6"><Skeleton width="100%" height="20rem" borderRadius="16px"></Skeleton></div>
-      <div class="col-12"><Skeleton width="100%" height="30rem" borderRadius="16px"></Skeleton></div>
+    <div v-if="isLoading" class="grid animate-fadein">
+
+      <div class="col-12 lg:col-6">
+        <div class="surface-card p-4 border-round-xl shadow-2 flex flex-column align-items-center justify-content-center h-full" style="min-height: 22rem;">
+          <Skeleton width="50%" height="2rem" class="mb-4"></Skeleton>
+          <Skeleton shape="circle" size="220px" class="mb-4"></Skeleton>
+          <Skeleton width="40%" height="2.5rem" borderRadius="16px"></Skeleton>
+        </div>
+      </div>
+
+      <div class="col-12 lg:col-6">
+        <div class="surface-card p-5 border-round-xl shadow-2 flex flex-column h-full" style="min-height: 22rem;">
+          <Skeleton width="40%" height="2rem" class="mb-3"></Skeleton>
+          <Skeleton width="70%" height="1rem" class="mb-4"></Skeleton>
+
+          <div class="flex flex-column gap-3 mt-auto mb-auto">
+            <Skeleton width="100%" height="3rem" borderRadius="8px"></Skeleton>
+            <Skeleton width="100%" height="3rem" borderRadius="8px"></Skeleton>
+            <Skeleton width="100%" height="3rem" borderRadius="8px" class="mt-2"></Skeleton>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 mt-3">
+        <div class="surface-card p-5 border-round-xl shadow-2">
+          <Skeleton width="30%" height="2rem" class="mb-4"></Skeleton>
+
+          <div class="flex flex-column gap-4">
+            <Skeleton width="100%" height="8rem" borderRadius="12px"></Skeleton>
+            <Skeleton width="100%" height="8rem" borderRadius="12px"></Skeleton>
+            <Skeleton width="100%" height="8rem" borderRadius="12px"></Skeleton>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div v-else-if="auditReport" class="grid animate-fadein">
@@ -141,10 +193,43 @@ const goBack = () => router.push(`/project/${projectId}/accompagnement`);
           <p class="text-500 mb-4">Générez les fichiers compatibles avec vos environnements de travail habituels.</p>
 
           <div class="flex flex-column gap-3 mt-auto mb-auto">
-            <Button label="Exporter le modèle Merise (.mcd)" icon="pi pi-sitemap" severity="secondary" outlined size="large" class="w-full justify-content-start font-bold" disabled />
-            <Button label="Exporter le processus Agile (.bpmn)" icon="pi pi-server" severity="secondary" outlined size="large" class="w-full justify-content-start font-bold" disabled />
-            <Button label="Télécharger le Rapport Complet (.pdf)" icon="pi pi-file-pdf" severity="danger" size="large" class="w-full justify-content-start font-bold mt-2" disabled />
+
+            <Button
+                label="Exporter le modèle Merise (.mcd)"
+                icon="pi pi-sitemap"
+                severity="secondary"
+                outlined
+                size="large"
+                class="w-full justify-content-start font-bold"
+                :disabled="auditReport.score < 50"
+                @click="exportJMerise"
+            />
+
+            <Button
+                label="Exporter le processus Agile (.bpmn)"
+                icon="pi pi-server"
+                severity="secondary"
+                outlined
+                size="large"
+                class="w-full justify-content-start font-bold"
+                :disabled="auditReport.score < 50"
+                @click="exportBPMN"
+            />
+
+            <Button
+                label="Télécharger le Rapport Complet (.pdf)"
+                icon="pi pi-file-pdf"
+                severity="danger"
+                size="large"
+                class="w-full justify-content-start font-bold mt-2"
+                @click="exportPDF"
+            />
           </div>
+
+          <Message v-if="auditReport.score < 50" severity="warn" :closable="false" class="mt-4 mb-0 text-sm py-2">
+            <span class="font-bold"><i class="pi pi-lock mr-1"></i> Exports verrouillés :</span>
+            Votre score de qualité doit être d'au moins 50% pour générer les fichiers techniques.
+          </Message>
         </div>
       </div>
 
