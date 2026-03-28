@@ -66,13 +66,30 @@ public class TaigaService {
     * @return The method `getProjectIdBySlug` is returning an Integer value, which is the ID of the
     * project corresponding to the provided slug.
     */
-    public Integer getProjectIdBySlug(String slug, String token){
-        String url = BASE_URL + "/projects/by_slug?slug=" + slug;
+    public Integer getProjectIdBySlug(String slug, String token) {
+        String cleanSlug = slug.trim().replace("/", "");
+        String url = BASE_URL + "/projects/by_slug?slug=" + cleanSlug;
         HttpHeaders headers = createAuthHeaders(token);
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    Map.class
+            );
 
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
-        return (Integer) response.getBody().get("id");
+            if (response.getBody() != null && response.getBody().containsKey("id")) {
+                return (Integer) response.getBody().get("id");
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur Taiga sur Slug [" + cleanSlug + "] : " + e.getMessage());
+            throw e;
+        }
+        return null;
     }
+
+
+
 
 
     /**
@@ -109,6 +126,8 @@ public class TaigaService {
     private HttpHeaders createAuthHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + token);
+        headers.set("Content-Type", "application/json");
+        headers.set("Accept", "application/json");
         return headers;
     }
     
