@@ -1,5 +1,5 @@
 <script setup>
-  import { ref,watch } from 'vue';
+import {computed, ref, watch} from 'vue';
   import { useRouter } from 'vue-router';
   import {ProjectService} from '../api/ProjectService.js';
   import Button from 'primevue/button';
@@ -15,6 +15,9 @@
   const taigaEnabled = ref(false);
   const nameTouched = ref(false);
   const featureTouched = ref(false);
+  const nameIsValid = computed(() => {
+    return /^[a-zA-ZÀ-ÿ\s]+$/.test(project.value.name.trim())
+  })
 
   const project = ref({
     name: '',
@@ -44,6 +47,7 @@
     featureTouched.value = true;
     if(project.value.project_type === '') return;
     if(project.value.name.trim() === '') return;
+    if(!nameIsValid.value) return;
 
     const payload = { ...project.value };
 
@@ -62,23 +66,25 @@
       const newProjectId = response.idProject;
       const targetRouteName = ROUTES_BY_TYPE[payload.project_type];
 
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       if (targetRouteName) {
-        router.push({
+        await router.push({
           name: targetRouteName,
-          params: { id: newProjectId }
+          params: {id: newProjectId}
         });
       } else {
-        router.push({
+        await router.push({
           name: 'project-dashboard',
-          params: { id: newProjectId }
+          params: {id: newProjectId}
         });
       }
+
     } catch (e) {
       console.error("Erreur lors de la création du project", e);
     } finally {
       loading.value = false;
     }
-
 
   };
 </script>
@@ -102,12 +108,15 @@
                 id="nom"
                 v-model="project.name"
                 @blur="nameTouched = true"
-                :class="{'p-invalid': nameTouched && project.name.trim() === ''}"
+                :class="{'p-invalid': nameTouched && !nameIsValid}"
                 required
                 class="w-full block w-full"
             />
             <small v-if="nameTouched && project.name.trim() === ''" class="p-error">
               Le nom du projet est obligatoire
+            </small>
+            <small v-else-if="nameTouched && !nameIsValid" class="p-error">
+              Le nom du projet ne doit contenir que des lettres
             </small>
           </div>
 
@@ -241,13 +250,13 @@
               <span class="ml-1">{{ project.description.length }} caractères </span>
             </p>
 
-            <p class="mb-0">
+            <p v-if="project.project_type === 'audit'" class="mb-0">
               <strong>Taiga :</strong>
               <span
                   class="ml-1"
-                  :class="project.project_type === 'audit' && taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
+                  :class="taigaEnabled ? 'text-green-600 font-medium' : 'text-red-500 font-medium'"
               >
-                      {{ project.project_type === 'audit' && taigaEnabled ? 'Activé' : 'Désactivé' }}
+                      {{ taigaEnabled ? 'Activé' : 'Désactivé' }}
                   </span>
             </p>
 
@@ -271,7 +280,7 @@
             label="Créer et Ouvrir"
             icon="pi pi-check"
             :loading="loading"
-            :disabled="project.name.trim() === '' || project.project_type === ''"
+            :disabled="!nameIsValid || project.name.trim() === '' || project.project_type === ''"
             class="p-button-primary w-full md:w-auto"
             @click="createProject"
         />
@@ -279,3 +288,4 @@
     </div>
   </div>
 </template>
+
