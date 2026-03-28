@@ -63,8 +63,11 @@ public class AuditController {
         }
     }
 
-
-
-
+    @GetMapping("/reports/{reportId}")
+    public ResponseEntity<Report> getReport(@PathVariable UUID reportId) {
+        return reportRepository.findById(reportId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
 }

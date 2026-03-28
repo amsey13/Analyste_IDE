@@ -46,6 +46,11 @@ export default{
             console.error(error);
             throw error;
         }
+    },
+
+    async getReportById(reportId) {
+        const response = await apiClient.get(`/audit/reports/${reportId}`);
+        return response.data;
     }
 
 

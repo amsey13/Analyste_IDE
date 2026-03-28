@@ -34,13 +34,13 @@ const scoreText = computed(() => {
   return 'NON CONFORME';
 });
 
-// L'ASTUCE : On associe chaque incohérence à sa recommandation par leur index (0 avec 0, 1 avec 1...)
+
 const pairedIssues = computed(() => {
   if (!auditReport.value) return [];
   const incs = auditReport.value.inconsistencies || [];
   const corrs = auditReport.value.corrections || [];
 
-  // On prend la taille de la liste la plus longue au cas où Mistral se trompe
+  
   const maxLength = Math.max(incs.length, corrs.length);
   const pairs = [];
 
@@ -92,22 +92,19 @@ onMounted(async () => {
   }
 });
 
-// --- FONCTIONS D'EXPORT  ---
 
 const exportJMerise = () => {
   console.log("TODO: Générer le fichier XML .mcd pour JMerise");
-  // Le dev devra transformer les données du dictionnaire en format XML JMerise
-  // puis créer un Blob() et forcer le téléchargement.
+  
 };
 
 const exportBPMN = () => {
   console.log("TODO: Télécharger le fichier .bpmn");
-  // Le dev devra récupérer le project.bpmnXml et le mettre dans un Blob() texte.
+  
 };
 
 const exportPDF = () => {
   console.log("TODO: Générer le PDF du rapport");
-  // Le dev pourra utiliser une librairie comme html2pdf.js pour capturer l'écran de cette page.
 };
 
 const goBack = () => router.push(`/app/accompagnement/${projectId}`);
