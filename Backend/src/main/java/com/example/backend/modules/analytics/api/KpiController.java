@@ -2,6 +2,7 @@ package com.example.backend.modules.analytics.api;
 
 import com.example.backend.modules.analytics.dto.ProjectKpiDTO;
 import com.example.backend.modules.analytics.service.KpiDashboardService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/kpi")
 public class KpiController {
+
+
 
     private final KpiDashboardService kpiService;
 

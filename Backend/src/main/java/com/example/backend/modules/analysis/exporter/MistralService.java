@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -156,6 +157,54 @@ public class MistralService {
         return string != null && !string.isEmpty();
     }
 
+    private String prepareFile(String perimetre, String contenuSource){
+        return """
+    Tu es un Expert Architecte en Conception Logicielle spécialisé en audit de cohérence multi-modèles.
+    Ton objectif est de détecter les ruptures de traçabilité entre les artefacts fournis.
+
+    [PÉRIMÈTRE DE CETTE ANALYSE]
+    Les modèles fournis pour cet audit sont : %s.
+    ATTENTION : Si un modèle est absent de cette liste, NE l'audite PAS. Ne signale PAS l'absence d'un modèle non fourni.
+
+    [SOURCES À ANALYSER]
+    %s
+
+    [RÈGLES D'OR DE L'AUDIT]
+    1. VOCABULAIRE MERISE : Interdiction de parler de 'Table', 'Clé étrangère' ou 'FK'. Utilise exclusivement : Entité, Propriété, Identifiant, Association, Cardinalité.
+    2. COHÉRENCE CROISÉE : 
+       - US vs MCD : Toute donnée métier citée dans une US doit être une Propriété ou une Entité.
+       - BPMN vs US : Chaque tâche du processus doit répondre à au moins une User Story.
+       - MFC vs MCD : Les flux de données doivent correspondre à des Entités existantes.
+       - ACTEURS : Un acteur présent dans le BPMN/MFC doit être identifié dans les US (si fournies).
+
+    [MATRICE DE SÉVÉRITÉ ET TYPES]
+    - CRITICAL : IMPASSE_LOGIQUE, INCOHERENCE_LOGIQUE.
+    - HIGH : TACHE_SANS_US, DONNEE_NON_MODELISE.
+    - MEDIUM : OBJECT_SANS_ATTRIBUT, REDONDANCE_SEMANTIQUE.
+    - LOW : LIBELLE_NON_CONFORME, ACTEUR_PASSIF.
+
+    [CONSIGNES DE FORMATAGE JSON - CRITIQUE]
+    - Réponds UNIQUEMENT par un objet JSON pur. Pas de texte avant ou après.
+    - AUCUN formatage Markdown (pas de **, pas de *, pas de #).
+    - N'échappe JAMAIS les apostrophes ('). Utilise uniquement des '\\n' pour les retours à la ligne.
+    - Calcule un score global (100 = parfait) selon la qualité des liens entre les modèles FOURNIS.
+
+    [STRUCTURE JSON ATTENDUE]
+    {
+      "score": 75,
+      "anomalies": [
+        {
+          "description": "Description claire sans markdown",
+          "type": "TYPE_AUTORISE",
+          "severity": "SEVERITE",
+          "suggestion": "Correction directe"
+        }
+      ]
+    }
+    """.formatted(perimetre, contenuSource);
+
+    }
+
 
     /**
      * The function `buildAuditPrompt` generates an audit prompt with specific rules and instructions
@@ -180,67 +229,34 @@ public class MistralService {
      * The content of the BPMN, MCD, MFC, and User Stories is included in the returned string, along
      * with severity rules, allowed anomaly types, and specific instructions for the audit process. The
      */
-    private String buildAuditPrompt(String bpmnContent, String mcdContent, String mfcContent, String usContent){
-
+    private String buildAuditPrompt(String bpmnContent, String mcdContent, String mfcContent, String usContent) {
         StringBuilder sb = new StringBuilder();
+        List<String> presents = new ArrayList<>();
 
-        if(isNotBlank(bpmnContent)) sb.append("\n--- MODÈLE BPMN ---\n").append(bpmnContent);
-        if(isNotBlank(mcdContent))  sb.append("\n--- MODÈLE MCD ---\n").append(mcdContent);
-        if(isNotBlank(mfcContent))  sb.append("\n--- MODÈLE MFC ---\n").append(mfcContent);
-        if(isNotBlank(usContent))   sb.append("\n--- USER STORIES ---\n").append(usContent);
+        if(isNotBlank(bpmnContent)) {
+            sb.append("\n[SOURCE BPMN]\n").append(bpmnContent);
+            presents.add("BPMN");
+        }
 
-        return """
-        Tu es un expert en audit de cohérence multi-modèles (BPMN, MCD, MFC, US).
-        Ton but est de vérifier que ces différents modèles sont alignés et ne se contredisent pas.
-        
-        [RÈGLES DE SÉVÉRITÉ]
-        Utilise impérativement l'une de ces valeurs pour 'severity' :
-        - CRITICAL (Erreur bloquante, incohérence majeure)
-        - HIGH (Manque important)
-        - MEDIUM
-        - LOW (Optimisation ou libellé mal nommé)
-        
-        [TYPES D'ANOMALIES AUTORISÉS]
-        Utilise l'un de ces libellés pour 'type' :
-        ACTEUR_PASSIF, DONNEE_NON_MODELISE, OBJECT_SANS_ATTRIBUT, TACHE_SANS_US, 
-        LIBELLE_NON_CONFORME, INCOHERENCE_LOGIQUE, REDONDANCE_SÉMANTIQUE, IMPASSE_LOGIQUE.
-        
-        [LIEN ENTRE SEVERITE ET ANOMALIE]
-        IMPASSE_LOGIQUE - CRITICAL
-        INCOHERENCE_LOGIQUE - CRITICAL
-        TACHE_SANS_US - CRITICAL
-        REDONDANCE_SÉMANTIQUE - HIGH
-        OBJECT_SANS_ATTRIBUT - HIGH
-        LIBELLE_NON_CONFORME - LOW
-        ACTEUR_PASSIF - LOW
-        
-        
-        
-        
-        
-        
-        
-        
-        [CONTENU DES MODÈLES]
-        %s
-        
-        [CONSIGNES]
-        1. Analyse UNIQUEMENT les modèles fournis.
-        2. Vérifie la cohérence croisée (ex: une donnée citée dans une US doit être dans le MCD).
-        2,5. Pour chaque anomalie detecté propose une solution concrete pour la resoudre
-        3. Réponds UNIQUEMENT au format JSON :
-        {"anomalies": [
-                         {
-                           "description": "...",\s
-                           "type": "...",\s
-                           "severity": "...",\s
-                           "suggestion": "Texte expliquant comment corriger l'anomalie"
-                         }
-                       ]
-                     }
-        IMPORTANT : Ta réponse doit être un JSON compact. Ne mets pas de vrais sauts de ligne à l'intérieur des valeurs de texte (descriptions ou suggestions)
-        utilise '\\n' si nécessaire."
-        """.formatted(sb.toString());
+        if(isNotBlank(mcdContent)) {
+            sb.append("\n[SOURCE MCD]\n").append(mcdContent);
+            presents.add("MCD");
+        }
+
+        if(isNotBlank(mfcContent)) {
+            sb.append("\n[SOURCE MFC]\n").append(mfcContent);
+            presents.add("MFC");
+        }
+
+        if(isNotBlank(usContent)) {
+            sb.append("\n[SOURCE US]\n").append(usContent);
+            presents.add("User Stories");
+        }
+        //No need to manage the case where anything is given cause the fronted manage it
+
+        String perimetre = presents.isEmpty() ? "Aucun modèle fourni" : String.join(", ", presents);
+        return prepareFile(perimetre, sb.toString());
+
 
     }
 
@@ -286,7 +302,10 @@ public class MistralService {
                 .replace("”", "\"")
                 .replace("\\'", "'");
 
-
+        System.out.println(cleanedResponse);
+        this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
+        this.mapper.configure(JsonReadFeature.ALLOW_SINGLE_QUOTES.mappedFeature(), true);
+        this.mapper.configure(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER.mappedFeature(), true);
         try{
             JsonNode root = mapper.readTree(cleanedResponse);
             JsonNode anomalies = root.path("anomalies");
@@ -295,12 +314,6 @@ public class MistralService {
                 root.fieldNames().forEachRemaining(name -> System.out.println(" -> " + name));
                 throw new IOException("La clé 'anomalies' est absente ou n'est pas un tableau. Réponse brute : " + response );
             }
-            this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
-            this.mapper.configure(JsonReadFeature.ALLOW_SINGLE_QUOTES.mappedFeature(), true);
-            this.mapper.configure(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER.mappedFeature(), true);
-
-
-
 
             return mapper.readValue(
                     anomalies.toString(),
@@ -358,8 +371,6 @@ public class MistralService {
 
         String prompt = this.buildDictionaryPrompt(usContent);
         String response = this.askQuestion(prompt);
-
-        // Nettoyage ultra-propre avec Regex (adieu les if/else)
         String cleanedResponse = response.replaceFirst("^```(json)?\\s*", "")
                 .replaceFirst("\\s*```$", "")
                 .trim();
@@ -374,7 +385,6 @@ public class MistralService {
 
             this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
 
-            // On convertit directement le JSON en liste de DTOs
             return mapper.readValue(
                     entries.toString(),
                     new TypeReference<List<DictionaryEntryRequestDTO>>() {}
@@ -383,6 +393,10 @@ public class MistralService {
             throw new IOException("Erreur lors du parsing des suggestions IA: " + e.getMessage());
         }
     }
+
+
+
+
     private String buildMcdPrompt(String rulesContent) {
         return """
         Tu es un architecte logiciel expert en méthode Merise.
@@ -426,15 +440,15 @@ public class MistralService {
         }
         """.formatted(rulesContent);
     }
+
+
     public McdSuggestionDTO suggestMcdFromBusinessRules(String rulesContent) throws IOException {
         if (rulesContent == null || rulesContent.isBlank()) {
-            return new McdSuggestionDTO(); // On retourne un objet vide si pas de règles
+            return new McdSuggestionDTO();
         }
 
         String prompt = this.buildMcdPrompt(rulesContent);
         String response = this.askQuestion(prompt);
-
-        // Nettoyage de la réponse (retirer les balises Markdown ```json si Mistral en a mis)
         String cleanedResponse = response.replaceFirst("^```(json)?\\s*", "")
                 .replaceFirst("\\s*```$", "")
                 .trim();
@@ -442,14 +456,11 @@ public class MistralService {
         try {
             JsonNode root = mapper.readTree(cleanedResponse);
 
-            // Vérification de sécurité
             if (!root.has("entries") || !root.has("associations")) {
                 throw new IOException("La réponse de l'IA ne contient pas les clés attendues ('entries' et 'associations').");
             }
 
             this.mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
-
-            // On mappe directement le JSON dans notre super objet DTO !
             return mapper.readValue(cleanedResponse, McdSuggestionDTO.class);
 
         } catch (Exception e) {
@@ -457,7 +468,7 @@ public class MistralService {
         }
     }
 
-    // 1. Le Mega-Prompt d'Audit
+
     private String buildAuditPrompt(String projectContext) {
         return """
         Tu es un Architecte Logiciel Senior et un auditeur qualité extrêmement rigoureux, expert en méthode Merise et Agile (BPMN, User Stories).
@@ -507,7 +518,8 @@ public class MistralService {
         """.formatted(projectContext);
     }
 
-    // 2. L'appel à l'API
+    
+    
     public ProjectAuditResponseDTO auditProjectComplete(String projectContext) throws IOException {
         String prompt = this.buildAuditPrompt(projectContext);
         String response = this.askQuestion(prompt);
@@ -525,8 +537,7 @@ public class MistralService {
 
             return mapper.readValue(jsonStr, ProjectAuditResponseDTO.class);
         } catch (Exception e) {
-            // On imprime la vraie réponse de Mistral dans la console pour comprendre le bug !
-            System.err.println("❌ ERREUR DE PARSING IA. Voici ce que Mistral a répondu : \n" + response);
+            System.err.println("ERREUR DE PARSING IA. Voici ce que Mistral a répondu : \n" + response);
             throw new IOException("Erreur lors du parsing de l'audit IA: " + e.getMessage());
         }
     }
