@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.modules.analysis.exporter.MistralService;
+import com.example.backend.modules.analytics.dao.LogExecutionRepository;
 import com.example.backend.modules.projects.audit.dao.AnomalyTypeRepository;
 import com.example.backend.modules.projects.audit.dao.AuditProjectRepository;
 import com.example.backend.modules.projects.audit.dao.ReportRepository;
@@ -34,6 +35,7 @@ public class AuditServiceTest {
     @Mock private ReportRepository reportRepository;
     @Mock private AnomalyTypeRepository anomalyTypeRepository;
     @Mock private TaigaService taigaService;
+    @Mock private LogExecutionRepository logExecutionRepository;
 
     @InjectMocks
     private AuditService auditService;

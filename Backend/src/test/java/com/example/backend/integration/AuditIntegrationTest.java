@@ -109,7 +109,7 @@ public class AuditIntegrationTest {
 
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.score").value(90.0)) //
+                .andExpect(jsonPath("$.score").value(95.0))
                 .andExpect(jsonPath("$.anomalies[0].description").value("Incohérence BPMN"))
                 .andExpect(jsonPath("$.anomalies[0].suggestion.content").value("Ajouter une User Story correspondante dans le backlog Taiga."));
 
@@ -121,7 +121,7 @@ public class AuditIntegrationTest {
         Report mainReport = savedReports.get(0);
         Anomaly savedAnomaly = mainReport.getAnomalies().get(0);
         assertEquals(projectId, mainReport.getProject().getIdProject());
-        assertEquals(90.0, mainReport.getScore());
+        assertEquals(95.0, mainReport.getScore());
         assertFalse(mainReport.getAnomalies().isEmpty());
         assertNotNull(savedAnomaly.getSuggestion(), "La suggestion devrait être enregistrée en base");
         assertEquals("Ajouter une User Story correspondante dans le backlog Taiga.",

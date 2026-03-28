@@ -98,7 +98,7 @@ public class MistralServiceTest {
 
         double scoreMixed = mistralService.calculScore(report);
 
-        assertEquals(75.0, scoreMixed, "Le score devrait être de 75 (100 - 20 - 5)");
+        assertEquals(87.0, scoreMixed, "Le score devrait être de 87 (100 - 10 - 3)");
     }
 
     @Test
