@@ -1,10 +1,10 @@
 package com.example.backend.modules.projects.audit.entity;
 
 public enum SeverityLevel {
-    LOW(2),
-    MEDIUM(5),
-    HIGH(10),
-    CRITICAL(20)
+    LOW(1),
+    MEDIUM(3),
+    HIGH(5),
+    CRITICAL(10)
 
     ;
     private final int malus;

@@ -1,6 +1,7 @@
 package com.example.backend.modules.projects.audit.api;
 
 import com.example.backend.modules.projects.audit.dao.ReportRepository;
+import com.example.backend.modules.projects.audit.dto.AuditVersionDTO;
 import com.example.backend.modules.projects.audit.entity.Report;
 import com.example.backend.modules.projects.audit.service.AuditService;
 import com.example.backend.modules.projects.audit.service.PdfReportService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @RestController
@@ -44,13 +46,16 @@ public class AuditController {
         }
     }
 
+
     @GetMapping("/{reportId}/export/pdf")
     public ResponseEntity<byte[]> exportPdf(@PathVariable UUID reportId) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Rapport introuvable"));
 
         try {
-            byte[] pdfContents = pdfReportService.generateAuditPdf(report);
+            UUID projectId = report.getProject().getId();
+            AuditVersionDTO diff = auditService.compareLastTwoReports(projectId);
+            byte[] pdfContents = pdfReportService.generateAuditPdf(report,diff);
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Rapport_Audit_" + reportId + ".pdf\"")
@@ -76,5 +81,6 @@ public class AuditController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build()); 
     }
+
 
 }
