@@ -1,5 +1,11 @@
 package com.example.backend.modules.projects.acc.service;
 
+import IhmMCD2.*;
+import Merise2.Entite2;
+import Merise2.Attribut2;
+import Merise2.Relation2;
+import Outil.ConfigSave;
+import Output.SQLSave;
 import com.example.backend.modules.analysis.exporter.MistralService;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.analytics.dao.LogExecutionRepository;
@@ -16,8 +22,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.io.ClassPathResource;
 
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -559,5 +566,178 @@ public class SupportFeatureService {
         }
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         return mapper.readValue(project.getLastAuditReport(), ProjectAuditResponseDTO.class);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generateMcdFile(UUID projectId) {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        ArrayList<Object> listeEntiteRelation = new ArrayList<>();
+        ArrayList<Object> listeLien = new ArrayList<>();
+        ArrayList<Object> listeCIF = new ArrayList<>();
+        ArrayList<Object> listelienCIF = new ArrayList<>();
+        ArrayList<Object> listePostIt = new ArrayList<>();
+        ArrayList<Object> listeHeritage = new ArrayList<>();
+        ArrayList<Object> listeLienContrainteHeritage = new ArrayList<>();
+
+        Map<UUID, IhmEntite2> entiteMap = new HashMap<>();
+        Set<UUID> rulesSeen = new HashSet<>();
+        StringBuilder allRulesContent = new StringBuilder("RÈGLES DE GESTION :\n\n");
+        boolean projectHasRules = false;
+
+        int x = 100, y = 100;
+
+        if (project.getDictionaryEntries() != null) {
+            for (DictionaryEntry entry : project.getDictionaryEntries()) {
+                Entite2 meriseEntite = new Entite2(entry.getName());
+
+                if (entry.getAttributes() != null) {
+                    for (DictionaryAttribute attr : entry.getAttributes()) {
+                        String type = (attr.getDataType() != null) ? attr.getDataType() : "VARCHAR";
+                        int taille = 50;
+                        try {
+                            if (attr.getSize() != null) taille = Integer.parseInt(attr.getSize().split(",")[0].trim());
+                        } catch (Exception ignored) {}
+
+                        Attribut2 meriseAttr = new Attribut2(attr.getName(), type, taille, 0,
+                                Boolean.TRUE.equals(attr.getPrimaryKey()) ? "PRIMARY KEY" : "",
+                                !Boolean.TRUE.equals(attr.getNotNull()),
+                                (attr.getDescription() != null) ? attr.getDescription() : "", meriseEntite);
+                        meriseEntite.getListeAttributs().add(meriseAttr);
+                    }
+                }
+
+                IhmEntite2 ihmEntite = new IhmEntite2(meriseEntite, x, y, true);
+                try { ihmEntite.setAligne("GAUCHE"); ihmEntite.setAligneTitre("GAUCHE"); } catch (Throwable ignored) {}
+                listeEntiteRelation.add(ihmEntite);
+                entiteMap.put(entry.getId(), ihmEntite);
+
+                x += 250;
+                if (x > 800) { x = 100; y += 200; }
+            }
+        }
+
+        List<DictionaryAssociation> assocs = associationRepository.findByProjectId(projectId);
+        if (assocs != null) {
+            for (DictionaryAssociation assoc : assocs) {
+                IhmEntite2 src = entiteMap.get(assoc.getSource().getId());
+                IhmEntite2 tgt = entiteMap.get(assoc.getTarget().getId());
+
+                if (src == null || tgt == null) continue;
+
+                if (assoc.getBusinessRule() != null && !rulesSeen.contains(assoc.getBusinessRule().getId())) {
+                    BusinessRule rule = assoc.getBusinessRule();
+                    allRulesContent.append("• ").append(rule.getCode().toUpperCase()).append(" :\n");
+                    allRulesContent.append(formatDescription(rule.getDescription(), 45)).append("\n\n");
+                    rulesSeen.add(rule.getId());
+                    projectHasRules = true;
+                }
+
+                if (Boolean.TRUE.equals(assoc.getIsInheritance())) {
+                    IhmHeritage2 heritage = new IhmHeritage2(x, y, tgt, 0);
+                    try { heritage.setNom(""); heritage.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 12)); } catch (Throwable ignored) {}
+                    listeHeritage.add(heritage);
+
+                    try {
+                        listeLienContrainteHeritage.add(new IhmLienContrainteHeritage2(heritage, tgt));
+                        listeLienContrainteHeritage.add(new IhmLienContrainteHeritage2(heritage, src));
+                    } catch (Throwable ignored) {}
+
+                } else {
+                    // 🔵 CAS 2 : RELATION NORMALE
+                    Relation2 logicRel = new Relation2(assoc.getName());
+                    if (assoc.getAttributes() != null) {
+                        for (DictionaryAttribute attr : assoc.getAttributes()) {
+                            Attribut2 meriseAttr = new Attribut2(attr.getName(), (attr.getDataType() != null ? attr.getDataType() : "VARCHAR"), 50, 0, "",
+                                    !Boolean.TRUE.equals(attr.getNotNull()), (attr.getDescription() != null ? attr.getDescription() : ""), logicRel);
+                            logicRel.getListeAttributs().add(meriseAttr);
+                        }
+                    }
+
+                    IhmRelation2 ihmRel = new IhmRelation2(logicRel, x, y, true);
+                    listeEntiteRelation.add(ihmRel);
+
+                    IhmLien2 lSrc = new IhmLien2(src, ihmRel);
+                    String cSrc = (assoc.getSourceMultiplicity() != null) ? assoc.getSourceMultiplicity().replace("..", ",") : "0,n";
+                    if (Boolean.TRUE.equals(assoc.getRelative()) && cSrc.contains("1") && !cSrc.toLowerCase().contains("n")) {
+                        cSrc = "(" + cSrc + ")"; lSrc.setRelatif(true);
+                    }
+                    lSrc.setCardinalite(cSrc);
+                    listeLien.add(lSrc);
+
+                    IhmLien2 lTgt = new IhmLien2(tgt, ihmRel);
+                    String cTgt = (assoc.getTargetMultiplicity() != null) ? assoc.getTargetMultiplicity().replace("..", ",") : "0,n";
+                    if (Boolean.TRUE.equals(assoc.getRelative()) && cTgt.contains("1") && !cTgt.toLowerCase().contains("n")) {
+                        cTgt = "(" + cTgt + ")"; lTgt.setRelatif(true);
+                    }
+                    lTgt.setCardinalite(cTgt);
+
+                    if (Boolean.TRUE.equals(assoc.getCif())) {
+                        try { lTgt.setFleche(true); } catch (Throwable ignored) {}
+                        IhmCIF2 cif = new IhmCIF2(x + 50, y - 50, 30, 30);
+                        try { cif.setNom("CIF"); cif.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 10)); } catch (Throwable ignored) {}
+                        listeCIF.add(cif);
+                        try {
+                            listelienCIF.add(new IhmLienCIF2(ihmRel, cif, ""));
+                        } catch (Throwable ignored) {}
+                    }
+                    listeLien.add(lTgt);
+                }
+                x += 280; if (x > 900) { x = 100; y += 180; }
+            }
+        }
+
+        if (projectHasRules) {
+            IhmPostIt2 postIt = new IhmPostIt2(allRulesContent.toString(), 1150, 50, 300, 400);
+            postIt.setCommentaire(allRulesContent.toString());
+            try { postIt.setClTexte(java.awt.Color.BLACK); } catch (Throwable ignored) {}
+            listePostIt.add(postIt);
+        }
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+
+            org.springframework.core.io.ClassPathResource resource = new org.springframework.core.io.ClassPathResource("blank.mcd");
+            try (ObjectInputStream ois = new ObjectInputStream(resource.getInputStream())) {
+                oos.writeObject(ois.readObject());
+                ois.readObject(); oos.writeObject(listeEntiteRelation);
+                ois.readObject(); oos.writeObject(listeLien);
+                ois.readObject(); oos.writeObject(listeCIF);
+                ois.readObject(); oos.writeObject(listelienCIF);
+
+                ois.readObject(); oos.writeObject(listePostIt);
+                ois.readObject(); oos.writeObject(new ArrayList<>());
+
+                oos.writeObject(ois.readObject());
+                ois.readObject(); oos.writeObject(listeHeritage);
+                ois.readObject(); oos.writeObject(listeLienContrainteHeritage);
+
+                while (true) {
+                    try { oos.writeObject(ois.readObject()); } catch (EOFException e) { break; }
+                }
+            }
+            oos.flush();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur de sérialisation MCD", e);
+        }
+    }
+
+    /**
+     * Empêche le Post-it d'être trop large en découpant le texte
+     */
+    private String formatDescription(String text, int limit) {
+        if (text == null) return "";
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String word : text.split(" ")) {
+            if (count + word.length() > limit) {
+                sb.append("\n");
+                count = 0;
+            }
+            sb.append(word).append(" ");
+            count += word.length() + 1;
+        }
+        return sb.toString().trim();
     }
 }

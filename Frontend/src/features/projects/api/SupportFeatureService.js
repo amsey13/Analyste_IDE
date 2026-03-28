@@ -133,5 +133,15 @@ export const SupportFeatureService = {
     async getAudit(projectId) {
         const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/audit`);
         return response.data;
-    }
+    },
+
+    async exportMcdFile(projectId) {
+        const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/export/mcd`, {
+            responseType: 'arraybuffer', // 🚨 CRUCIAL : On force le buffer binaire pur
+            headers: {
+                'Accept': 'application/octet-stream' // 🚨 On interdit le JSON
+            }
+        });
+        return response.data;
+    },
 };

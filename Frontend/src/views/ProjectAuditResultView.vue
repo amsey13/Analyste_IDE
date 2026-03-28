@@ -2,8 +2,10 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { SupportFeatureService } from '../features/projects/api/SupportFeatureService.js';
+import { ProjectService } from '../features/projects/api/ProjectService.js';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
+import html2pdf from 'html2pdf.js';
 import Message from 'primevue/message';
 import Skeleton from 'primevue/skeleton';
 import Chart from 'primevue/chart';
@@ -14,7 +16,7 @@ const projectId = route.params.id;
 
 const auditReport = ref(null);
 const isLoading = ref(true);
-
+const project = ref(null);
 const chartData = ref(null);
 const chartOptions = ref(null);
 
@@ -34,13 +36,13 @@ const scoreText = computed(() => {
   return 'NON CONFORME';
 });
 
-
+// L'ASTUCE : On associe chaque incohérence à sa recommandation par leur index (0 avec 0, 1 avec 1...)
 const pairedIssues = computed(() => {
   if (!auditReport.value) return [];
   const incs = auditReport.value.inconsistencies || [];
   const corrs = auditReport.value.corrections || [];
 
-  
+  // On prend la taille de la liste la plus longue au cas où Mistral se trompe
   const maxLength = Math.max(incs.length, corrs.length);
   const pairs = [];
 
@@ -76,37 +78,81 @@ onMounted(async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    const report = await SupportFeatureService.getAudit(projectId);
+    const [report, projData] = await Promise.all([
+      SupportFeatureService.getAudit(projectId),
+      ProjectService.getProjectById(projectId)
+    ]);
 
-    if (report) {
+    if (report && projData) {
       auditReport.value = report;
+      project.value = projData;
       initChart();
     } else {
-      router.push(`/project/${projectId}/accompagnement`);
+      router.push(`/app/accompagnement/${projectId}`);
     }
   } catch (e) {
     console.error("Erreur", e);
-    router.push(`/project/${projectId}/accompagnement`);
+    router.push(`/app/accompagnement/${projectId}`);
   } finally {
     isLoading.value = false;
   }
 });
 
+const exportJMerise = async () => {
+  try {
+    const blobData = await SupportFeatureService.exportMcdFile(projectId);
+    const blob = new Blob([blobData], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Modele_${project.value?.name || 'Projet'}.mcd`;
 
-const exportJMerise = () => {
-  console.log("TODO: Générer le fichier XML .mcd pour JMerise");
-  
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Erreur lors de l'export JMerise", error);
+  }
 };
 
+// --- 2. EXPORT BPMN ---
 const exportBPMN = () => {
-  console.log("TODO: Télécharger le fichier .bpmn");
-  
+  const bpmnContent = project.value?.bpmnXml;
+
+  if (!bpmnContent) {
+    console.error("Aucun processus BPMN n'est associé à ce projet.");
+    return;
+  }
+
+  const blob = new Blob([bpmnContent], { type: "application/bpmn20-xml;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `Processus_${project.value?.name || 'Projet'}.bpmn`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 };
 
+// --- 3. EXPORT PDF ---
 const exportPDF = () => {
-  console.log("TODO: Générer le PDF du rapport");
-};
+  const element = document.getElementById("report-content"); // 🚨 N'oublie pas d'ajouter cet ID dans ton <template> !
+  if (!element) {
+    console.error("Zone de rapport introuvable");
+    return;
+  }
 
+  const opt = {
+    margin:       10,
+    filename:     `Rapport_Audit_${project.value?.name || 'Projet'}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save();
+};
 const goBack = () => router.push(`/app/accompagnement/${projectId}`);
 </script>
 
@@ -162,7 +208,7 @@ const goBack = () => router.push(`/app/accompagnement/${projectId}`);
 
     </div>
 
-    <div v-else-if="auditReport" class="grid animate-fadein">
+    <div v-else-if="auditReport" id="report-content" class="grid animate-fadein">
 
       <div class="col-12 lg:col-6">
         <div class="surface-card p-4 border-round-xl shadow-2 flex flex-column align-items-center justify-content-center h-full" style="min-height: 22rem;">
