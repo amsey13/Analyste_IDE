@@ -24,18 +24,26 @@ const selectedProject = ref(null);
 
 const latestReport = ref(null);
 
+const normalizeProject = (project) => {
+  return {
+    ...project,
+    id: project.id || project.idProject,
+    idProject: project.idProject || project.id,
+    name: project.name || 'Sans titre',
+    project_type: (project.projectType || project.project_type || project.typeProjet || project.type || '').toLowerCase(),
+    description: project.description || '',
+    creationDate: project.creationDate || null,
+    updateDate: project.updateDate || null
+  };
+};
 
-
-const normalizeProject = (project) => ({
-
-
-  ...project,
-  id: project.id || project.idProject,
-  idProject: project.idProject || project.id,
-  name: project.name || 'Sans titre',
-  project_type: project.projectType || '',
-  description: project.description || ''
-});
+const sortProjectsByLatestDate = (projects) => {
+  return [...projects].sort((a, b) => {
+    const dateA = new Date(a.updateDate || a.creationDate || 0);
+    const dateB = new Date(b.updateDate || b.creationDate || 0);
+    return dateB - dateA;
+  });
+};
 
 const hasMoreThanFiveProjects = computed(() => projects.value.length > 5);
 
@@ -59,7 +67,7 @@ onMounted(async () => {
       console.log('Clés du premier projet :', Object.keys(data[0]));
     }
 
-    projects.value = data.map(normalizeProject);
+    projects.value = sortProjectsByLatestDate(data.map(normalizeProject));
 
     console.log('Projets après normalisation :', projects.value);
   } catch (error) {

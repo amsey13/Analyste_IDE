@@ -11,7 +11,7 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
 import Drawer from 'primevue/drawer';
 import Paginator from 'primevue/paginator';
-import auditProjectService from "../features/projects/api/AuditProjectService.js"; 
+import auditProjectService from "../api/AuditProjectService.js";
 const latestReport = ref(null);
 
 const router = useRouter();
@@ -27,26 +27,26 @@ const selectedProject = ref(null);
 const first = ref(0);
 const rows = ref(6);
 
-const normalizeProject = (project) => ({
-  ...project,
-  id: project.id || project.idProject,
-  idProject: project.idProject || project.id,
-  name: project.name || 'Sans titre',
-  project_type: project.project_type || project.typeProjet || project.type || '',
-  description: project.description || ''
-});
 // Normalisation des données projet pour éviter les différences de structure
 const normalizeProject = (project) => {
-
-  const type = project.projectType || '';
-
-  return{
+  return {
     ...project,
-    idProject: project.idProject || project.id, // Supporte les deux variantes
+    id: project.id || project.idProject,
+    idProject: project.idProject || project.id,
     name: project.name || 'Sans titre',
-    project_type: type.toLowerCase(), // On force la minuscule pour le CSS
-    description: project.description || ''
+    project_type: (project.projectType || project.project_type || project.typeProjet || project.type || '').toLowerCase(),
+    description: project.description || '',
+    creationDate: project.creationDate || null,
+    updateDate: project.updateDate || null
   };
+};
+
+const sortProjectsByLatestDate = (projects) => {
+  return [...projects].sort((a, b) => {
+    const dateA = new Date(a.updateDate || a.creationDate || 0);
+    const dateB = new Date(b.updateDate || b.creationDate || 0);
+    return dateB - dateA;
+  });
 };
 
 
@@ -61,7 +61,7 @@ onMounted(async () => {
 
   try {
     const data = await ProjectService.getProjects();
-    projects.value = data.map(normalizeProject);
+    projects.value = sortProjectsByLatestDate(data.map(normalizeProject));
   } catch (error) {
     console.error('Erreur lors du chargement des projets :', error);
     toast.add({
@@ -297,9 +297,6 @@ const goToLatestReport = () => {
   </Drawer>
   </div>
 
-  <div style="color: red; font-weight: bold;">
-    DEBUG : {{ project.projectType || 'CLEF ABSENTE' }}
-  </div>
 </template>
 
 <style scoped>
