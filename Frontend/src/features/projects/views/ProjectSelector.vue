@@ -24,6 +24,8 @@ const selectedProject = ref(null);
 
 const latestReport = ref(null);
 
+const searchQuery = ref('');
+
 const normalizeProject = (project) => {
   return {
     ...project,
@@ -48,6 +50,14 @@ const sortProjectsByLatestDate = (projects) => {
 const hasMoreThanFiveProjects = computed(() => projects.value.length > 5);
 
 const displayedProjects = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+
+  if (query) {
+    return projects.value.filter(project =>
+        (project.name || '').toLowerCase().includes(query)
+    );
+  }
+
   return hasMoreThanFiveProjects.value ? projects.value.slice(0, 4) : projects.value;
 });
 
@@ -207,7 +217,7 @@ const goToLatestReport = () => {
   <Toast />
   <ConfirmDialog />
 
-  <div class="projects-page projects-page--selector">
+  <div class="projects-page">
     <div class="projects-page__header">
       <div>
         <h1 class="projects-page__title">Gestion des Projets</h1>
@@ -221,81 +231,96 @@ const goToLatestReport = () => {
       Chargement...
     </div>
 
-    <div v-else class="projects-grid">
-      <Card
-          class="project-card project-card--centered cursor-pointer border-2 border-300 hover:shadow-4"
-          @click="goToCreate"
-      >
-        <template #content>
-          <div class="project-card__content project-card__content--centered">
-            <div class="project-card__hero-icon">
-              <i class="pi pi-plus"></i>
-            </div>
-            <h3 class="project-card__title project-card__title--centered">Nouveau Projet</h3>
-            <p class="project-card__description project-card__description--centered">
-              Créer une nouvelle analyse fonctionnelle
-            </p>
-          </div>
-        </template>
-      </Card>
+    <div v-else-if="projects.length === 0" class="projects-page__state">
+      Aucun projet disponible.
+    </div>
 
-      <Card
-          v-for="project in displayedProjects"
-          :key="project.idProject"
-          class="project-card cursor-pointer border-2 border-300 hover:shadow-4"
-          @click="openProjectDrawer(project)"
-      >
-        <template #content>
-          <div class="project-card__content">
-            <div class="project-card__main">
-              <h3 class="project-card__title">{{ project.name }}</h3>
+    <div v-else>
 
-              <p class="project-card__meta">
-                <strong>Type :</strong>
-                {{ formatProjectType(project.project_type) }}
-              </p>
+      <div class="search-container">
+        <i class="pi pi-search search-icon"></i>
+        <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Nom de Projet ..."
+            class="search-input"
+        />
+      </div>
 
-              <p class="project-card__description">
-                {{ truncateDescription(project.description) }}
+      <div class="projects-grid">
+
+        <Card
+            class="project-card project-card--centered cursor-pointer border-2 border-300 hover:shadow-4"
+            @click="goToCreate"
+        >
+          <template #content>
+            <div class="project-card__content project-card__content--centered">
+              <div class="project-card__hero-icon">
+                <i class="pi pi-plus"></i>
+              </div>
+              <h3 class="project-card__title project-card__title--centered">Nouveau Projet</h3>
+              <p class="project-card__description project-card__description--centered">
+                Créer une nouvelle analyse fonctionnelle
               </p>
             </div>
+          </template>
+        </Card>
 
-            <div class="project-card__footer">
-              <Button
-                  label="Supprimer"
-                  icon="pi pi-trash"
-                  severity="danger"
-                  text
-                  rounded
-                  @click.stop="deleteProject(project.idProject)"
-              />
+        <Card
+            v-for="project in displayedProjects"
+            :key="project.idProject"
+            class="project-card cursor-pointer border-2 border-300 hover:shadow-4"
+            @click="openProjectDrawer(project)"
+        >
+          <template #content>
+            <div class="project-card__content">
+              <div class="project-card__main">
+                <h3 class="project-card__title">{{ project.name }}</h3>
+
+                <p class="project-card__meta">
+                  <strong>Type :</strong>
+                  {{ formatProjectType(project.project_type) }}
+                </p>
+
+                <p class="project-card__description">
+                  {{ truncateDescription(project.description) }}
+                </p>
+              </div>
+
+              <div class="project-card__footer">
+                <Button
+                    label="Supprimer"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    text
+                    rounded
+                    @click.stop="deleteProject(project.idProject)"
+                />
+              </div>
             </div>
-          </div>
-        </template>
-      </Card>
+          </template>
+        </Card>
 
-      <Card
-          v-if="hasMoreThanFiveProjects"
-          class="project-card project-card--centered cursor-pointer border-2 border-300 hover:shadow-4"
-          @click="goToAllProjects"
-      >
-        <template #content>
-          <div class="project-card__content project-card__content--centered">
-            <div class="project-card__hero-icon">
-              <i class="pi pi-eye"></i>
+        <Card
+            v-if="hasMoreThanFiveProjects"
+            class="project-card project-card--centered cursor-pointer border-2 border-300 hover:shadow-4"
+            @click="goToAllProjects"
+        >
+          <template #content>
+            <div class="project-card__content project-card__content--centered">
+              <div class="project-card__hero-icon">
+                <i class="pi pi-eye"></i>
+              </div>
+              <h3 class="project-card__title project-card__title--centered">Voir plus</h3>
+              <p class="project-card__description project-card__description--centered">
+                Afficher tous les projets
+              </p>
             </div>
-            <h3 class="project-card__title project-card__title--centered">Voir plus</h3>
-            <p class="project-card__description project-card__description--centered">
-              Afficher tous les projets
-            </p>
-          </div>
-        </template>
-      </Card>
-
-      <div v-if="displayedProjects.length === 0" class="projects-page__state projects-page__state--full">
-        Aucun projet trouvé.
+          </template>
+        </Card>
       </div>
     </div>
+
 
     <Drawer
         v-model:visible="drawerVisible"
@@ -345,9 +370,13 @@ const goToLatestReport = () => {
   --card-radius: 14px;
   --card-height: 210px;
   --card-padding: 1.05rem;
+  --title-size: 2rem;
+  --subtitle-size: 1rem;
   --card-title-size: 1rem;
   --card-text-size: 0.92rem;
+  --section-spacing: 1.35rem;
   padding: calc(1.5rem * var(--page-scale));
+  padding-bottom: 0.8rem;
 }
 
 .projects-page__header {
@@ -497,6 +526,10 @@ const goToLatestReport = () => {
 }
 
 @media (max-width: 768px) {
+  .projects-page__header {
+    flex-direction: column;
+  }
+
   .projects-grid {
     grid-template-columns: 1fr;
   }
@@ -505,5 +538,36 @@ const goToLatestReport = () => {
     height: auto;
     min-height: 190px;
   }
+}
+.search-container {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+  margin-left: auto;
+  margin-bottom: 30px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 14px 6px 45px; /* space for icon */
+  font-size: 0.95rem;
+  border-radius: 12px;
+  border: 2px solid #d0d7de;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #6b7280;
 }
 </style>
