@@ -11,7 +11,7 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
 import Drawer from 'primevue/drawer';
 import Paginator from 'primevue/paginator';
-import auditProjectService from "../features/projects/api/AuditProjectService.js"; 
+import auditProjectService from "../api/AuditProjectService.js";
 const latestReport = ref(null);
 
 const router = useRouter();
@@ -27,28 +27,39 @@ const selectedProject = ref(null);
 const first = ref(0);
 const rows = ref(6);
 
-const normalizeProject = (project) => ({
-  ...project,
-  id: project.id || project.idProject,
-  idProject: project.idProject || project.id,
-  name: project.name || 'Sans titre',
-  project_type: project.project_type || project.typeProjet || project.type || '',
-  description: project.description || ''
-});
+const searchQuery = ref('');
+
 // Normalisation des données projet pour éviter les différences de structure
 const normalizeProject = (project) => {
-
-  const type = project.projectType || '';
-
-  return{
+  return {
     ...project,
-    idProject: project.idProject || project.id, // Supporte les deux variantes
+    id: project.id || project.idProject,
+    idProject: project.idProject || project.id,
     name: project.name || 'Sans titre',
-    project_type: type.toLowerCase(), // On force la minuscule pour le CSS
-    description: project.description || ''
+    project_type: (project.projectType || project.project_type || project.typeProjet || project.type || '').toLowerCase(),
+    description: project.description || '',
+    creationDate: project.creationDate || null,
+    updateDate: project.updateDate || null
   };
 };
 
+const sortProjectsByLatestDate = (projects) => {
+  return [...projects].sort((a, b) => {
+    const dateA = new Date(a.updateDate || a.creationDate || 0);
+    const dateB = new Date(b.updateDate || b.creationDate || 0);
+    return dateB - dateA;
+  });
+};
+
+const filteredProjects = computed(() => {
+  if (!searchQuery.value) return projects.value;
+
+  return projects.value.filter(project =>
+      (project.name || '')
+          .toLowerCase()
+          .includes(searchQuery.value.toLowerCase())
+  );
+});
 
 const truncateDescription = (text, maxLength = 70) => {
   if (!text) return 'Pas de description';
@@ -61,7 +72,7 @@ onMounted(async () => {
 
   try {
     const data = await ProjectService.getProjects();
-    projects.value = data.map(normalizeProject);
+    projects.value = sortProjectsByLatestDate(data.map(normalizeProject));
   } catch (error) {
     console.error('Erreur lors du chargement des projets :', error);
     toast.add({
@@ -75,7 +86,9 @@ onMounted(async () => {
 });
 
 const paginatedProjects = computed(() => {
-  return projects.value.slice(first.value, first.value + rows.value);
+  const start = first.value;
+  const end = start + rows.value;
+  return filteredProjects.value.slice(start, end);
 });
 
 const formatProjectType = (type) => {
@@ -206,6 +219,17 @@ const goToLatestReport = () => {
     </div>
 
     <div v-else>
+
+      <div class="search-container">
+        <i class="pi pi-search search-icon"></i>
+        <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Nom de Projet ..."
+            class="search-input"
+        />
+      </div>
+
       <div class="projects-grid">
         <Card
             v-for="project in paginatedProjects"
@@ -247,7 +271,7 @@ const goToLatestReport = () => {
         <Paginator
             :first="first"
             :rows="rows"
-            :totalRecords="projects.length"
+            :totalRecords="filteredProjects.length"
             :rowsPerPageOptions="[6, 9, 12]"
             @page="onPageChange"
         />
@@ -297,9 +321,6 @@ const goToLatestReport = () => {
   </Drawer>
   </div>
 
-  <div style="color: red; font-weight: bold;">
-    DEBUG : {{ project.projectType || 'CLEF ABSENTE' }}
-  </div>
 </template>
 
 <style scoped>
@@ -316,6 +337,7 @@ const goToLatestReport = () => {
   --card-text-size: 0.92rem;
   --section-spacing: 1.35rem;
   padding: calc(1.5rem * var(--page-scale));
+  padding-bottom: 0.8rem;
 }
 
 .projects-page__header {
@@ -323,7 +345,8 @@ const goToLatestReport = () => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: var(--section-spacing);
+  margin-bottom: 1.35rem;
+
 }
 
 .projects-page__title {
@@ -424,7 +447,7 @@ const goToLatestReport = () => {
 }
 
 .projects-page__paginator {
-  margin-top: 1rem;
+  margin-top: 2rem;
   display: flex;
   justify-content: center;
 }
@@ -468,5 +491,36 @@ const goToLatestReport = () => {
     height: auto;
     min-height: 190px;
   }
+}
+.search-container {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+  margin-left: auto;
+  margin-bottom: 30px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 14px 6px 45px; /* space for icon */
+  font-size: 0.95rem;
+  border-radius: 12px;
+  border: 2px solid #d0d7de;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #6b7280;
 }
 </style>
