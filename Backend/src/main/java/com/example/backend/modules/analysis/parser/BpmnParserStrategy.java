@@ -31,10 +31,9 @@ public class BpmnParserStrategy implements ModelParserStrategy {
 
 
     public BpmnParserStrategy(InputStream input) throws ParserConfigurationException, IOException, SAXException {
-        this.document = DocumentBuilderFactory
-                .newInstance()
-                .newDocumentBuilder()
-                .parse(input);
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(false);
+        this.document = factory.newDocumentBuilder().parse(input);
         this.xpath = XPathFactory.newInstance().newXPath();
 
     }
@@ -43,6 +42,15 @@ public class BpmnParserStrategy implements ModelParserStrategy {
 
 
 
+    /**
+     * Nettoie les noms extraits du XML pour éviter les sauts de ligne (&#10;)
+     * qui cassent le JSON de l'IA plus tard.
+     */
+    private String cleanXmlValue(String value) {
+        if (value == null) return "";
+        // Remplace les sauts de ligne, tabulations et espaces multiples par un seul espace
+        return value.replaceAll("[\\n\\r\\t]+", " ").replaceAll("\\s{2,}", " ").trim();
+    }
 
 
    /**
@@ -67,7 +75,7 @@ public class BpmnParserStrategy implements ModelParserStrategy {
                 sb.append("- Aucun participant défini (Processus global)\n");
             } else {
                 for (Actor a : actors) {
-                    sb.append("- ").append(a.getName()).append("\n");
+                    sb.append("- ").append(cleanXmlValue(a.getName())).append("\n");
                 }
             }
 
@@ -78,7 +86,7 @@ public class BpmnParserStrategy implements ModelParserStrategy {
                 sb.append("- Aucune tâche détectée.\n");
             } else {
                 for (String t : tasks) {
-                    sb.append("- Tâche : ").append(t).append("\n");
+                    sb.append("- Tâche : ").append(cleanXmlValue(t)).append("\n");
                 }
             }
 
@@ -90,7 +98,9 @@ public class BpmnParserStrategy implements ModelParserStrategy {
             } else {
                 for (Flux f : messageFlows) {
                     sb.append(String.format("- Message \"%s\" envoyé par [%s] à [%s]\n",
-                            f.getName(), f.getSender(), f.getRecipient()));
+                            cleanXmlValue(f.getName()),
+                            cleanXmlValue(f.getSender()),
+                            cleanXmlValue(f.getRecipient())));
                 }
             }
 
@@ -153,7 +163,11 @@ public class BpmnParserStrategy implements ModelParserStrategy {
      */
     public static List<String> findTasks(Document doc, XPath xpath) throws XPathExpressionException {
         List<String> tasks = new ArrayList<>();
-        NodeList taskNode = (NodeList) xpath.evaluate("//*[contains(local-name(),'Task') or local-name()='callActivity']", doc, XPathConstants.NODESET);
+        String query = "//*[substring(local-name(), string-length(local-name()) - 3) = 'Task' " +
+                "or local-name()='task' " +
+                "or local-name()='callActivity']";
+
+        NodeList taskNode = (NodeList) xpath.evaluate(query, doc, XPathConstants.NODESET);
 
         for (int i = 0; i < taskNode.getLength(); i++) {
 

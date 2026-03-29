@@ -35,6 +35,20 @@ const normalizeProject = (project) => ({
   project_type: project.project_type || project.typeProjet || project.type || '',
   description: project.description || ''
 });
+// Normalisation des données projet pour éviter les différences de structure
+const normalizeProject = (project) => {
+
+  const type = project.projectType || '';
+
+  return{
+    ...project,
+    idProject: project.idProject || project.id, // Supporte les deux variantes
+    name: project.name || 'Sans titre',
+    project_type: type.toLowerCase(), // On force la minuscule pour le CSS
+    description: project.description || ''
+  };
+};
+
 
 const truncateDescription = (text, maxLength = 70) => {
   if (!text) return 'Pas de description';
@@ -66,8 +80,11 @@ const paginatedProjects = computed(() => {
 
 const formatProjectType = (type) => {
   if (!type) return 'Non défini';
-  if (type === 'audit') return 'Audit';
-  if (type === 'accompagnement') return 'Accompagnement';
+
+  const t = type.toLowerCase();
+  if (t.includes('audit')) return 'Audit';
+  if (t.includes('accompagnement') || t.includes('support')) return 'Accompagnement';
+
   return type;
 };
 
@@ -88,7 +105,7 @@ const openProjectDrawer = async (project) => {
     try {
       const data = await auditProjectService.getLatestReport(projectId);
       if (data) {
-        latestReport.value = data; // <--- C'est ici que la magie opère
+        latestReport.value = data;
       }
     } catch (error) {
       console.error("Erreur lors de la récupération du rapport :", error);
@@ -278,6 +295,10 @@ const goToLatestReport = () => {
       </div>
     </div>
   </Drawer>
+  </div>
+
+  <div style="color: red; font-weight: bold;">
+    DEBUG : {{ project.projectType || 'CLEF ABSENTE' }}
   </div>
 </template>
 

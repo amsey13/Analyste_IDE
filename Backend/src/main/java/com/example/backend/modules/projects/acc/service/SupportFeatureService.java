@@ -1,5 +1,11 @@
 package com.example.backend.modules.projects.acc.service;
 
+import IhmMCD2.*;
+import Merise2.Entite2;
+import Merise2.Attribut2;
+import Merise2.Relation2;
+import Outil.ConfigSave;
+import Output.SQLSave;
 import com.example.backend.modules.analysis.exporter.MistralService;
 import com.example.backend.modules.analysis.parser.BpmnParserStrategy;
 import com.example.backend.modules.analytics.dao.LogExecutionRepository;
@@ -16,8 +22,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.io.ClassPathResource;
 
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,21 +85,28 @@ public class SupportFeatureService {
         Actor actor = new Actor();
         actor.setName(name);
         actor.setProject(project);
-        return supportProjectMapper.toActorDTO(actorRepository.save(actor));
+        Actor savedActor = actorRepository.save(actor);
+        updateProjectActivity(project);
+        return supportProjectMapper.toActorDTO(savedActor);
     }
 
     @Transactional
     public ActorResponseDTO updateActor(UUID actorId, String newName) {
         Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(actor.getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(actor.getProject().getIdProject());
         actor.setName(newName);
-        return supportProjectMapper.toActorDTO(actorRepository.save(actor));
+        Actor savedActor = actorRepository.save(actor);
+        updateProjectActivity(project);
+        return supportProjectMapper.toActorDTO(savedActor);
     }
 
     @Transactional
     public void deleteActor(UUID actorId) {
+        Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
+        SupportProject project = getProjectAndCheckOwnership(actor.getProject().getIdProject());
         userStoryRepository.deleteByActorId(actorId);
         actorRepository.deleteById(actorId);
+        updateProjectActivity(project);
     }
 
     // --- User Stories ---
@@ -109,27 +123,32 @@ public class SupportFeatureService {
         us.setAcceptanceCriteria(crit);
         us.setActor(actor);
         us.setProject(project);
-        return supportProjectMapper.toUserStoryDTO(userStoryRepository.save(us));
+        UserStory savedUs = userStoryRepository.save(us);
+        updateProjectActivity(project);
+        return supportProjectMapper.toUserStoryDTO(savedUs);
     }
 
     @Transactional
     public UserStoryResponseDTO updateUserStory(UUID usId, String desc, String ben, String crit, UUID actorId) {
         UserStory us = userStoryRepository.findById(usId).orElseThrow(() -> new EntityNotFoundException());
         Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(us.getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(us.getProject().getIdProject());
 
         us.setDescription(desc);
         us.setBenefit(ben);
         us.setAcceptanceCriteria(crit);
         us.setActor(actor);
-        return supportProjectMapper.toUserStoryDTO(userStoryRepository.save(us));
+        UserStory savedUs = userStoryRepository.save(us);
+        updateProjectActivity(project);
+        return supportProjectMapper.toUserStoryDTO(savedUs);
     }
 
     @Transactional
     public void deleteUserStory(UUID usId) {
         UserStory us = userStoryRepository.findById(usId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(us.getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(us.getProject().getIdProject());
         userStoryRepository.delete(us);
+        updateProjectActivity(project);
     }
 
     // --- BPMN ---
@@ -138,7 +157,8 @@ public class SupportFeatureService {
         SupportProject project = getProjectAndCheckOwnership(projectId);
         project.setBpmnXml(bpmnXml);
         updateCoverageScoreInternal(project);
-        return projectRepository.save(project);
+        updateProjectActivity(project);
+        return project;
     }
 
     private void updateCoverageScoreInternal(SupportProject project) {
@@ -166,30 +186,35 @@ public class SupportFeatureService {
         entry.setName(dto.getName());
         entry.setDescription(dto.getDescription());
         entry.setProject(project);
-        return supportProjectMapper.toDictionaryEntryDTO(dictionaryEntryRepository.save(entry));
+        DictionaryEntry savedEntry = dictionaryEntryRepository.save(entry);
+        updateProjectActivity(project);
+        return supportProjectMapper.toDictionaryEntryDTO(savedEntry);
     }
 
     @Transactional
     public DictionaryEntryResponseDTO updateDictionaryEntry(UUID entryId, DictionaryEntryRequestDTO dto) {
         DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(entry.getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(entry.getProject().getIdProject());
         entry.setName(dto.getName());
         entry.setDescription(dto.getDescription());
-        return supportProjectMapper.toDictionaryEntryDTO(dictionaryEntryRepository.save(entry));
+        DictionaryEntry savedEntry = dictionaryEntryRepository.save(entry);
+        updateProjectActivity(project);
+        return supportProjectMapper.toDictionaryEntryDTO(savedEntry);
     }
 
     @Transactional
     public void deleteDictionaryEntry(UUID entryId) {
         DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(entry.getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(entry.getProject().getIdProject());
         dictionaryEntryRepository.delete(entry);
+        updateProjectActivity(project);
     }
 
     // --- Dictionnaire (Attributs) ---
     @Transactional
     public DictionaryAttributeResponseDTO addDictionaryAttribute(UUID entryId, DictionaryAttributeRequestDTO dto) {
         DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(entry.getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(entry.getProject().getIdProject());
 
         DictionaryAttribute attr = new DictionaryAttribute();
         attr.setName(dto.getName());
@@ -199,13 +224,15 @@ public class SupportFeatureService {
         attr.setNotNull(dto.getNotNull());
         attr.setDescription(dto.getDescription());
         attr.setDictionaryEntry(entry);
-        return supportProjectMapper.toDictionaryAttributeDTO(dictionaryAttributeRepository.save(attr));
+        DictionaryAttribute savedAttr = dictionaryAttributeRepository.save(attr);
+        updateProjectActivity(project);
+        return supportProjectMapper.toDictionaryAttributeDTO(savedAttr);
     }
 
     @Transactional
     public DictionaryAttributeResponseDTO updateDictionaryAttribute(UUID attrId, DictionaryAttributeRequestDTO dto) {
         DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
 
         attr.setName(dto.getName());
         attr.setDataType(dto.getDataType());
@@ -213,14 +240,17 @@ public class SupportFeatureService {
         attr.setPrimaryKey(dto.getPrimaryKey());
         attr.setNotNull(dto.getNotNull());
         attr.setDescription(dto.getDescription());
-        return supportProjectMapper.toDictionaryAttributeDTO(dictionaryAttributeRepository.save(attr));
+        DictionaryAttribute savedAttr = dictionaryAttributeRepository.save(attr);
+        updateProjectActivity(project);
+        return supportProjectMapper.toDictionaryAttributeDTO(savedAttr);
     }
 
     @Transactional
     public void deleteDictionaryAttribute(UUID attrId) {
         DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId).orElseThrow(() -> new EntityNotFoundException());
-        getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
         dictionaryAttributeRepository.delete(attr);
+        updateProjectActivity(project);
     }
 
     // --- IA ---
@@ -247,7 +277,7 @@ public class SupportFeatureService {
 
     @Transactional
     public DictionaryAssociationResponseDTO addAssociation(UUID projectId, DictionaryAssociationRequestDTO request) {
-        getProjectAndCheckOwnership(projectId);
+        SupportProject project = getProjectAndCheckOwnership(projectId);
         DictionaryEntry src = dictionaryEntryRepository.findById(request.getSourceId()).orElseThrow(() -> new IllegalArgumentException());
         DictionaryEntry tgt = dictionaryEntryRepository.findById(request.getTargetId()).orElseThrow(() -> new IllegalArgumentException());
 
@@ -266,7 +296,9 @@ public class SupportFeatureService {
             assoc.setBusinessRule(rule);
         }
 
-        return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
+        DictionaryAssociation savedAssoc = associationRepository.save(assoc);
+        updateProjectActivity(project);
+        return supportProjectMapper.toDictionaryAssociationDTO(savedAssoc);
     }
 
     @Transactional
@@ -275,7 +307,7 @@ public class SupportFeatureService {
                 .orElseThrow(() -> new EntityNotFoundException("Association introuvable"));
 
         // Sécurité : on vérifie que l'utilisateur a les droits sur le projet
-        getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
 
         // On récupère les entités (au cas où l'utilisateur change les flèches)
         DictionaryEntry src = dictionaryEntryRepository.findById(request.getSourceId())
@@ -300,14 +332,17 @@ public class SupportFeatureService {
             assoc.setBusinessRule(null); // On permet de retirer la règle
         }
 
-        return supportProjectMapper.toDictionaryAssociationDTO(associationRepository.save(assoc));
+        DictionaryAssociation savedAssoc = associationRepository.save(assoc);
+        updateProjectActivity(project);
+        return supportProjectMapper.toDictionaryAssociationDTO(savedAssoc);
     }
 
     @Transactional
     public void deleteAssociation(UUID associationId) {
         DictionaryAssociation assoc = associationRepository.findById(associationId).orElseThrow(() -> new IllegalArgumentException());
-        getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
         associationRepository.delete(assoc);
+        updateProjectActivity(project);
     }
     // --- GESTION DES RÈGLES DE GESTION ---
 
@@ -329,6 +364,7 @@ public class SupportFeatureService {
         rule.setDescription(request.getDescription());
 
         rule = businessRuleRepository.save(rule);
+        updateProjectActivity(project);
 
         return supportProjectMapper.toBusinessRuleResponseDTO(rule);
     }
@@ -337,8 +373,9 @@ public class SupportFeatureService {
     public void deleteBusinessRule(UUID ruleId) {
         BusinessRule rule = businessRuleRepository.findById(ruleId)
                 .orElseThrow(() -> new EntityNotFoundException("Règle introuvable"));
-        getProjectAndCheckOwnership(rule.getProject().getIdProject());
+        SupportProject project = getProjectAndCheckOwnership(rule.getProject().getIdProject());
         businessRuleRepository.delete(rule);
+        updateProjectActivity(project);
     }
 
     // --- GÉNÉRATION IA DU MCD ---
@@ -444,6 +481,8 @@ public class SupportFeatureService {
                                 });
                     }
                 });
+
+        updateProjectActivity(project);
     }
 
     // --- AUDIT GLOBAL DU PROJET ---
@@ -529,7 +568,7 @@ public class SupportFeatureService {
 
             com.fasterxml.jackson.databind.ObjectMapper mapper = new ObjectMapper();
             project.setLastAuditReport(mapper.writeValueAsString(report));
-            projectRepository.save(project);
+            updateProjectActivity(project);
 
             return report;
 
@@ -559,5 +598,206 @@ public class SupportFeatureService {
         }
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         return mapper.readValue(project.getLastAuditReport(), ProjectAuditResponseDTO.class);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generateMcdFile(UUID projectId) {
+        SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        ArrayList<Object> listeEntiteRelation = new ArrayList<>();
+        ArrayList<Object> listeLien = new ArrayList<>();
+        ArrayList<Object> listeCIF = new ArrayList<>();
+        ArrayList<Object> listelienCIF = new ArrayList<>();
+        ArrayList<Object> listePostIt = new ArrayList<>();
+        ArrayList<Object> listeHeritage = new ArrayList<>();
+        ArrayList<Object> listeLienContrainteHeritage = new ArrayList<>();
+
+        Map<UUID, IhmEntite2> entiteMap = new HashMap<>();
+        Set<UUID> rulesSeen = new HashSet<>();
+        StringBuilder allRulesContent = new StringBuilder("RÈGLES DE GESTION :\n\n");
+        boolean projectHasRules = false;
+
+        int x = 100, y = 100;
+
+        if (project.getDictionaryEntries() != null) {
+            for (DictionaryEntry entry : project.getDictionaryEntries()) {
+                Entite2 meriseEntite = new Entite2(entry.getName());
+
+                if (entry.getAttributes() != null) {
+                    for (DictionaryAttribute attr : entry.getAttributes()) {
+                        String type = (attr.getDataType() != null) ? attr.getDataType() : "VARCHAR";
+                        int taille = 50;
+                        try {
+                            if (attr.getSize() != null) taille = Integer.parseInt(attr.getSize().split(",")[0].trim());
+                        } catch (Exception ignored) {}
+
+                        Attribut2 meriseAttr = new Attribut2(attr.getName(), type, taille, 0,
+                                Boolean.TRUE.equals(attr.getPrimaryKey()) ? "PRIMARY KEY" : "",
+                                !Boolean.TRUE.equals(attr.getNotNull()),
+                                (attr.getDescription() != null) ? attr.getDescription() : "", meriseEntite);
+                        meriseEntite.getListeAttributs().add(meriseAttr);
+                    }
+                }
+
+                IhmEntite2 ihmEntite = new IhmEntite2(meriseEntite, x, y, true);
+                try { ihmEntite.setAligne("GAUCHE"); ihmEntite.setAligneTitre("GAUCHE"); } catch (Throwable ignored) {}
+                listeEntiteRelation.add(ihmEntite);
+                entiteMap.put(entry.getId(), ihmEntite);
+
+                x += 250;
+                if (x > 800) { x = 100; y += 200; }
+            }
+        }
+
+        List<DictionaryAssociation> assocs = associationRepository.findByProjectId(projectId);
+        if (assocs != null) {
+            for (DictionaryAssociation assoc : assocs) {
+                IhmEntite2 src = entiteMap.get(assoc.getSource().getId());
+                IhmEntite2 tgt = entiteMap.get(assoc.getTarget().getId());
+
+                if (src == null || tgt == null) continue;
+
+                if (assoc.getBusinessRule() != null && !rulesSeen.contains(assoc.getBusinessRule().getId())) {
+                    BusinessRule rule = assoc.getBusinessRule();
+                    allRulesContent.append("• ").append(rule.getCode().toUpperCase()).append(" :\n");
+                    allRulesContent.append(formatDescription(rule.getDescription(), 45)).append("\n\n");
+                    rulesSeen.add(rule.getId());
+                    projectHasRules = true;
+                }
+
+                if (Boolean.TRUE.equals(assoc.getIsInheritance())) {
+                    IhmHeritage2 heritage = new IhmHeritage2(x, y, tgt, 0);
+                    try { heritage.setNom(""); heritage.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 12)); } catch (Throwable ignored) {}
+                    listeHeritage.add(heritage);
+
+                    try {
+                        listeLienContrainteHeritage.add(new IhmLienContrainteHeritage2(heritage, tgt));
+                        listeLienContrainteHeritage.add(new IhmLienContrainteHeritage2(heritage, src));
+                    } catch (Throwable ignored) {}
+
+                } else {
+                    // 🔵 CAS 2 : RELATION NORMALE
+                    Relation2 logicRel = new Relation2(assoc.getName());
+                    if (assoc.getAttributes() != null) {
+                        for (DictionaryAttribute attr : assoc.getAttributes()) {
+                            Attribut2 meriseAttr = new Attribut2(attr.getName(), (attr.getDataType() != null ? attr.getDataType() : "VARCHAR"), 50, 0, "",
+                                    !Boolean.TRUE.equals(attr.getNotNull()), (attr.getDescription() != null ? attr.getDescription() : ""), logicRel);
+                            logicRel.getListeAttributs().add(meriseAttr);
+                        }
+                    }
+
+                    IhmRelation2 ihmRel = new IhmRelation2(logicRel, x, y, true);
+                    listeEntiteRelation.add(ihmRel);
+
+                    IhmLien2 lSrc = new IhmLien2(src, ihmRel);
+                    String cSrc = (assoc.getSourceMultiplicity() != null) ? assoc.getSourceMultiplicity().replace("..", ",") : "0,n";
+                    if (Boolean.TRUE.equals(assoc.getRelative()) && cSrc.contains("1") && !cSrc.toLowerCase().contains("n")) {
+                        cSrc = "(" + cSrc + ")"; lSrc.setRelatif(true);
+                    }
+                    lSrc.setCardinalite(cSrc);
+                    listeLien.add(lSrc);
+
+                    IhmLien2 lTgt = new IhmLien2(tgt, ihmRel);
+                    String cTgt = (assoc.getTargetMultiplicity() != null) ? assoc.getTargetMultiplicity().replace("..", ",") : "0,n";
+                    if (Boolean.TRUE.equals(assoc.getRelative()) && cTgt.contains("1") && !cTgt.toLowerCase().contains("n")) {
+                        cTgt = "(" + cTgt + ")"; lTgt.setRelatif(true);
+                    }
+                    lTgt.setCardinalite(cTgt);
+
+                    if (Boolean.TRUE.equals(assoc.getCif())) {
+                        try { lTgt.setFleche(true); } catch (Throwable ignored) {}
+                        IhmCIF2 cif = new IhmCIF2(x + 50, y - 50, 30, 30);
+                        try { cif.setNom("CIF"); cif.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 10)); } catch (Throwable ignored) {}
+                        listeCIF.add(cif);
+                        try {
+                            listelienCIF.add(new IhmLienCIF2(ihmRel, cif, ""));
+                        } catch (Throwable ignored) {}
+                    }
+                    listeLien.add(lTgt);
+                }
+                x += 280; if (x > 900) { x = 100; y += 180; }
+            }
+        }
+
+        if (projectHasRules) {
+            IhmPostIt2 postIt = new IhmPostIt2(allRulesContent.toString(), 1150, 50, 300, 400);
+            postIt.setCommentaire(allRulesContent.toString());
+            try { postIt.setClTexte(java.awt.Color.BLACK); } catch (Throwable ignored) {}
+            listePostIt.add(postIt);
+        }
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+
+            org.springframework.core.io.ClassPathResource resource = new org.springframework.core.io.ClassPathResource("blank.mcd");
+            try (ObjectInputStream ois = new ObjectInputStream(resource.getInputStream())) {
+                oos.writeObject(ois.readObject());
+                ois.readObject(); oos.writeObject(listeEntiteRelation);
+                ois.readObject(); oos.writeObject(listeLien);
+                ois.readObject(); oos.writeObject(listeCIF);
+                ois.readObject(); oos.writeObject(listelienCIF);
+
+                ois.readObject(); oos.writeObject(listePostIt);
+                ois.readObject(); oos.writeObject(new ArrayList<>());
+
+                oos.writeObject(ois.readObject());
+                ois.readObject(); oos.writeObject(listeHeritage);
+                ois.readObject(); oos.writeObject(listeLienContrainteHeritage);
+
+                while (true) {
+                    try { oos.writeObject(ois.readObject()); } catch (EOFException e) { break; }
+                }
+            }
+            oos.flush();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur de sérialisation MCD", e);
+        }
+    }
+
+    /**
+     * Empêche le Post-it d'être trop large en découpant le texte
+     */
+    private String formatDescription(String text, int limit) {
+        if (text == null) return "";
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String word : text.split(" ")) {
+            if (count + word.length() > limit) {
+                sb.append("\n");
+                count = 0;
+            }
+            sb.append(word).append(" ");
+            count += word.length() + 1;
+        }
+        return sb.toString().trim();
+    }
+
+    /**
+     * Met à jour le statut du projet en fonction de son avancement
+     * et force l'actualisation de la date de modification.
+     */
+    private void updateProjectActivity(SupportProject project) {
+        project.setUpdateAt(LocalDateTime.now());
+
+        boolean hasRules = businessRuleRepository.findByProject_Id(project.getIdProject()).size() > 0;
+        boolean hasSpec = (project.getActors() != null && !project.getActors().isEmpty())
+                || (project.getUserStories() != null && !project.getUserStories().isEmpty())
+                || hasRules;
+        boolean hasModel = (project.getDictionaryEntries() != null && !project.getDictionaryEntries().isEmpty())
+                || (project.getBpmnXml() != null && !project.getBpmnXml().trim().isEmpty());
+        boolean isAudited = project.getLastAuditReport() != null && !project.getLastAuditReport().trim().isEmpty();
+
+        if (isAudited) {
+            project.setStatus(StatusProject.LIVRE);
+        } else if (hasModel) {
+            project.setStatus(StatusProject.EN_MODELISATION);
+        } else if (hasSpec) {
+            project.setStatus(StatusProject.EN_SPECIFICATION);
+        } else {
+            project.setStatus(StatusProject.INITIALISE);
+        }
+
+        projectRepository.save(project);
     }
 }

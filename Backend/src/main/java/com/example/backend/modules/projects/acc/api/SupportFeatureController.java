@@ -5,7 +5,9 @@ import com.example.backend.modules.projects.acc.entity.SupportProject;
 import com.example.backend.modules.projects.acc.service.SupportFeatureService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -238,5 +240,21 @@ public class SupportFeatureController {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/projects/{projectId}/export/mcd") // Ajuste l'URL selon tes conventions
+    public ResponseEntity<byte[]> exportProjectToMcd(@PathVariable UUID projectId) {
+
+        // On appelle la méthode qu'on vient de créer
+        byte[] mcdFileBytes = supportService.generateMcdFile(projectId);
+
+        // On configure les en-têtes pour forcer le téléchargement du fichier binaire
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Modele_JMerise.mcd");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(mcdFileBytes);
     }
 }
