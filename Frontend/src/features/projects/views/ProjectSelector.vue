@@ -10,6 +10,8 @@ import Card from 'primevue/card';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
 import Drawer from 'primevue/drawer';
+import auditProjectService from "../api/AuditProjectService.js";
+
 
 const projects = ref([]);
 const router = useRouter();
@@ -20,7 +22,10 @@ const toast = useToast();
 const drawerVisible = ref(false);
 const selectedProject = ref(null);
 
-// Normalisation des données pour garder le même rendu que AllProjectsView
+const latestReport = ref(null);
+
+
+
 const normalizeProject = (project) => ({
 
 
@@ -38,7 +43,6 @@ const displayedProjects = computed(() => {
   return hasMoreThanFiveProjects.value ? projects.value.slice(0, 4) : projects.value;
 });
 
-// Tronque la description pour garder des cartes compactes et régulières
 const truncateDescription = (text, maxLength = 70) => {
   if (!text) return 'Pas de description';
   if (text.length <= maxLength) return text;
@@ -85,13 +89,25 @@ const formatProjectType = (type) => {
   return type;
 };
 
-// Ouvre le drawer avec le projet sélectionné
-const openProjectDrawer = (project) => {
+const openProjectDrawer = async (project) => {
   selectedProject.value = project;
   drawerVisible.value = true;
+  latestReport.value = null; // Reset
+
+  const id = project.idProject || project.id;
+  
+  if (project.project_type?.toLowerCase() === 'audit') {
+    try {
+      const data = await auditProjectService.getLatestReport(id);
+      if (data) {
+        latestReport.value = data;
+      }
+    } catch (error) {
+      console.error("Pas de rapport trouvé pour ce projet");
+    }
+  }
 };
 
-// Ouvre le dashboard du projet
 const goToProject = () => {
   const project = selectedProject.value;
 
@@ -136,7 +152,6 @@ const goToCreate = () => {
   router.push({ name: 'project-create' });
 };
 
-// Suppression d'un projet avec confirmation
 const deleteProject = (idProject) => {
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
@@ -163,6 +178,21 @@ const deleteProject = (idProject) => {
     }
   });
 };
+
+
+
+const goToLatestReport = () => {
+  if (!selectedProject.value || !latestReport.value) return;
+  drawerVisible.value = false;
+  router.push({
+    name: 'AuditReport', // Vérifie que ce nom correspond à ta route dans router/index.js
+    params: { 
+      id: selectedProject.value.idProject || selectedProject.value.id,
+      reportId: latestReport.value.id 
+    }
+  });
+};
+
 </script>
 
 <template>
@@ -282,6 +312,18 @@ const deleteProject = (idProject) => {
             class="w-full"
             @click="goToProject"
         />
+
+        <Button
+          v-if="latestReport"
+          label="Voir le dernier audit"
+          icon="pi pi-history"
+          severity="secondary"
+          outlined
+          class="w-full"
+          @click="goToLatestReport"
+        />
+
+
       </div>
     </Drawer>
   </div>

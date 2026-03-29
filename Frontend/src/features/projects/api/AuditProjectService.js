@@ -51,12 +51,17 @@ export default{
     async getReportById(reportId) {
         const response = await apiClient.get(`/audit/reports/${reportId}`);
         return response.data;
-    }
+    },
 
-
-
-
-
+    async getLatestReport(projectId) {
+        try {
+            const response = await apiClient.get(`/audit/project/${projectId}/latest`);
+            return response.data;
+        } catch (error) {
+            console.error("Erreur lors de la récupération du dernier rapport", error);
+            return null;
+        }
+    }    
 
 
 }

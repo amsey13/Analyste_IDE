@@ -70,4 +70,11 @@ public class AuditController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/project/{projectId}/latest")
+    public ResponseEntity<Report> getLatestReport(@PathVariable UUID projectId) {
+        return reportRepository.findFirstByProjectIdOrderByCreationDateDesc(projectId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build()); 
+    }
+
 }
