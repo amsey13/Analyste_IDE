@@ -1,93 +1,236 @@
-# projet-si
+# 🚀 AnalytiQ — Analyste IDE
 
+**AnalytiQ** est une plateforme complète d’assistance à la conception et à la modélisation des **Systèmes d’Information**.
 
+Pensé pour les **analystes métiers**, **architectes logiciels** et **étudiants**, cet IDE web centralise les spécifications, facilite la modélisation et intègre un **audit intelligent automatisé** basé sur l’IA.
 
-## Getting started
+---
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## ✨ Fonctionnalités principales
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### 📖 Spécifications fonctionnelles
+* Gestion des **acteurs**
+* Rédaction des **user stories**
+* Définition des **règles de gestion**
+* Centralisation des exigences métier
 
-## Add your files
+### ⚙️ Modélisation des processus
+* Éditeur **BPMN interactif** (via `bpmn-js`)
+* Visualisation claire des flux métiers
+* Structuration des processus complexes
 
-* [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+### 🗄️ Modélisation des données (MCD)
+* Création d’un **dictionnaire de données**
+* Génération automatique du **MCD**
+* Visualisation via `Mermaid.js`
 
+### 🤖 Audit intelligent (IA)
+* Analyse de cohérence entre :
+    * User Stories
+    * Règles de gestion
+    * BPMN
+    * MCD
+* Détection d’incohérences
+* Suggestions d’amélioration automatisées (via **Mistral AI**)
+
+### 📄 Génération de rapports
+* Export d’un **rapport d’architecture complet**
+* Format **PDF professionnel**
+* Génération via `html2pdf.js`
+
+### 💾 Interopérabilité
+* Export vers :
+    * **JMerise** (`.mcd`)
+* Compatible avec les standards académiques et professionnels
+
+---
+
+## 🛠️ Stack technique
+
+Le projet est structuré en deux couches principales :
+
+### 🔙 Backend — Java / Spring Boot
+* **Framework :** Spring Boot 3.x
+* **ORM :** Spring Data JPA / Hibernate
+* **Base de données :** PostgreSQL (Docker)
+* **IA :** API Mistral AI
+* **Sécurité :** Spring Security + OIDC
+* **Migrations DB :** Flyway
+
+### 🎨 Frontend — Vue.js
+* **Framework :** Vue.js 3 (Composition API) + Vite
+* **UI :** PrimeVue + TailwindCSS / PrimeFlex
+* **Modélisation :**
+    * `bpmn-js` (processus)
+    * `mermaid.js` (diagrammes MCD)
+* **Export PDF :** html2pdf.js
+
+---
+
+## 🏗️ Architecture et Découpage des Packages
+
+Le projet adopte une architecture modulaire stricte (proche du *Modular Monolith* pour le Back et du *Feature-Sliced Design* pour le Front) afin de garantir la maintenabilité et l'évolutivité.
+
+### Backend (`src/main/java/com/example/backend`)
+L'API est découpée en **modules métier** autonomes :
+* `core/` : Configurations globales, utilitaires (cryptage), sécurité (OIDC) et intégration de l'IA Mistral.
+* `modules/projects/core/` : Gestion du cycle de vie principal des projets.
+* `modules/projects/acc/` : (*Accompagnement*) Entités et services liés à la spécification (User Stories, Acteurs, Dictionnaire, MCD).
+* `modules/projects/audit/` : Logique complexe d'audit IA, exports PDF, et connecteurs externes (ex: Taiga).
+* `modules/analysis/` : Parsing et traitement des fichiers XML/BPMN/MCD/MFC.
+* `modules/analytics/` : Suivi des KPIs, logs d'exécution et statistiques du projet.
+
+*(Chaque module possède sa propre structure : `api/` (Controllers), `service/`, `dao/` (Repositories), `entity/` et `dto/`).*
+
+### Frontend (`src/`)
+* `features/` : Découpage par domaine métier (`projects`, `users`). Contient les composants spécifiques, les appels API (`api/`) et les vues internes.
+* `views/` : Pages principales de routing (`DashboardView`, `AuditView`, `AccompagnementView`...).
+* `api/` : Client HTTP centralisé (`HttpClient.js`) avec intercepteurs.
+* `layouts/` : Structure de l'interface (Header, Sidebar).
+
+---
+Au sein de chaque module, le code respecte une stricte séparation des responsabilités (Séparation of Concerns) répartie dans les packages suivants :
+
+* 📍 **`api/` (Controllers) :** Expose les endpoints REST. Il réceptionne les requêtes HTTP du frontend, délègue le travail au Service, et ne renvoie **que** des DTOs (jamais d'entités directes).
+* 📦 **`dto/` (Data Transfer Object) :** Objets de transport. Ils servent de "bouclier" entre la base de données et l'extérieur. Ils permettent de filtrer les données (ex: cacher les mots de passe ou les ID internes) et de valider les requêtes entrantes.
+* 🔄 **`mapper/` :** Assure la conversion fluide, sécurisée et automatisée entre les objets de la base de données (`Entity`) et les objets exposés à l'API (`DTO`).
+* ⚙️ **`service/` :** Le "cerveau" de l'application. Contient toute la logique métier complexe (vérification des droits, calcul des scores d'audit, appels à l'IA Mistral).
+* 🗄️ **`dao/` (Data Access Object / Repositories) :** Interfaces Spring Data gérant exclusivement les requêtes et les interactions directes avec la base de données PostgreSQL.
+* 🗃️ **`entity/` :** Représente la structure exacte et les relations des tables en base de données (modèles JPA/Hibernate).
+* ⚠️ **`exception/` :** Gestion centralisée des erreurs métiers (ex: `ProjectNotFoundException`, `UnauthorizedAccessException`) pour garantir que le frontend reçoive toujours des codes d'erreur HTTP clairs et propres.
+
+---
+
+## 💎 Bonnes Pratiques Appliquées
+
+1. **Sécurité par l'isolation :** Le frontend ne voit jamais la structure réelle de la base de données grâce au pattern **DTO + Mapper**.
+2. **Inversion de Contrôle (IoC) & Injection de Dépendances :** Utilisation systématique de l'injection par constructeur pour garantir que les services soient testables (Mocking) et faiblement couplés.
+3. **Traçabilité & Historisation :** Utilisation des annotations `@CreationTimestamp` et `@UpdateTimestamp` d'Hibernate pour le suivi automatique du cycle de vie des entités.
+4. **Gestion des Migrations BDD :** Utilisation de scripts SQL versionnés (Flyway/Scripts natifs) garantissant la reproductibilité de la base de données sur n'importe quel environnement.
+5. **Chiffrement des données sensibles :** Utilisation d'`AttributeEncryptor` pour sécuriser les données directement avant l'insertion en base.
+
+---
+## ⚙️ Prérequis
+
+Avant installation, assure-toi d’avoir :
+* ☕ **Java 17+**
+* 🟢 **Node.js (v16+) + npm**
+* 🐳 **Docker & Docker Compose**
+
+---
+
+## 🚀 Installation & Lancement
+
+### 1️⃣ Cloner le projet
+
+```bash
+git clone [https://gitlab-etu.fil.univ-lille.fr/glauriel-fosther.badjila-wandja-legara.etu/projet-si.git](https://gitlab-etu.fil.univ-lille.fr/glauriel-fosther.badjila-wandja-legara.etu/projet-si.git)
+cd projet-si
 ```
-cd existing_repo
-git remote add origin https://gitlab-etu.fil.univ-lille.fr/glauriel-fosther.badjila-wandja-legara.etu/projet-si.git
-git branch -M main
-git push -uf origin main
+
+---
+
+### 2️⃣ Démarrer la base de données
+
+```bash
+docker-compose up -d
 ```
 
-## Integrate with your tools
+---
 
-* [Set up project integrations](https://gitlab-etu.fil.univ-lille.fr/glauriel-fosther.badjila-wandja-legara.etu/projet-si/-/settings/integrations)
+### 3️⃣ Lancer le Backend
 
-## Collaborate with your team
+```bash
+cd Backend
+```
+⚠️ Étape cruciale : Configuration de l'environnement
+Vous devez copier le fichier d'exemple .env.example, le renommer en .env, et y renseigner vos identifiants locaux.
 
-* [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+Pour cela, exécutez d'abord :
 
-## Test and Deploy
+```bash
+cp .env.example .env
+```
 
-Use the built-in continuous integration in GitLab.
+Ouvrez ensuite le fichier .env fraîchement créé et collez/remplissez les valeurs suivantes
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```bash
+JUMPCLOUD_CLIENT_ID=9c839027-42b2-4219-a0ec-664a896f9813
+JUMPCLOUD_CLIENT_SECRET=bJd8zDtWfETF1npFmXm8WoSYym
+ENCRYPTION_KEY=hgkauthkpnchirzg
+API_KEY_MISTRAL=df8d6CT9rG9nBJEdIUVaSGDeIIl5A4Bz
+```
+Puis lancer :
 
-***
+```bash
+mvn clean spring-boot:run
+```
 
-# Editing this README
+Backend disponible sur :
+http://localhost:8080
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+---
 
-## Suggestions for a good README
+### 4️⃣ Lancer le Frontend
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```bash
+cd Frontend
+npm install
+npm run dev
+```
 
-## Name
-Choose a self-explaining name for your project.
+Frontend disponible sur :
+http://localhost:5173
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+---
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## 🏗️ Structure du projet
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```plaintext
+analyste_ide/
+├── Backend/               # API Spring Boot
+│   ├── src/main/java/     # Code métier (Core, Auth, Analyse)
+│   ├── libs/              # JMerise, JFlux
+│   ├── pom.xml
+│   └── .env.example
+│
+├── Frontend/              # Application Vue.js
+│   ├── src/features/      # Modules fonctionnels
+│   ├── src/views/         # Pages (Dashboard, Audit...)
+│   ├── package.json
+│   └── vite.config.js
+│
+└── compose.yaml           # Infrastructure Docker
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+---
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## 🎯 Objectif du projet
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Ce projet vise à créer une **synergie entre** :
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+* 🧠 **Ingénierie des SI**
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+    * Merise
+    * BPMN
+    * Méthodes agiles
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+* 🤖 **Intelligence Artificielle Générative**
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+    * Analyse automatique
+    * Assistance à la conception
+    * Amélioration continue des modèles
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+---
 
-## License
-For open source projects, say how it is licensed.
+## 👨‍💻 Auteur
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- Christian KALEMBA ZAYI
+- Thi Thuy Tien NGUYEN
+- Kadiatou BARRY
+- Mamady MANSARE
+- Glauriel Fosther BADJILA WANDJA
+
+---
+
+

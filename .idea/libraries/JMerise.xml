@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="JMerise">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Backend/src/main/java/com/example/backend/JMerise.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
