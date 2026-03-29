@@ -339,8 +339,24 @@ const goToLatestReport = () => {
   animation: fadeInDown 0.4s ease both;
 }
 
-.projects-page__title { font-size: 1.8rem; font-weight: 700; color: #1f355e; margin: 0; }
-.projects-page__subtitle { font-size: 0.9rem; color: #64748b; margin-top: 4px; }
+.projects-page__title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1f355e;
+  margin: 0 0 0.4rem;
+  padding-left: 0.75rem;
+  border-left: 4px solid #2563eb;
+  line-height: 1.2;
+}
+
+.projects-page__subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0.4rem 0 0 0;
+  padding-left: 0.85rem;
+  border-left: 4px solid transparent;
+  font-style: italic;
+}
 .projects-page__actions { display: flex; gap: 10px; }
 .projects-page__state { padding: 1rem 0; font-size: 0.95rem; color: #64748b; }
 
