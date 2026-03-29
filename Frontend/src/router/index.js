@@ -10,6 +10,7 @@ const AccompagnementView = () => import('../views/AccompagnementView.vue')
 const AllProjectsView = () => import('../features/projects/views/AllProjectsView.vue')
 const AuditView = () => import('../views/AuditView.vue')
 const SupportProjectAuditResultView = () => import('../views/ProjectAuditResultView.vue')
+const AuditReportView = () => import('../views/AuditReportView.vue')
 
 const routes = [
     {
@@ -64,6 +65,11 @@ const routes = [
                 name: 'ProjectAuditResult',
                 component: SupportProjectAuditResultView,
                 meta: { requiresAuth: true }
+            },
+            {
+            path: 'project/:id/audit-result/:reportId', 
+            name: 'AuditReport',
+            component: AuditReportView
             },
         ]
     }

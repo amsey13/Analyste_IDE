@@ -42,11 +42,13 @@ const scoreText = computed(() => {
   return 'NON CONFORME';
 });
 
+
 const pairedIssues = computed(() => {
   if (!auditReport.value) return [];
   const incs = auditReport.value.inconsistencies || [];
   const corrs = auditReport.value.corrections || [];
 
+  
   const maxLength = Math.max(incs.length, corrs.length);
   const pairs = [];
 

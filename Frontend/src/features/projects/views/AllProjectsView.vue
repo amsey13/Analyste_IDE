@@ -11,6 +11,8 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
 import Drawer from 'primevue/drawer';
 import Paginator from 'primevue/paginator';
+import auditProjectService from "../features/projects/api/AuditProjectService.js"; 
+const latestReport = ref(null);
 
 const router = useRouter();
 const confirm = useConfirm();
@@ -25,6 +27,14 @@ const selectedProject = ref(null);
 const first = ref(0);
 const rows = ref(6);
 
+const normalizeProject = (project) => ({
+  ...project,
+  id: project.id || project.idProject,
+  idProject: project.idProject || project.id,
+  name: project.name || 'Sans titre',
+  project_type: project.project_type || project.typeProjet || project.type || '',
+  description: project.description || ''
+});
 // Normalisation des données projet pour éviter les différences de structure
 const normalizeProject = (project) => {
 
@@ -40,7 +50,6 @@ const normalizeProject = (project) => {
 };
 
 
-// Tronque la description pour garder des cartes compactes et homogènes
 const truncateDescription = (text, maxLength = 70) => {
   if (!text) return 'Pas de description';
   if (text.length <= maxLength) return text;
@@ -65,12 +74,10 @@ onMounted(async () => {
   }
 });
 
-// Pagination côté front
 const paginatedProjects = computed(() => {
   return projects.value.slice(first.value, first.value + rows.value);
 });
 
-// Format d'affichage lisible pour le type du projet
 const formatProjectType = (type) => {
   if (!type) return 'Non défini';
 
@@ -86,13 +93,28 @@ const onPageChange = (event) => {
   rows.value = event.rows;
 };
 
-// Ouvre le drawer avec le projet sélectionné
-const openProjectDrawer = (project) => {
+
+const openProjectDrawer = async (project) => {
   selectedProject.value = project;
   drawerVisible.value = true;
+  latestReport.value = null;
+
+  const projectId = project.idProject || project.id;
+
+  if (project.project_type === 'audit') {
+    try {
+      const data = await auditProjectService.getLatestReport(projectId);
+      if (data) {
+        latestReport.value = data;
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération du rapport :", error);
+    }
+  }
 };
 
-// Redirige vers le dashboard du projet
+
+
 const goToProject = () => {
   if (!selectedProject.value?.idProject) return;
 
@@ -111,7 +133,6 @@ const goToCreateProject = () => {
   router.push('/app/project/create');
 };
 
-// Suppression avec confirmation utilisateur
 const deleteProject = (idProject) => {
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer ce projet ?',
@@ -142,6 +163,21 @@ const deleteProject = (idProject) => {
     }
   });
 };
+
+
+const goToLatestReport = () => {
+  if (!selectedProject.value?.idProject || !latestReport.value?.id) return;
+  
+  drawerVisible.value = false;
+  router.push({
+    name: 'AuditReport',
+    params: { 
+      id: selectedProject.value.idProject, 
+      reportId: latestReport.value.id 
+    }
+  });
+};
+
 </script>
 
 <template>
@@ -219,30 +255,46 @@ const deleteProject = (idProject) => {
     </div>
 
     <Drawer
-        v-model:visible="drawerVisible"
-        position="right"
-        class="project-drawer !w-full md:!w-28rem lg:!w-[30rem]"
-    >
-      <div v-if="selectedProject" class="project-drawer__content">
-        <h2 class="project-drawer__title">{{ selectedProject.name }}</h2>
+      v-model:visible="drawerVisible"
+      position="right"
+      class="project-drawer !w-full md:!w-28rem lg:!w-[30rem]"
+  >
+    <div v-if="selectedProject" class="project-drawer__content">
+      <h2 class="project-drawer__title">{{ selectedProject.name }}</h2>
 
-        <p class="project-drawer__text">
-          <strong>Type :</strong>
-          {{ formatProjectType(selectedProject.project_type) }}
-        </p>
+      <p class="project-drawer__text">
+        <strong>Type :</strong>
+        {{ formatProjectType(selectedProject.project_type) }}
+      </p>
 
-        <p class="project-drawer__text">
-          {{ selectedProject.description || 'Pas de description' }}
-        </p>
+      <p class="project-drawer__text">
+        {{ selectedProject.description || 'Pas de description' }}
+      </p>
 
+      <div class="flex flex-column gap-3 mt-4">
         <Button
             label="Ouvrir ce projet"
             icon="pi pi-arrow-right"
             class="w-full"
             @click="goToProject"
         />
+
+        <Button
+            v-if="latestReport"
+            label="Voir le dernier audit"
+            icon="pi pi-history"
+            severity="secondary"
+            outlined
+            class="w-full"
+            @click="goToLatestReport"
+        />
+        
+        <small v-if="latestReport" class="text-center text-500 italic">
+          Dernière analyse : {{ latestReport.score }}% de cohérence
+        </small>
       </div>
-    </Drawer>
+    </div>
+  </Drawer>
   </div>
 
   <div style="color: red; font-weight: bold;">

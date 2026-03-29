@@ -68,9 +68,19 @@ public class AuditController {
         }
     }
 
+    @GetMapping("/reports/{reportId}")
+    public ResponseEntity<Report> getReport(@PathVariable UUID reportId) {
+        return reportRepository.findById(reportId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
-
-
+    @GetMapping("/project/{projectId}/latest")
+    public ResponseEntity<Report> getLatestReport(@PathVariable UUID projectId) {
+        return reportRepository.findFirstByProjectIdOrderByCreationDateDesc(projectId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build()); 
+    }
 
 
 }
