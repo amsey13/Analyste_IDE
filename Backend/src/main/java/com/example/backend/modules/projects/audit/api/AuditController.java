@@ -53,7 +53,7 @@ public class AuditController {
                 .orElseThrow(() -> new RuntimeException("Rapport introuvable"));
 
         try {
-            UUID projectId = report.getProject().getId();
+            UUID projectId = report.getProject().getIdProject();
             AuditVersionDTO diff = auditService.compareLastTwoReports(projectId);
             byte[] pdfContents = pdfReportService.generateAuditPdf(report,diff);
 

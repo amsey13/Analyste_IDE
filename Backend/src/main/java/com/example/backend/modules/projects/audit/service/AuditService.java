@@ -122,10 +122,10 @@ public class AuditService {
                 sb.append("- US: ").append(us.getSubject())
                         .append(" | Description: ").append(us.getSubject()).append("\n");
             }
-            saveLog("TAIGA_EXPORT", start, "SUCCESS", project.getId(), "{\"stories\": " + stories.size() + "}");
+            saveLog("TAIGA_EXPORT", start, "SUCCESS", project.getIdProject(), "{\"stories\": " + stories.size() + "}");
             return sb.toString();
         } catch (Exception e) {
-            saveLog("TAIGA_EXPORT", start, "FAILURE", project.getId(), "{\"error\": \"" + e.getMessage() + "\"}");
+            saveLog("TAIGA_EXPORT", start, "FAILURE", project.getIdProject(), "{\"error\": \"" + e.getMessage() + "\"}");
             throw new RuntimeException("Arreur d'importation de US TAIGA : "+e.getMessage());
         }
     }
@@ -247,15 +247,15 @@ public class AuditService {
 
             dtos = mistralService.executeAuditAnalysis(bpmn, mcd, mfc, us);
             long iaDuration = System.currentTimeMillis() - start;
-            saveLog("IA_RESPONSE_TIME", iaDuration, "SUCCESS", project.getId(),
+            saveLog("IA_RESPONSE_TIME", iaDuration, "SUCCESS", project.getIdProject(),
                     "{\"duration_ms\": " + iaDuration + "}");
 
 
-            saveLog(OP_DESERIAL, start, "SUCCESS", project.getId(), "{\"count\": " + dtos.size() + "}");
+            saveLog(OP_DESERIAL, start, "SUCCESS", project.getIdProject(), "{\"count\": " + dtos.size() + "}");
 
         } catch (Exception e) {
 
-            saveLog(OP_DESERIAL, start, "FAILURE", project.getId(), "{\"error\": \"" + e.getMessage() + "\"}");
+            saveLog(OP_DESERIAL, start, "FAILURE", project.getIdProject(), "{\"error\": \"" + e.getMessage() + "\"}");
             throw e;
         }
 
@@ -277,7 +277,7 @@ public class AuditService {
 
         long duration = System.currentTimeMillis() - start;
         String details = String.format("{\"score\": %.2f, \"anomalies\": %d}", scoreFinal, dtos.size());
-        saveLog(OP_AUDIT, duration, "SUCCESS", project.getId(), details);
+        saveLog(OP_AUDIT, duration, "SUCCESS", project.getIdProject(), details);
 
         return savedReport;
 
