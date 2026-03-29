@@ -80,14 +80,6 @@ L'API est découpée en **modules métier** autonomes :
 * `modules/analysis/` : Parsing et traitement des fichiers XML/BPMN/MCD/MFC.
 * `modules/analytics/` : Suivi des KPIs, logs d'exécution et statistiques du projet.
 
-*(Chaque module possède sa propre structure : `api/` (Controllers), `service/`, `dao/` (Repositories), `entity/` et `dto/`).*
-
-### Frontend (`src/`)
-* `features/` : Découpage par domaine métier (`projects`, `users`). Contient les composants spécifiques, les appels API (`api/`) et les vues internes.
-* `views/` : Pages principales de routing (`DashboardView`, `AuditView`, `AccompagnementView`...).
-* `api/` : Client HTTP centralisé (`HttpClient.js`) avec intercepteurs.
-* `layouts/` : Structure de l'interface (Header, Sidebar).
-
 ---
 Au sein de chaque module, le code respecte une stricte séparation des responsabilités (Séparation of Concerns) répartie dans les packages suivants :
 
@@ -98,6 +90,14 @@ Au sein de chaque module, le code respecte une stricte séparation des responsab
 * 🗄️ **`dao/` (Data Access Object / Repositories) :** Interfaces Spring Data gérant exclusivement les requêtes et les interactions directes avec la base de données PostgreSQL.
 * 🗃️ **`entity/` :** Représente la structure exacte et les relations des tables en base de données (modèles JPA/Hibernate).
 * ⚠️ **`exception/` :** Gestion centralisée des erreurs métiers (ex: `ProjectNotFoundException`, `UnauthorizedAccessException`) pour garantir que le frontend reçoive toujours des codes d'erreur HTTP clairs et propres.
+
+---
+
+### Frontend (`src/`)
+* `features/` : Découpage par domaine métier (`projects`, `users`). Contient les composants spécifiques, les appels API (`api/`) et les vues internes.
+* `views/` : Pages principales de routing (`DashboardView`, `AuditView`, `AccompagnementView`...).
+* `api/` : Client HTTP centralisé (`HttpClient.js`) avec intercepteurs.
+* `layouts/` : Structure de l'interface (Header, Sidebar).
 
 ---
 
