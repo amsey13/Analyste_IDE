@@ -18,7 +18,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "projects")
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name="project_type")
-@Data
 public class Project {
 
     @Id
