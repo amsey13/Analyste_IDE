@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { UserService } from '../features/users/api/UserService.js';
 import Button from 'primevue/button';
@@ -16,7 +16,7 @@ const initialCheck = ref(true); // Pour éviter un flash visuel du bouton si dé
 const typedText = ref(null);
 
 const typeWriter = (element, text, speed = 30) => {
-  let i = 0;
+  let i = 0
   element.innerHTML = '';
 
   const type = () => {
@@ -48,11 +48,11 @@ onMounted(async () => {
 
     initialCheck.value = false;
 
-    setTimeout(() => {
+    await nextTick();
       if (typedText.value) {
         typeWriter(typedText.value, 'Optimisez vos analyses systémiques grâce à notre moteur d\'analyse décisionnelle.');
-      }
-    }, 300);
+
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('error') && urlParams.get('error') === 'authentification_echouee') {

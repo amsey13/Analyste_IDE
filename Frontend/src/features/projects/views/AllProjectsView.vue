@@ -232,8 +232,9 @@ const goToLatestReport = () => {
 
       <div class="projects-grid">
         <Card
-            v-for="project in paginatedProjects"
+            v-for="(project, index) in paginatedProjects"
             :key="project.idProject"
+            :style="{ animationDelay: `${index * 0.08}s`, opacity: 0 }"
             class="project-card cursor-pointer border-2 border-300 hover:shadow-4"
             @click="openProjectDrawer(project)"
         >
@@ -522,5 +523,32 @@ const goToLatestReport = () => {
   transform: translateY(-50%);
   font-size: 20px;
   color: #6b7280;
+}
+</style>
+
+<style scoped>
+/* ... ton style existant ... */
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.projects-page__header {
+  animation: fadeInDown 0.4s ease both;
+}
+
+.search-container {
+  animation: fadeInDown 0.4s 0.1s ease both;
+}
+
+.project-card {
+  animation: fadeInUp 0.4s ease both;
+  opacity: 0;
 }
 </style>
