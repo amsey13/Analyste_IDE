@@ -19,7 +19,22 @@ const messages = {
     'Initialisation des modules...',
     'Configuration de l\'environnement...',
     'Presque prêt...'
+  ],
+  iaCalling: [
+    'Enregistrement de vos artefacts...',
+    'Nous analysons vos données...',
+    'Mistral IA génère votre rapport...',
+    'Analyse de cohérence en cours...',
+    'Le traitement est en cours...',
+    'Encore un peu de patience...'
   ]
+};
+
+// Intervalle entre les messages selon le mode
+const messageIntervals = {
+  open: 1500,
+  create: 1500,
+  iaCalling: 3000  // Plus lent pour les appels IA
 };
 
 const currentMessage = ref('');
@@ -27,12 +42,13 @@ let interval = null;
 
 const startMessages = () => {
   const list = messages[props.mode] || messages.open;
+  const intervalTime = messageIntervals[props.mode] || 1500;
   let i = 0;
   currentMessage.value = list[0];
   interval = setInterval(() => {
     i = (i + 1) % list.length;
     currentMessage.value = list[i];
-  }, 1500);
+  }, intervalTime);
 };
 
 const stopMessages = () => {
@@ -64,7 +80,7 @@ onMounted(() => {
       </Transition>
 
       <div class="progress-bar-wrap">
-        <div class="progress-bar"></div>
+        <div :class="['progress-bar', { 'progress-bar--indeterminate': mode === 'iaCalling' }]"></div>
       </div>
     </div>
   </Transition>
@@ -76,6 +92,11 @@ onMounted(() => {
 }
 @keyframes progress {
   from { width: 0%; } to { width: 100%; }
+}
+@keyframes progress-indeterminate {
+  0% { left: -40%; width: 40%; }
+  50% { left: 50%; width: 30%; }
+  100% { left: 100%; width: 40%; }
 }
 
 .overlay {
@@ -132,6 +153,7 @@ onMounted(() => {
 }
 
 .progress-bar-wrap {
+  position: relative;
   width: 240px;
   height: 3px;
   background: rgba(255,255,255,0.1);
@@ -144,6 +166,12 @@ onMounted(() => {
   background: #00b8d9;
   border-radius: 10px;
   animation: progress 4.5s ease both;
+}
+
+.progress-bar--indeterminate {
+  position: absolute;
+  width: 40%;
+  animation: progress-indeterminate 1.8s ease-in-out infinite;
 }
 
 .overlay-fade-enter-active,

@@ -204,9 +204,20 @@ public class SupportFeatureService {
 
     @Transactional
     public void deleteDictionaryEntry(UUID entryId) {
-        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
+        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
+                .orElseThrow(() -> new EntityNotFoundException("Entité introuvable"));
         SupportProject project = getProjectAndCheckOwnership(entry.getProject().getIdProject());
+
+        // 1. Trouver les associations du projet
+        List<DictionaryAssociation> projectAssociations = associationRepository.findByProjectId(project.getIdProject());
+
+        List<DictionaryAssociation> associationsToDelete = projectAssociations.stream()
+                .filter(assoc -> assoc.getSource().getId().equals(entryId) || assoc.getTarget().getId().equals(entryId))
+                .toList();
+        associationRepository.deleteAll(associationsToDelete);
+        associationRepository.flush();
         dictionaryEntryRepository.delete(entry);
+        dictionaryEntryRepository.flush();
         updateProjectActivity(project);
     }
 
@@ -374,6 +385,17 @@ public class SupportFeatureService {
         BusinessRule rule = businessRuleRepository.findById(ruleId)
                 .orElseThrow(() -> new EntityNotFoundException("Règle introuvable"));
         SupportProject project = getProjectAndCheckOwnership(rule.getProject().getIdProject());
+
+        // --- ANTICIPATION : Détacher la règle des associations MCD avant suppression ---
+        List<DictionaryAssociation> projectAssociations = associationRepository.findByProjectId(project.getIdProject());
+        for (DictionaryAssociation assoc : projectAssociations) {
+            if (assoc.getBusinessRule() != null && assoc.getBusinessRule().getId().equals(ruleId)) {
+                assoc.setBusinessRule(null); // On enlève le lien sans casser le MCD
+                associationRepository.save(assoc);
+            }
+        }
+        // ---------------------------------------------------------------------------------
+
         businessRuleRepository.delete(rule);
         updateProjectActivity(project);
     }

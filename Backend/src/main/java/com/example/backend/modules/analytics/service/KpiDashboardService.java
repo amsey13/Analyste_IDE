@@ -3,6 +3,8 @@ package com.example.backend.modules.analytics.service;
 import com.example.backend.modules.analytics.dto.ProjectKpiDTO;
 import com.example.backend.modules.analytics.entity.LogExecution;
 import com.example.backend.modules.analytics.dao.LogExecutionRepository;
+import com.example.backend.modules.projects.acc.entity.StatusProject;
+import com.example.backend.modules.projects.audit.dao.AuditProjectRepository;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -15,12 +17,15 @@ public class KpiDashboardService {
 
     private final LogExecutionRepository logExecutionRepository;
     private final ProjectRepository projectRepository;
+    private final AuditProjectRepository auditProjectRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     public KpiDashboardService(LogExecutionRepository logExecutionRepository,
-                                ProjectRepository projectRepository) {
+                                ProjectRepository projectRepository,
+                               AuditProjectRepository auditProjectRepository) {
         this.logExecutionRepository = logExecutionRepository;
         this.projectRepository = projectRepository;
+        this.auditProjectRepository = auditProjectRepository;
     }
 
     /**
@@ -107,5 +112,16 @@ public class KpiDashboardService {
         return logExecutionRepository.getAverageIaDuration();
     }
 
+    public Double getGlobalCompletionRate() {
+        long totalProjects = projectRepository.count();
 
+        if (totalProjects == 0) {
+            return 0.0;
+        }
+        long completedSupport = projectRepository.countSupportProjectsByStatus(StatusProject.LIVRE);
+        long completedAudit = auditProjectRepository.countCompletedAudits();
+
+        double rate = ((double) (completedSupport + completedAudit) / totalProjects) * 100.0;
+        return Math.round(rate * 100.0) / 100.0;
+    }
 }

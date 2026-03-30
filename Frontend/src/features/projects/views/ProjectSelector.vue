@@ -23,7 +23,6 @@ const toast = useToast();
 const drawerVisible = ref(false);
 const selectedProject = ref(null);
 
-const latestReport = ref(null);
 
 const searchQuery = ref('');
 const overlayVisible = ref(false);
@@ -121,20 +120,6 @@ const getBadgeClass = (type) => {
 const openProjectDrawer = async (project) => {
   selectedProject.value = project;
   drawerVisible.value = true;
-  latestReport.value = null; // Reset
-
-  const id = project.idProject || project.id;
-  
-  if (project.project_type?.toLowerCase() === 'audit') {
-    try {
-      const data = await auditProjectService.getLatestReport(id);
-      if (data) {
-        latestReport.value = data;
-      }
-    } catch (error) {
-      console.error("Pas de rapport trouvé pour ce projet");
-    }
-  }
 };
 
 const goToProject = async () => {
@@ -203,17 +188,7 @@ const deleteProject = (idProject) => {
 
 
 
-const goToLatestReport = () => {
-  if (!selectedProject.value || !latestReport.value) return;
-  drawerVisible.value = false;
-  router.push({
-    name: 'AuditReport', // Vérifie que ce nom correspond à ta route dans router/index.js
-    params: { 
-      id: selectedProject.value.idProject || selectedProject.value.id,
-      reportId: latestReport.value.id 
-    }
-  });
-};
+
 
 </script>
 
@@ -335,23 +310,6 @@ const goToLatestReport = () => {
           <p class="drawer__hero-desc">{{ selectedProject.description || 'Pas de description' }}</p>
         </div>
 
-        <div class="drawer__body">
-          <div v-if="latestReport">
-            <div class="drawer__score">
-              <div class="drawer__score-left">
-                <span class="drawer__score-label">Dernière analyse</span>
-                <span class="drawer__score-sub">de cohérence</span>
-              </div>
-              <div class="drawer__score-right">
-                <span class="drawer__score-value">{{ latestReport.score }}</span>
-                <span class="drawer__score-pct">%</span>
-              </div>
-            </div>
-            <div class="drawer__score-bar">
-              <div class="drawer__score-fill" :style="{ width: latestReport.score + '%' }"></div>
-            </div>
-          </div>
-        </div>
 
         <div class="drawer__actions">
           <Button
@@ -360,15 +318,6 @@ const goToLatestReport = () => {
               class="w-full"
               style="background: #1f355e; border-color: #1f355e;"
               @click="goToProject"
-          />
-          <Button
-              v-if="latestReport"
-              label="Voir le dernier audit"
-              icon="pi pi-history"
-              severity="secondary"
-              outlined
-              class="w-full"
-              @click="goToLatestReport"
           />
         </div>
 
