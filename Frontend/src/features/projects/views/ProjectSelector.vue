@@ -233,10 +233,10 @@ const goToLatestReport = () => {
     </div>
 
     <div v-if="loading" class="projects-page__state">Chargement...</div>
-    <div v-else-if="projects.length === 0" class="projects-page__state">Aucun projet disponible.</div>
 
     <div v-else>
-      <div class="search-container">
+
+      <div v-if="projects.length > 0" class="search-container">
         <div class="search-wrap">
           <i class="pi pi-search search-icon"></i>
           <input
