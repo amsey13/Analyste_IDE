@@ -34,10 +34,15 @@ watch(isSidebarCollapsed, (value) => {
 // Ouvre / réduit le sidebar
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
+
+  // Si la barre latérale s'ouvre OU se ferme -> réinitialiser le sous-menu
+  if (!isSidebarCollapsed.value) {
+    openMode.value = null;
+  }
 };
 
 const modeDescriptions = {
-  accompagnement: 'Faites-vous accompagner pour votre analyse de A à Z avec cette fonctionnalité. Définissez vos acteurs, vos User-Stories, modélisez vos processus, et générez un rapport sécurisé de bout en bout à la fin.',
+  accompagnement: 'Faites-vous accompagner pour votre analyse de A à Z avec cette fonctionnalité. Définissez vos acteurs, vos User-Stories,..',
   audit: 'Analysez et auditez la qualité de vos modélisations fonctionnelles (BPMN, MCD, User Stories).'
 };
 

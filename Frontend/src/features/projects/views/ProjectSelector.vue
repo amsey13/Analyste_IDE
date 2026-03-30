@@ -222,7 +222,7 @@ const deleteProject = (idProject) => {
           />
         </div>
         <span class="count-badge">
-          {{ displayedProjects.length }} projet{{ displayedProjects.length > 1 ? 's' : '' }}
+          {{ projects.length }} projet{{ projects.length > 1 ? 's' : '' }}
         </span>
       </div>
 
