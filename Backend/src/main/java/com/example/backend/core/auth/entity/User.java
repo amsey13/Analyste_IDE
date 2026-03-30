@@ -30,7 +30,7 @@ public class User {
     private boolean isActive = true;
 
     @OneToMany(mappedBy = "user")
-    private List<Project> projets;
+    private List<Project> projects;
 
     public String getEmail() {
         return email;
@@ -72,11 +72,11 @@ public class User {
         isActive = active;
     }
 
-    public List<Project> getProjets() {
-        return projets;
+    public List<Project> getProjects() {
+        return projects;
     }
 
-    public void setProjets(List<Project> projets) {
-        this.projets = projets;
+    public void setProjects(List<Project> projets) {
+        this.projects = projets;
     }
 }

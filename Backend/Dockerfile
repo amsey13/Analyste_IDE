@@ -1,28 +1,28 @@
-# --- Étape 1 : Construction (Build) ---
+# --- ÉTAPE 1 : Compilation (Build) ---
+# On utilise une image Maven officielle pour compiler le code
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copie le fichier pom.xml et télécharge les dépendances (cache pour accélérer)
+# On copie le pom.xml et les libs locales (très important pour ton projet !)
 COPY pom.xml .
-RUN mvn dependency:go-offline
+COPY libs ./libs
 
-# Copie le reste du code source
+# On copie le code source
 COPY src ./src
 
-COPY Backend/.env .  
-
-# Compile l'application (en ignorant les tests pour aller plus vite)
+# On compile le projet en ignorant les tests pour gagner du temps
 RUN mvn clean package -DskipTests
 
-# --- Étape 2 : Lancement (Runtime) ---
+# --- ÉTAPE 2 : Exécution (Runtime) ---
+# On utilise une image Java légère pour faire tourner l'app
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copie uniquement le JAR généré à l'étape précédente
+# On récupère UNIQUEMENT le fichier .jar généré à l'étape précédente
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose le port par défaut de Spring Boot
+# On expose le port
 EXPOSE 8080
 
-# Commande de démarrage
+# On lance l'application
 ENTRYPOINT ["java", "-jar", "app.jar"]
