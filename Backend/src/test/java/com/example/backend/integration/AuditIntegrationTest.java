@@ -93,7 +93,6 @@ public class AuditIntegrationTest {
 
         byte[] fakeXml = "<?xml version='1.0' encoding='UTF-8'?><root/>".getBytes();
 
-        // Contenu pour tromper la désérialisation Java
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         new ObjectOutputStream(bos).writeObject("DUMMY_OBJECT");
         byte[] fakeObject = bos.toByteArray();
