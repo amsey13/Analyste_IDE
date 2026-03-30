@@ -37,7 +37,7 @@ const toggleSidebar = () => {
 };
 
 const modeDescriptions = {
-  accompagnement: 'Faites-vous accompagner pour votre analyse de A à Z avec cette fonctionnalité. Définissez vos acteurs, vos User-Stories,.. je suis fatigué LOL.',
+  accompagnement: 'Faites-vous accompagner pour votre analyse de A à Z avec cette fonctionnalité. Définissez vos acteurs, vos User-Stories, modélisez vos processus, et générez un rapport sécurisé de bout en bout à la fin.',
   audit: 'Analysez et auditez la qualité de vos modélisations fonctionnelles (BPMN, MCD, User Stories).'
 };
 
