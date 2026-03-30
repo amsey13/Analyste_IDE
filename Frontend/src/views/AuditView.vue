@@ -1,11 +1,11 @@
 <script setup>
-import Card from 'primevue/card'
-import Button from 'primevue/button'
-import FileUpload from 'primevue/fileupload'
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router' 
-import auditProjectService from "../features/projects/api/AuditProjectService.js"
-import Dialog from 'primevue/dialog'
+import { ref, onMounted, computed } from 'vue'; import { useRoute, useRouter } from 'vue-router';
+import Button from 'primevue/button';
+import Card from 'primevue/card';
+import Dialog from 'primevue/dialog';
+import FileUpload from 'primevue/fileupload'; 
+
+import auditProjectService from "../features/projects/api/AuditProjectService.js";
 
 const router = useRouter() 
 const route = useRoute()
@@ -15,6 +15,7 @@ const showDialog = ref(false)
 const errorMessage = ref('')
 const isLoading = ref(false)
 const report = ref(null)
+const latestReport = ref(null);
 
 const files = ref({
   bpmn: null,
@@ -70,14 +71,14 @@ const startAudit = async () => {
   errorMessage.value = ""
 
   try {
-       const result = await auditProjectService.analyzeProject(
+    const result = await auditProjectService.analyzeProject(
       idProject,
       files.value.bpmn,
       files.value.mcd,
       files.value.mfc
     )
     
-        router.push({ 
+    router.push({ 
       name: 'AuditReport', 
       params: { 
         id: idProject, 
@@ -92,28 +93,52 @@ const startAudit = async () => {
   }
 }
 
-const downloadReport = async() => {
-  if(!report.value || !report.value.id) {
-    errorMessage.value = "Impossible de trouver l'ID du rapport.";
-    return;
+const goToLatestReport = () => {
+  if (!latestReport.value) return;
+  
+  router.push({
+    name: 'AuditReport', 
+    params: { 
+      id: idProject,
+      reportId: latestReport.value.id 
+    }
+  });
+};
+
+onMounted(async () => {
+  if (idProject) {
+    try {
+      const data = await auditProjectService.getLatestReport(idProject);
+      if (data) {
+        latestReport.value = data;
+      }
+    } catch (error) {
+      console.log("Aucun rapport précédent trouvé.");
+    }
   }
-  try {
-    await auditProjectService.downloadPdf(report.value.id);
-  } catch(error) {
-    alert(errorMessage.value);
-  }
-}
+});
 </script>
 
 <template>
   <div class="audit-page">
+    <div class="audit-page__header flex justify-content-between align-items-start">
+      <div>
+        <h1 class="audit-page__title">
+          <i class="pi pi-search" style="font-size: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></i>
+          Configuration de l'Audit
+        </h1>
+        <p class="audit-page__subtitle">Sélectionnez les sources à croiser pour l'analyse de cohérence.</p>
+      </div>
 
-    <div class="audit-page__header">
-      <h1 class="audit-page__title">
-        <i class="pi pi-search" style="font-size: 1.5rem; margin-right: 0.5rem; vertical-align: middle;"></i>
-        Configuration de l'Audit
-      </h1>
-      <p class="audit-page__subtitle">Sélectionnez les sources à croiser pour l'analyse de cohérence.</p>
+      <Button
+          v-if="latestReport"
+          label="Voir le dernier audit"
+          icon="pi pi-history"
+          severity="secondary"
+          outlined
+          class="p-button-sm"
+          @click="goToLatestReport"
+      />
     </div>
 
     <div class="upload-grid">
@@ -184,9 +209,11 @@ const downloadReport = async() => {
           @click="startAudit"
       />
     </div>
-
   </div>
 </template>
+
+
+
 
 <style scoped>
 @keyframes fadeInDown {
