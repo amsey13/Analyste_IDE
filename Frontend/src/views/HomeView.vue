@@ -25,7 +25,7 @@ const typeWriter = (element, text, speed = 30) => {
       i++;
       setTimeout(type, speed);
     } else {
-      // Pause de 3 secondes puis recommence
+      // 3-second pause then restart
       setTimeout(() => {
         i = 0;
         element.innerHTML = '';

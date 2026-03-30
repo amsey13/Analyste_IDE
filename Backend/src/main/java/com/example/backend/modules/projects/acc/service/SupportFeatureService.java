@@ -269,7 +269,6 @@ public class SupportFeatureService {
                 .orElseThrow(() -> new EntityNotFoundException("Entité introuvable"));
         SupportProject project = getProjectAndCheckOwnership(entry.getProject().getIdProject());
 
-        // 1. Trouver les associations du projet
         List<DictionaryAssociation> projectAssociations = associationRepository.findByProjectId(project.getIdProject());
 
         List<DictionaryAssociation> associationsToDelete = projectAssociations.stream()
@@ -560,7 +559,6 @@ public class SupportFeatureService {
                             });
                 });
 
-        // Sauvegarder les Associations
         ofNullable(suggestion.getAssociations())
                 .orElse(java.util.Collections.emptyList())
                 .forEach(assocDto -> {
@@ -582,7 +580,6 @@ public class SupportFeatureService {
                         assoc.setCif(false);
                         assoc.setIsInheritance(false);
 
-                        // On lie l'association à la règle de gestion de façon concise
                         if (assocDto.getRuleCode() != null) {
                             rules.stream()
                                     .filter(r -> r.getCode().equalsIgnoreCase(assocDto.getRuleCode()))
@@ -590,10 +587,8 @@ public class SupportFeatureService {
                                     .ifPresent(assoc::setBusinessRule);
                         }
 
-                        //On récupère l'association sauvegardée
                         final DictionaryAssociation savedAssoc = associationRepository.save(assoc);
 
-                        // On boucle pour sauvegarder les attributs portés par la relation
                         ofNullable(assocDto.getAttributes())
                                 .orElse(java.util.Collections.emptyList())
                                 .forEach(attrDto -> {
@@ -605,7 +600,6 @@ public class SupportFeatureService {
                                     attr.setNotNull(Boolean.TRUE.equals(attrDto.getNotNull()));
                                     attr.setDescription(attrDto.getDescription());
 
-                                    // On l'attache à l'association, pas à l'entité !
                                     attr.setDictionaryAssociation(savedAssoc);
 
                                     dictionaryAttributeRepository.save(attr);
@@ -815,7 +809,6 @@ public class SupportFeatureService {
                     }
 
                 } else {
-                    // relation normale
                     Relation2 logicRel = new Relation2(assoc.getName());
                     if (assoc.getAttributes() != null) {
                         for (DictionaryAttribute attr : assoc.getAttributes()) {
@@ -933,7 +926,7 @@ public class SupportFeatureService {
     }
 
     /**
-     * Empêche le Post-it d'être trop large en découpant le texte
+     * Prevents the Post-it from being too wide by wrapping the text
      */
     private String formatDescription(String text, int limit) {
         if (text == null)
@@ -952,8 +945,8 @@ public class SupportFeatureService {
     }
 
     /**
-     * Met à jour le statut du projet en fonction de son avancement
-     * et force l'actualisation de la date de modification.
+     * Updates the project status based on its progress
+     * and forces the update of the modification date.
      */
     private void updateProjectActivity(SupportProject project) {
         project.setUpdateAt(LocalDateTime.now());

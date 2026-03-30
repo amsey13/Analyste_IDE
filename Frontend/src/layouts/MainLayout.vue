@@ -32,7 +32,6 @@ watch(isSidebarCollapsed, (value) => {
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
 
-  // Si la barre latérale s'ouvre OU se ferme -> réinitialiser le sous-menu
   if (!isSidebarCollapsed.value) {
     openMode.value = null;
   }

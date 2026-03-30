@@ -52,7 +52,7 @@ public class SecurityConfig {
                             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                     )
 
-                    //  Règles d'accès aux routes
+                    // Route access rules
                     .authorizeHttpRequests(auth -> auth
 
 
