@@ -46,15 +46,15 @@ public class SupportFeatureService {
     private final LogExecutionRepository logExecutionRepository;
 
     public SupportFeatureService(ActorRepository actorRepository,
-                                 UserStoryRepository userStoryRepository,
-                                 ProjectRepository projectRepository,
-                                 SupportProjectMapper supportProjectMapper,
-                                 DictionaryEntryRepository dictionaryEntryRepository,
-                                 DictionaryAttributeRepository dictionaryAttributeRepository,
-                                 MistralService mistralService,
-                                 DictionaryAssociationRepository associationRepository,
-                                 BusinessRuleRepository businessRuleRepository,
-                                 LogExecutionRepository logExecutionRepository) {
+            UserStoryRepository userStoryRepository,
+            ProjectRepository projectRepository,
+            SupportProjectMapper supportProjectMapper,
+            DictionaryEntryRepository dictionaryEntryRepository,
+            DictionaryAttributeRepository dictionaryAttributeRepository,
+            MistralService mistralService,
+            DictionaryAssociationRepository associationRepository,
+            BusinessRuleRepository businessRuleRepository,
+            LogExecutionRepository logExecutionRepository) {
         this.actorRepository = actorRepository;
         this.userStoryRepository = userStoryRepository;
         this.projectRepository = projectRepository;
@@ -67,6 +67,16 @@ public class SupportFeatureService {
         this.logExecutionRepository = logExecutionRepository;
     }
 
+    /**
+     * Retrieves a project by its ID and checks that the current authenticated user
+     * is the owner.
+     *
+     * @param projectId the ID of the project to retrieve
+     * @return the project if it exists and the user is authorized
+     * @throws ProjectNotFoundException    if the project does not exist
+     * @throws UnauthorizedAccessException if the current user is not the owner of
+     *                                     the project
+     */
     private SupportProject getProjectAndCheckOwnership(UUID projectId) {
         String currentExternalId = SecurityContextHolder.getContext().getAuthentication().getName();
         SupportProject project = (SupportProject) projectRepository.findById(projectId)
@@ -89,6 +99,13 @@ public class SupportFeatureService {
         return supportProjectMapper.toActorDTO(savedActor);
     }
 
+    /**
+     * Adds a new actor to a project.
+     *
+     * @param projectId the ID of the project
+     * @param name      the name of the actor to create
+     * @return the created actor as a DTO
+     */
     @Transactional
     public ActorResponseDTO updateActor(UUID actorId, String newName) {
         Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
@@ -99,6 +116,11 @@ public class SupportFeatureService {
         return supportProjectMapper.toActorDTO(savedActor);
     }
 
+    /**
+     * Deletes an actor and all its related user stories.
+     *
+     * @param actorId the ID of the actor to delete
+     */
     @Transactional
     public void deleteActor(UUID actorId) {
         Actor actor = actorRepository.findById(actorId).orElseThrow(() -> new EntityNotFoundException());
@@ -108,7 +130,7 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-
+    // --- User Stories ---
     @Transactional
     public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String desc, String benefit, String crit) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -127,6 +149,16 @@ public class SupportFeatureService {
         return supportProjectMapper.toUserStoryDTO(savedUs);
     }
 
+    /**
+     * Updates an existing user story.
+     *
+     * @param usId    the ID of the user story to update
+     * @param desc    the new description
+     * @param ben     the new benefit
+     * @param crit    the new acceptance criteria
+     * @param actorId the ID of the actor linked to the user story
+     * @return the updated user story as a DTO
+     */
     @Transactional
     public UserStoryResponseDTO updateUserStory(UUID usId, String desc, String ben, String crit, UUID actorId) {
         UserStory us = userStoryRepository.findById(usId).orElseThrow(() -> new EntityNotFoundException());
@@ -142,6 +174,11 @@ public class SupportFeatureService {
         return supportProjectMapper.toUserStoryDTO(savedUs);
     }
 
+    /**
+     * Deletes a user story by its ID.
+     *
+     * @param usId the ID of the user story to delete
+     */
     @Transactional
     public void deleteUserStory(UUID usId) {
         UserStory us = userStoryRepository.findById(usId).orElseThrow(() -> new EntityNotFoundException());
@@ -150,7 +187,7 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-
+    // --- BPMN ---
     @Transactional
     public SupportProject saveBpmnDiagram(UUID projectId, String bpmnXml) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -160,6 +197,12 @@ public class SupportFeatureService {
         return project;
     }
 
+    /**
+     * Calculates and updates the coverage score of a project based on linked user
+     * stories.
+     *
+     * @param project the project to update
+     */
     private void updateCoverageScoreInternal(SupportProject project) {
         List<UserStory> allStories = project.getUserStories();
         if (allStories == null || allStories.isEmpty()) {
@@ -171,13 +214,19 @@ public class SupportFeatureService {
         project.setCoverageScore(Math.round(((double) covered / allStories.size() * 100) * 100.0) / 100.0);
     }
 
+    /**
+     * Retrieves detailed information about a project.
+     *
+     * @param projectId the ID of the project
+     * @return the project details as a DTO
+     */
     @Transactional(readOnly = true)
     public SupportProjectResponseDTO getProjectDetails(UUID projectId) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
         return (SupportProjectResponseDTO) supportProjectMapper.map(project);
     }
 
-
+    // --- Dictionnaire (Entités) ---
     @Transactional
     public DictionaryEntryResponseDTO addDictionaryEntry(UUID projectId, DictionaryEntryRequestDTO dto) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -190,9 +239,17 @@ public class SupportFeatureService {
         return supportProjectMapper.toDictionaryEntryDTO(savedEntry);
     }
 
+    /**
+     * Updates an existing dictionary entry.
+     *
+     * @param entryId the ID of the dictionary entry
+     * @param dto     the updated data
+     * @return the updated dictionary entry as a DTO
+     */
     @Transactional
     public DictionaryEntryResponseDTO updateDictionaryEntry(UUID entryId, DictionaryEntryRequestDTO dto) {
-        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
+        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
+                .orElseThrow(() -> new EntityNotFoundException());
         SupportProject project = getProjectAndCheckOwnership(entry.getProject().getIdProject());
         entry.setName(dto.getName());
         entry.setDescription(dto.getDescription());
@@ -201,6 +258,11 @@ public class SupportFeatureService {
         return supportProjectMapper.toDictionaryEntryDTO(savedEntry);
     }
 
+    /**
+     * Deletes a dictionary entry and all its related associations.
+     *
+     * @param entryId the ID of the dictionary entry to delete
+     */
     @Transactional
     public void deleteDictionaryEntry(UUID entryId) {
         DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
@@ -219,10 +281,11 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-
+    // --- Dictionnaire (Attributs) ---
     @Transactional
     public DictionaryAttributeResponseDTO addDictionaryAttribute(UUID entryId, DictionaryAttributeRequestDTO dto) {
-        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId).orElseThrow(() -> new EntityNotFoundException());
+        DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
+                .orElseThrow(() -> new EntityNotFoundException());
         SupportProject project = getProjectAndCheckOwnership(entry.getProject().getIdProject());
 
         DictionaryAttribute attr = new DictionaryAttribute();
@@ -238,9 +301,17 @@ public class SupportFeatureService {
         return supportProjectMapper.toDictionaryAttributeDTO(savedAttr);
     }
 
+    /**
+     * Updates an existing dictionary attribute.
+     *
+     * @param attrId the ID of the attribute
+     * @param dto    the updated attribute data
+     * @return the updated attribute as a DTO
+     */
     @Transactional
     public DictionaryAttributeResponseDTO updateDictionaryAttribute(UUID attrId, DictionaryAttributeRequestDTO dto) {
-        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId).orElseThrow(() -> new EntityNotFoundException());
+        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId)
+                .orElseThrow(() -> new EntityNotFoundException());
         SupportProject project = getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
 
         attr.setName(dto.getName());
@@ -254,19 +325,26 @@ public class SupportFeatureService {
         return supportProjectMapper.toDictionaryAttributeDTO(savedAttr);
     }
 
+    /**
+     * Deletes a dictionary attribute from a project.
+     *
+     * @param attrId the ID of the attribute to delete
+     */
     @Transactional
     public void deleteDictionaryAttribute(UUID attrId) {
-        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId).orElseThrow(() -> new EntityNotFoundException());
+        DictionaryAttribute attr = dictionaryAttributeRepository.findById(attrId)
+                .orElseThrow(() -> new EntityNotFoundException());
         SupportProject project = getProjectAndCheckOwnership(attr.getDictionaryEntry().getProject().getIdProject());
         dictionaryAttributeRepository.delete(attr);
         updateProjectActivity(project);
     }
 
-
+    // --- IA ---
     @Transactional(readOnly = true)
     public List<DictionaryEntryRequestDTO> getDictionarySuggestions(UUID projectId) throws IOException {
         SupportProject project = getProjectAndCheckOwnership(projectId);
-        if (project.getUserStories() == null || project.getUserStories().isEmpty()) return Collections.emptyList();
+        if (project.getUserStories() == null || project.getUserStories().isEmpty())
+            return Collections.emptyList();
 
         StringBuilder usContent = new StringBuilder();
         for (UserStory us : project.getUserStories()) {
@@ -275,7 +353,7 @@ public class SupportFeatureService {
         return mistralService.suggestDictionaryFromUserStories(usContent.toString());
     }
 
-
+    // --- Associations (MCD) ---
     @Transactional(readOnly = true)
     public List<DictionaryAssociationResponseDTO> getAssociationsByProject(UUID projectId) {
         getProjectAndCheckOwnership(projectId);
@@ -284,11 +362,19 @@ public class SupportFeatureService {
                 .toList();
     }
 
+    /**
+     * Retrieves all dictionary associations for a project.
+     *
+     * @param projectId the ID of the project
+     * @return list of associations as DTOs
+     */
     @Transactional
     public DictionaryAssociationResponseDTO addAssociation(UUID projectId, DictionaryAssociationRequestDTO request) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
-        DictionaryEntry src = dictionaryEntryRepository.findById(request.getSourceId()).orElseThrow(() -> new IllegalArgumentException());
-        DictionaryEntry tgt = dictionaryEntryRepository.findById(request.getTargetId()).orElseThrow(() -> new IllegalArgumentException());
+        DictionaryEntry src = dictionaryEntryRepository.findById(request.getSourceId())
+                .orElseThrow(() -> new IllegalArgumentException());
+        DictionaryEntry tgt = dictionaryEntryRepository.findById(request.getTargetId())
+                .orElseThrow(() -> new IllegalArgumentException());
 
         DictionaryAssociation assoc = new DictionaryAssociation();
         assoc.setSource(src);
@@ -310,8 +396,16 @@ public class SupportFeatureService {
         return supportProjectMapper.toDictionaryAssociationDTO(savedAssoc);
     }
 
+    /**
+     * Updates an existing dictionary association.
+     *
+     * @param associationId the ID of the association to update
+     * @param request       the updated association data
+     * @return the updated association as a DTO
+     */
     @Transactional
-    public DictionaryAssociationResponseDTO updateAssociation(UUID associationId, DictionaryAssociationRequestDTO request) {
+    public DictionaryAssociationResponseDTO updateAssociation(UUID associationId,
+            DictionaryAssociationRequestDTO request) {
         DictionaryAssociation assoc = associationRepository.findById(associationId)
                 .orElseThrow(() -> new EntityNotFoundException("Association introuvable"));
 
@@ -343,15 +437,27 @@ public class SupportFeatureService {
         return supportProjectMapper.toDictionaryAssociationDTO(savedAssoc);
     }
 
+    /**
+     * Deletes an existing dictionary association.
+     *
+     * @param associationId the ID of the association to delete
+     */
     @Transactional
     public void deleteAssociation(UUID associationId) {
-        DictionaryAssociation assoc = associationRepository.findById(associationId).orElseThrow(() -> new IllegalArgumentException());
+        DictionaryAssociation assoc = associationRepository.findById(associationId)
+                .orElseThrow(() -> new IllegalArgumentException());
         SupportProject project = getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
         associationRepository.delete(assoc);
         updateProjectActivity(project);
     }
 
 
+    /**
+     * Retrieves all business rules of a project.
+     *
+     * @param projectId the ID of the project
+     * @return list of business rules as DTOs
+     */
     @Transactional(readOnly = true)
     public List<BusinessRuleResponseDTO> getBusinessRules(UUID projectId) {
         getProjectAndCheckOwnership(projectId);
@@ -360,6 +466,13 @@ public class SupportFeatureService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Adds a new business rule to a project.
+     *
+     * @param projectId the ID of the project
+     * @param request   the business rule data
+     * @return the created business rule as a DTO
+     */
     @Transactional
     public BusinessRuleResponseDTO addBusinessRule(UUID projectId, BusinessRuleRequestDTO request) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -375,6 +488,11 @@ public class SupportFeatureService {
         return supportProjectMapper.toBusinessRuleResponseDTO(rule);
     }
 
+
+    /** Deletes a business rule from a project. 
+     * @param ruleId the ID of the business rule to delete
+     * 
+    */
     @Transactional
     public void deleteBusinessRule(UUID ruleId) {
         BusinessRule rule = businessRuleRepository.findById(ruleId)
@@ -388,31 +506,35 @@ public class SupportFeatureService {
                 associationRepository.save(assoc);
             }
         }
+        
 
         businessRuleRepository.delete(rule);
         updateProjectActivity(project);
     }
 
-
+    // --- GÉNÉRATION IA DU MCD ---
     @Transactional
     public void generateMcdFromBusinessRules(UUID projectId) throws IOException {
         SupportProject project = getProjectAndCheckOwnership(projectId);
 
-
+        // 1. Récupérer les règles
         List<BusinessRule> rules = businessRuleRepository.findByProject_Id(projectId);
         if (rules.isEmpty()) {
             throw new IllegalArgumentException("Aucune règle de gestion trouvée pour générer le MCD.");
         }
 
-
+        // 2. Construire le texte pour l'IA (version Stream élégante)
         String rulesContent = rules.stream()
                 .map(r -> r.getCode() + " : " + r.getDescription())
                 .collect(Collectors.joining("\n"));
 
-
+        // 3. Appeler Mistral
         McdSuggestionDTO suggestion = mistralService.suggestMcdFromBusinessRules(rulesContent);
+
+        // 4. Sauvegarder les Entités et Attributs
         Map<String, DictionaryEntry> savedEntities = new HashMap<>();
 
+        // Utilisation d'Optional pour éviter le "if (suggestion.getEntries() != null)"
         ofNullable(suggestion.getEntries())
                 .orElse(java.util.Collections.emptyList())
                 .forEach(entryDto -> {
@@ -441,7 +563,8 @@ public class SupportFeatureService {
                 .orElse(java.util.Collections.emptyList())
                 .forEach(assocDto -> {
 
-                    if (assocDto.getSourceName() == null || assocDto.getTargetName() == null) return;
+                    if (assocDto.getSourceName() == null || assocDto.getTargetName() == null)
+                        return;
 
                     DictionaryEntry source = savedEntities.get(assocDto.getSourceName().toLowerCase());
                     DictionaryEntry target = savedEntities.get(assocDto.getTargetName().toLowerCase());
@@ -498,9 +621,7 @@ public class SupportFeatureService {
 
 
         contextBuilder.append("--- ACTEURS ---\n");
-        project.getActors().forEach(a ->
-                contextBuilder.append("- ").append(a.getName()).append("\n")
-        );
+        project.getActors().forEach(a -> contextBuilder.append("- ").append(a.getName()).append("\n"));
 
 
         contextBuilder.append("\n--- USER STORIES ---\n");
@@ -514,18 +635,16 @@ public class SupportFeatureService {
 
 
         contextBuilder.append("\n--- RÈGLES DE GESTION ---\n");
-        businessRuleRepository.findByProject_Id(projectId).forEach(r ->
-                contextBuilder.append("- ").append(r.getCode()).append(" : ").append(r.getDescription()).append("\n")
-        );
+        businessRuleRepository.findByProject_Id(projectId).forEach(r -> contextBuilder.append("- ").append(r.getCode())
+                .append(" : ").append(r.getDescription()).append("\n"));
 
 
         contextBuilder.append("\n--- DICTIONNAIRE DE DONNÉES ---\n");
         project.getDictionaryEntries().forEach(entry -> {
             contextBuilder.append("Entité : ").append(entry.getName()).append("\n");
             if (entry.getAttributes() != null) {
-                entry.getAttributes().forEach(attr ->
-                        contextBuilder.append("  - Attribut : ").append(attr.getName()).append(" (").append(attr.getDataType()).append(")\n")
-                );
+                entry.getAttributes().forEach(attr -> contextBuilder.append("  - Attribut : ").append(attr.getName())
+                        .append(" (").append(attr.getDataType()).append(")\n"));
             }
         });
 
@@ -533,14 +652,14 @@ public class SupportFeatureService {
         contextBuilder.append("\n--- MODÈLE CONCEPTUEL DE DONNÉES (ASSOCIATIONS) ---\n");
         associationRepository.findByProjectId(projectId).forEach(assoc -> {
             contextBuilder.append("- Relation '").append(assoc.getName()).append("' entre ")
-                    .append(assoc.getSource().getName()).append(" (").append(assoc.getSourceMultiplicity()).append(") et ")
+                    .append(assoc.getSource().getName()).append(" (").append(assoc.getSourceMultiplicity())
+                    .append(") et ")
                     .append(assoc.getTarget().getName()).append(" (").append(assoc.getTargetMultiplicity()).append(")");
 
             if (assoc.getAttributes() != null && !assoc.getAttributes().isEmpty()) {
                 contextBuilder.append(" | Données portées : ");
-                assoc.getAttributes().forEach(attr ->
-                        contextBuilder.append(attr.getName()).append(" (").append(attr.getDataType()).append("), ")
-                );
+                assoc.getAttributes().forEach(attr -> contextBuilder.append(attr.getName()).append(" (")
+                        .append(attr.getDataType()).append("), "));
             }
             contextBuilder.append("\n");
         });
@@ -627,8 +746,10 @@ public class SupportFeatureService {
                         String type = (attr.getDataType() != null) ? attr.getDataType() : "VARCHAR";
                         int taille = 50;
                         try {
-                            if (attr.getSize() != null) taille = Integer.parseInt(attr.getSize().split(",")[0].trim());
-                        } catch (Exception ignored) {}
+                            if (attr.getSize() != null)
+                                taille = Integer.parseInt(attr.getSize().split(",")[0].trim());
+                        } catch (Exception ignored) {
+                        }
 
                         Attribut2 meriseAttr = new Attribut2(attr.getName(), type, taille, 0,
                                 Boolean.TRUE.equals(attr.getPrimaryKey()) ? "PRIMARY KEY" : "",
@@ -639,12 +760,19 @@ public class SupportFeatureService {
                 }
 
                 IhmEntite2 ihmEntite = new IhmEntite2(meriseEntite, x, y, true);
-                try { ihmEntite.setAligne("GAUCHE"); ihmEntite.setAligneTitre("GAUCHE"); } catch (Throwable ignored) {}
+                try {
+                    ihmEntite.setAligne("GAUCHE");
+                    ihmEntite.setAligneTitre("GAUCHE");
+                } catch (Throwable ignored) {
+                }
                 listeEntiteRelation.add(ihmEntite);
                 entiteMap.put(entry.getId(), ihmEntite);
 
                 x += 250;
-                if (x > 800) { x = 100; y += 200; }
+                if (x > 800) {
+                    x = 100;
+                    y += 200;
+                }
             }
         }
 
@@ -654,7 +782,8 @@ public class SupportFeatureService {
                 IhmEntite2 src = entiteMap.get(assoc.getSource().getId());
                 IhmEntite2 tgt = entiteMap.get(assoc.getTarget().getId());
 
-                if (src == null || tgt == null) continue;
+                if (src == null || tgt == null)
+                    continue;
 
                 if (assoc.getBusinessRule() != null && !rulesSeen.contains(assoc.getBusinessRule().getId())) {
                     BusinessRule rule = assoc.getBusinessRule();
@@ -666,20 +795,27 @@ public class SupportFeatureService {
 
                 if (Boolean.TRUE.equals(assoc.getIsInheritance())) {
                     IhmHeritage2 heritage = new IhmHeritage2(x, y, tgt, 0);
-                    try { heritage.setNom(""); heritage.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 12)); } catch (Throwable ignored) {}
+                    try {
+                        heritage.setNom("");
+                        heritage.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 12));
+                    } catch (Throwable ignored) {
+                    }
                     listeHeritage.add(heritage);
 
                     try {
                         listeLienContrainteHeritage.add(new IhmLienContrainteHeritage2(heritage, tgt));
                         listeLienContrainteHeritage.add(new IhmLienContrainteHeritage2(heritage, src));
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
 
                 } else {
                     Relation2 logicRel = new Relation2(assoc.getName());
                     if (assoc.getAttributes() != null) {
                         for (DictionaryAttribute attr : assoc.getAttributes()) {
-                            Attribut2 meriseAttr = new Attribut2(attr.getName(), (attr.getDataType() != null ? attr.getDataType() : "VARCHAR"), 50, 0, "",
-                                    !Boolean.TRUE.equals(attr.getNotNull()), (attr.getDescription() != null ? attr.getDescription() : ""), logicRel);
+                            Attribut2 meriseAttr = new Attribut2(attr.getName(),
+                                    (attr.getDataType() != null ? attr.getDataType() : "VARCHAR"), 50, 0, "",
+                                    !Boolean.TRUE.equals(attr.getNotNull()),
+                                    (attr.getDescription() != null ? attr.getDescription() : ""), logicRel);
                             logicRel.getListeAttributs().add(meriseAttr);
                         }
                     }
@@ -688,62 +824,98 @@ public class SupportFeatureService {
                     listeEntiteRelation.add(ihmRel);
 
                     IhmLien2 lSrc = new IhmLien2(src, ihmRel);
-                    String cSrc = (assoc.getSourceMultiplicity() != null) ? assoc.getSourceMultiplicity().replace("..", ",") : "0,n";
-                    if (Boolean.TRUE.equals(assoc.getRelative()) && cSrc.contains("1") && !cSrc.toLowerCase().contains("n")) {
-                        cSrc = "(" + cSrc + ")"; lSrc.setRelatif(true);
+                    String cSrc = (assoc.getSourceMultiplicity() != null)
+                            ? assoc.getSourceMultiplicity().replace("..", ",")
+                            : "0,n";
+                    if (Boolean.TRUE.equals(assoc.getRelative()) && cSrc.contains("1")
+                            && !cSrc.toLowerCase().contains("n")) {
+                        cSrc = "(" + cSrc + ")";
+                        lSrc.setRelatif(true);
                     }
                     lSrc.setCardinalite(cSrc);
                     listeLien.add(lSrc);
 
                     IhmLien2 lTgt = new IhmLien2(tgt, ihmRel);
-                    String cTgt = (assoc.getTargetMultiplicity() != null) ? assoc.getTargetMultiplicity().replace("..", ",") : "0,n";
-                    if (Boolean.TRUE.equals(assoc.getRelative()) && cTgt.contains("1") && !cTgt.toLowerCase().contains("n")) {
-                        cTgt = "(" + cTgt + ")"; lTgt.setRelatif(true);
+                    String cTgt = (assoc.getTargetMultiplicity() != null)
+                            ? assoc.getTargetMultiplicity().replace("..", ",")
+                            : "0,n";
+                    if (Boolean.TRUE.equals(assoc.getRelative()) && cTgt.contains("1")
+                            && !cTgt.toLowerCase().contains("n")) {
+                        cTgt = "(" + cTgt + ")";
+                        lTgt.setRelatif(true);
                     }
                     lTgt.setCardinalite(cTgt);
 
                     if (Boolean.TRUE.equals(assoc.getCif())) {
-                        try { lTgt.setFleche(true); } catch (Throwable ignored) {}
+                        try {
+                            lTgt.setFleche(true);
+                        } catch (Throwable ignored) {
+                        }
                         IhmCIF2 cif = new IhmCIF2(x + 50, y - 50, 30, 30);
-                        try { cif.setNom("CIF"); cif.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 10)); } catch (Throwable ignored) {}
+                        try {
+                            cif.setNom("CIF");
+                            cif.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 10));
+                        } catch (Throwable ignored) {
+                        }
                         listeCIF.add(cif);
                         try {
                             listelienCIF.add(new IhmLienCIF2(ihmRel, cif, ""));
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable ignored) {
+                        }
                     }
                     listeLien.add(lTgt);
                 }
-                x += 280; if (x > 900) { x = 100; y += 180; }
+                x += 280;
+                if (x > 900) {
+                    x = 100;
+                    y += 180;
+                }
             }
         }
 
         if (projectHasRules) {
             IhmPostIt2 postIt = new IhmPostIt2(allRulesContent.toString(), 1150, 50, 300, 400);
             postIt.setCommentaire(allRulesContent.toString());
-            try { postIt.setClTexte(java.awt.Color.BLACK); } catch (Throwable ignored) {}
+            try {
+                postIt.setClTexte(java.awt.Color.BLACK);
+            } catch (Throwable ignored) {
+            }
             listePostIt.add(postIt);
         }
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                ObjectOutputStream oos = new ObjectOutputStream(baos)) {
 
-            org.springframework.core.io.ClassPathResource resource = new org.springframework.core.io.ClassPathResource("blank.mcd");
+            org.springframework.core.io.ClassPathResource resource = new org.springframework.core.io.ClassPathResource(
+                    "blank.mcd");
             try (ObjectInputStream ois = new ObjectInputStream(resource.getInputStream())) {
                 oos.writeObject(ois.readObject());
-                ois.readObject(); oos.writeObject(listeEntiteRelation);
-                ois.readObject(); oos.writeObject(listeLien);
-                ois.readObject(); oos.writeObject(listeCIF);
-                ois.readObject(); oos.writeObject(listelienCIF);
+                ois.readObject();
+                oos.writeObject(listeEntiteRelation);
+                ois.readObject();
+                oos.writeObject(listeLien);
+                ois.readObject();
+                oos.writeObject(listeCIF);
+                ois.readObject();
+                oos.writeObject(listelienCIF);
 
-                ois.readObject(); oos.writeObject(listePostIt);
-                ois.readObject(); oos.writeObject(new ArrayList<>());
+                ois.readObject();
+                oos.writeObject(listePostIt);
+                ois.readObject();
+                oos.writeObject(new ArrayList<>());
 
                 oos.writeObject(ois.readObject());
-                ois.readObject(); oos.writeObject(listeHeritage);
-                ois.readObject(); oos.writeObject(listeLienContrainteHeritage);
+                ois.readObject();
+                oos.writeObject(listeHeritage);
+                ois.readObject();
+                oos.writeObject(listeLienContrainteHeritage);
 
                 while (true) {
-                    try { oos.writeObject(ois.readObject()); } catch (EOFException e) { break; }
+                    try {
+                        oos.writeObject(ois.readObject());
+                    } catch (EOFException e) {
+                        break;
+                    }
                 }
             }
             oos.flush();
@@ -757,7 +929,8 @@ public class SupportFeatureService {
      * Prevents the Post-it from being too wide by wrapping the text
      */
     private String formatDescription(String text, int limit) {
-        if (text == null) return "";
+        if (text == null)
+            return "";
         StringBuilder sb = new StringBuilder();
         int count = 0;
         for (String word : text.split(" ")) {

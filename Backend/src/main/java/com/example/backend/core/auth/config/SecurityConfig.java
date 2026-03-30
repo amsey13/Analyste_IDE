@@ -41,18 +41,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) {
         try {
             http
-                    // Allow requests from the Front-End
+                    
                     .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                    // Secure data modification requests (POST, PUT, DELETE)
                     .csrf(csrf -> csrf
                             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                     )
 
-
-
-                    // REST API behavior (401 instead of 302)
                     .exceptionHandling(customizer -> customizer
                             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                     )
@@ -67,8 +62,6 @@ public class SecurityConfig {
                             .requestMatchers("/api/kpi/**").permitAll()
                             .anyRequest().authenticated()
                     )
-
-                    // 5. OAUTH2 / OIDC: Authentication and synchronization
                     .oauth2Login(oauth2 -> oauth2
 
                             .authorizationEndpoint(authorization -> authorization
@@ -85,7 +78,6 @@ public class SecurityConfig {
                             )
                     )
 
-                    // Local logout and RP-Initiated logout (JumpCloud)
                     .logout(logout -> logout
                             .logoutRequestMatcher(request -> "GET".equals(request.getMethod()) && request.getRequestURI().endsWith("/logout"))
                             .logoutSuccessUrl("http://localhost:5173")
@@ -102,7 +94,7 @@ public class SecurityConfig {
 
 
     /**
-     * Handles CORS authorization for cross-origin requests.
+     * * Manages CORS (Cross-Origin Resource Sharing) permissions for cross-domain requests.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
