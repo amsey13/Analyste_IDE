@@ -16,7 +16,9 @@ import javax.sql.DataSource;
 public class BackendApplication {
 
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.configure().directory("../").load();
+        Dotenv dotenv = Dotenv.configure()
+                .ignoreIfMissing()
+                .load();
         dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
 
         if (dotenv.get("JUMPCLOUD_CLIENT_ID") != null) {
