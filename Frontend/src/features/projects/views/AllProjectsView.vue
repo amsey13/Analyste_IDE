@@ -212,8 +212,19 @@ const goToLatestReport = () => {
       </div>
 
       <div class="projects-page__actions">
-        <Button label="Nouveau projet" icon="pi pi-plus" @click="goToCreateProject" />
-        <Button label="Retour" icon="pi pi-arrow-left" outlined @click="goBack" />
+        <Button
+            label="Nouveau projet"
+            icon="pi pi-plus"
+            style="background: #1f355e; border-color: #1f355e;"
+            @click="goToCreateProject"
+        />
+        <Button
+            label="Retour"
+            icon="pi pi-arrow-left"
+            style="color: #1f355e; border-color: #1f355e;"
+            outlined
+            @click="goBack"
+        />
       </div>
     </div>
 
@@ -366,6 +377,12 @@ const goToLatestReport = () => {
   justify-content: space-between;
   margin-bottom: 1.5rem;
   animation: fadeInDown 0.4s 0.1s ease both;
+}
+
+.projects-page__actions .p-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
 }
 
 .search-wrap { position: relative; max-width: 340px; width: 100%; }
