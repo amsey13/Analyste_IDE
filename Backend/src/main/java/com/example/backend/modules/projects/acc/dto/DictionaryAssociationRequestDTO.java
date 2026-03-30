@@ -18,10 +18,10 @@ public class DictionaryAssociationRequestDTO {
     private String name;
 
     @NotBlank(message = "La cardinalité source est obligatoire")
-    private String sourceMultiplicity; // ex: "0..N"
+    private String sourceMultiplicity;
 
     @NotBlank(message = "La cardinalité cible est obligatoire")
-    private String targetMultiplicity; // ex: "1..1"
+    private String targetMultiplicity;
 
     private Boolean isRelative;
 

@@ -49,11 +49,9 @@ const loadProject = async () => {
   try {
     project.value = await ProjectService.getProjectById(projectId);
 
-    // Sécurité réactivité
     if (!project.value.actors) project.value.actors = [];
     if (!project.value.userStories) project.value.userStories = [];
-    if (!project.value.dictionaryEntries) project.value.dictionaryEntries = []; // <- NOUVEAU
-  } catch (error) {
+    if (!project.value.dictionaryEntries) project.value.dictionaryEntries = [];
     console.error("Erreur lors du chargement du projet", error);
   } finally {
     isLoading.value = false;
@@ -85,17 +83,15 @@ const runAudit = async () => {
 const checkExistingAudit = async () => {
   try {
     const report = await SupportFeatureService.getAudit(projectId);
-    // Si on a un rapport avec un score, c'est qu'il existe !
     if (report && report.score !== undefined) {
       hasExistingAudit.value = true;
     }
   } catch (e) {
-    // On ignore l'erreur silencieusement (ça veut juste dire "pas de rapport")
     console.log("Aucun audit précédent trouvé.");
   }
 };
 
-// NOUVELLE FONCTION : Redirige sans relancer l'IA
+
 const viewLastAudit = () => {
   router.push(`/project/${projectId}/audit-result`);
 };

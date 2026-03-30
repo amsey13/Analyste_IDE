@@ -88,7 +88,6 @@ public class SupportFeatureService {
         return project;
     }
 
-    // --- Acteurs ---
     @Transactional
     public ActorResponseDTO addActor(UUID projectId, String name) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -131,16 +130,7 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-    /**
-     * Adds a user story to a project for a specific actor.
-     *
-     * @param projectId the ID of the project
-     * @param actorId   the ID of the actor linked to the user story
-     * @param desc      the description of the user story
-     * @param benefit   the benefit/value of the user story
-     * @param crit      the acceptance criteria
-     * @return the created user story as a DTO
-     */
+    // --- User Stories ---
     @Transactional
     public UserStoryResponseDTO addUserStory(UUID projectId, UUID actorId, String desc, String benefit, String crit) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -197,13 +187,7 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-    /**
-     * Saves a BPMN diagram to a project and updates its coverage score.
-     *
-     * @param projectId the ID of the project
-     * @param bpmnXml   the BPMN XML content
-     * @return the updated project
-     */
+    // --- BPMN ---
     @Transactional
     public SupportProject saveBpmnDiagram(UUID projectId, String bpmnXml) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -242,13 +226,7 @@ public class SupportFeatureService {
         return (SupportProjectResponseDTO) supportProjectMapper.map(project);
     }
 
-    /**
-     * Adds a new dictionary entry to a project.
-     *
-     * @param projectId the ID of the project
-     * @param dto       the dictionary entry data
-     * @return the created dictionary entry as a DTO
-     */
+    // --- Dictionnaire (Entités) ---
     @Transactional
     public DictionaryEntryResponseDTO addDictionaryEntry(UUID projectId, DictionaryEntryRequestDTO dto) {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -304,13 +282,7 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-    /**
-     * Adds a new attribute to a dictionary entry.
-     *
-     * @param entryId the ID of the dictionary entry
-     * @param dto     the attribute data
-     * @return the created attribute as a DTO
-     */
+    // --- Dictionnaire (Attributs) ---
     @Transactional
     public DictionaryAttributeResponseDTO addDictionaryAttribute(UUID entryId, DictionaryAttributeRequestDTO dto) {
         DictionaryEntry entry = dictionaryEntryRepository.findById(entryId)
@@ -368,12 +340,7 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-    /**
-     * Generates dictionary suggestions based on project user stories using AI.
-     *
-     * @param projectId the ID of the project
-     * @return a list of suggested dictionary entries
-     */
+    // --- IA ---
     @Transactional(readOnly = true)
     public List<DictionaryEntryRequestDTO> getDictionarySuggestions(UUID projectId) throws IOException {
         SupportProject project = getProjectAndCheckOwnership(projectId);
@@ -387,12 +354,7 @@ public class SupportFeatureService {
         return mistralService.suggestDictionaryFromUserStories(usContent.toString());
     }
 
-    /**
-     * Retrieves all dictionary associations for a project.
-     *
-     * @param projectId the ID of the project
-     * @return list of associations as DTOs
-     */
+    // --- Associations (MCD) ---
     @Transactional(readOnly = true)
     public List<DictionaryAssociationResponseDTO> getAssociationsByProject(UUID projectId) {
         getProjectAndCheckOwnership(projectId);
@@ -448,16 +410,13 @@ public class SupportFeatureService {
         DictionaryAssociation assoc = associationRepository.findById(associationId)
                 .orElseThrow(() -> new EntityNotFoundException("Association introuvable"));
 
-        // Sécurité : on vérifie que l'utilisateur a les droits sur le projet
         SupportProject project = getProjectAndCheckOwnership(assoc.getSource().getProject().getIdProject());
-
-        // On récupère les entités (au cas où l'utilisateur change les flèches)
         DictionaryEntry src = dictionaryEntryRepository.findById(request.getSourceId())
                 .orElseThrow(() -> new EntityNotFoundException("Source introuvable"));
         DictionaryEntry tgt = dictionaryEntryRepository.findById(request.getTargetId())
                 .orElseThrow(() -> new EntityNotFoundException("Cible introuvable"));
 
-        // Mise à jour des champs
+
         assoc.setSource(src);
         assoc.setTarget(tgt);
         assoc.setName(request.getName());
@@ -471,7 +430,7 @@ public class SupportFeatureService {
                     .orElseThrow(() -> new EntityNotFoundException("Règle de gestion introuvable"));
             assoc.setBusinessRule(rule);
         } else {
-            assoc.setBusinessRule(null); // On permet de retirer la règle
+            assoc.setBusinessRule(null);
         }
 
         DictionaryAssociation savedAssoc = associationRepository.save(assoc);
@@ -492,7 +451,7 @@ public class SupportFeatureService {
         associationRepository.delete(assoc);
         updateProjectActivity(project);
     }
-    // --- GESTION DES RÈGLES DE GESTION ---
+
 
     /**
      * Retrieves all business rules of a project.
@@ -548,41 +507,44 @@ public class SupportFeatureService {
                 associationRepository.save(assoc);
             }
         }
-        // ---------------------------------------------------------------------------------
+        
 
         businessRuleRepository.delete(rule);
         updateProjectActivity(project);
     }
 
-    
+    // --- GÉNÉRATION IA DU MCD ---
     @Transactional
     public void generateMcdFromBusinessRules(UUID projectId) throws IOException {
         SupportProject project = getProjectAndCheckOwnership(projectId);
+
+        // 1. Récupérer les règles
         List<BusinessRule> rules = businessRuleRepository.findByProject_Id(projectId);
         if (rules.isEmpty()) {
             throw new IllegalArgumentException("Aucune règle de gestion trouvée pour générer le MCD.");
         }
 
+        // 2. Construire le texte pour l'IA (version Stream élégante)
         String rulesContent = rules.stream()
                 .map(r -> r.getCode() + " : " + r.getDescription())
                 .collect(Collectors.joining("\n"));
 
-    
+        // 3. Appeler Mistral
         McdSuggestionDTO suggestion = mistralService.suggestMcdFromBusinessRules(rulesContent);
+
+        // 4. Sauvegarder les Entités et Attributs
         Map<String, DictionaryEntry> savedEntities = new HashMap<>();
+
+        // Utilisation d'Optional pour éviter le "if (suggestion.getEntries() != null)"
         ofNullable(suggestion.getEntries())
                 .orElse(java.util.Collections.emptyList())
                 .forEach(entryDto -> {
-
                     DictionaryEntry entry = new DictionaryEntry();
                     entry.setName(entryDto.getName());
                     entry.setDescription(entryDto.getDescription());
                     entry.setProject(project);
                     final DictionaryEntry savedEntry = dictionaryEntryRepository.save(entry);
-
                     savedEntities.put(savedEntry.getName().toLowerCase(), savedEntry);
-
-                    // Boucle sur les attributs sans le "if != null"
                     ofNullable(entryDto.getAttributes())
                             .orElse(java.util.Collections.emptyList())
                             .forEach(attrDto -> {
@@ -590,7 +552,6 @@ public class SupportFeatureService {
                                 attr.setName(attrDto.getName());
                                 attr.setDataType(attrDto.getDataType());
                                 attr.setSize(attrDto.getSize());
-                                // Astuce Clean Code : Boolean.TRUE.equals() gère les nulls tout seul
                                 attr.setPrimaryKey(Boolean.TRUE.equals(attrDto.getPrimaryKey()));
                                 attr.setNotNull(Boolean.TRUE.equals(attrDto.getNotNull()));
                                 attr.setDescription(attrDto.getDescription());
@@ -599,7 +560,7 @@ public class SupportFeatureService {
                             });
                 });
 
-        // 5. Sauvegarder les Associations
+        // Sauvegarder les Associations
         ofNullable(suggestion.getAssociations())
                 .orElse(java.util.Collections.emptyList())
                 .forEach(assocDto -> {
@@ -629,10 +590,10 @@ public class SupportFeatureService {
                                     .ifPresent(assoc::setBusinessRule);
                         }
 
-                        // ⚠️ MODIFICATION ICI : On récupère l'association sauvegardée
+                        //On récupère l'association sauvegardée
                         final DictionaryAssociation savedAssoc = associationRepository.save(assoc);
 
-                        // NOUVEAU : On boucle pour sauvegarder les attributs portés par la relation !
+                        // On boucle pour sauvegarder les attributs portés par la relation
                         ofNullable(assocDto.getAttributes())
                                 .orElse(java.util.Collections.emptyList())
                                 .forEach(attrDto -> {
@@ -655,22 +616,20 @@ public class SupportFeatureService {
         updateProjectActivity(project);
     }
 
-    // --- AUDIT GLOBAL DU PROJET ---
+
     @Transactional
     public ProjectAuditResponseDTO auditProject(UUID projectId) throws IOException {
         SupportProject project = getProjectAndCheckOwnership(projectId);
         long startMillis = System.currentTimeMillis();
         LocalDateTime startTime = LocalDateTime.now();
-
-        // 1. On rassemble toutes les pièces du puzzle
         StringBuilder contextBuilder = new StringBuilder();
         contextBuilder.append("Nom du projet : ").append(project.getName()).append("\n\n");
 
-        // Acteurs
+
         contextBuilder.append("--- ACTEURS ---\n");
         project.getActors().forEach(a -> contextBuilder.append("- ").append(a.getName()).append("\n"));
 
-        // User Stories
+
         contextBuilder.append("\n--- USER STORIES ---\n");
         project.getUserStories().forEach(us -> {
             String actorName = (us.getActor() != null) ? us.getActor().getName() : "Inconnu";
@@ -680,12 +639,12 @@ public class SupportFeatureService {
                     .append(us.getBenefit()).append("\n");
         });
 
-        // Règles de Gestion
+
         contextBuilder.append("\n--- RÈGLES DE GESTION ---\n");
         businessRuleRepository.findByProject_Id(projectId).forEach(r -> contextBuilder.append("- ").append(r.getCode())
                 .append(" : ").append(r.getDescription()).append("\n"));
 
-        // Dictionnaire de Données
+
         contextBuilder.append("\n--- DICTIONNAIRE DE DONNÉES ---\n");
         project.getDictionaryEntries().forEach(entry -> {
             contextBuilder.append("Entité : ").append(entry.getName()).append("\n");
@@ -695,7 +654,7 @@ public class SupportFeatureService {
             }
         });
 
-        // MCD (Associations)
+
         contextBuilder.append("\n--- MODÈLE CONCEPTUEL DE DONNÉES (ASSOCIATIONS) ---\n");
         associationRepository.findByProjectId(projectId).forEach(assoc -> {
             contextBuilder.append("- Relation '").append(assoc.getName()).append("' entre ")
@@ -739,7 +698,6 @@ public class SupportFeatureService {
             return report;
 
         } catch (Exception e) {
-            // LOG D'ÉCHEC (Pour surveiller si Mistral plante)
             LogExecution log = new LogExecution();
             log.setOperation("AUDIT_IA");
             log.setStartTime(startTime);
@@ -857,7 +815,7 @@ public class SupportFeatureService {
                     }
 
                 } else {
-                    // 🔵 CAS 2 : RELATION NORMALE
+                    // relation normale
                     Relation2 logicRel = new Relation2(assoc.getName());
                     if (assoc.getAttributes() != null) {
                         for (DictionaryAttribute attr : assoc.getAttributes()) {

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class DictionaryEntryRequestDTO {
-    private UUID id; // Utile si on fait une mise à jour
+    private UUID id;
     private String name;
     private String description;
     private List<DictionaryAttributeRequestDTO> attributes = new ArrayList<>();

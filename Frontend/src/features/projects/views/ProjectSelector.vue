@@ -120,6 +120,20 @@ const getBadgeClass = (type) => {
 const openProjectDrawer = async (project) => {
   selectedProject.value = project;
   drawerVisible.value = true;
+  latestReport.value = null;
+
+  const id = project.idProject || project.id;
+  
+  if (project.project_type?.toLowerCase() === 'audit') {
+    try {
+      const data = await auditProjectService.getLatestReport(id);
+      if (data) {
+        latestReport.value = data;
+      }
+    } catch (error) {
+      console.error("Pas de rapport trouvé pour ce projet");
+    }
+  }
 };
 
 const goToProject = async () => {
@@ -188,7 +202,17 @@ const deleteProject = (idProject) => {
 
 
 
-
+const goToLatestReport = () => {
+  if (!selectedProject.value || !latestReport.value) return;
+  drawerVisible.value = false;
+  router.push({
+    name: 'AuditReport',
+    params: { 
+      id: selectedProject.value.idProject || selectedProject.value.id,
+      reportId: latestReport.value.id 
+    }
+  });
+};
 
 </script>
 

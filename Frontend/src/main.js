@@ -4,13 +4,13 @@ import router from './router';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 
-// PrimeVue et Thème
+
 import PrimeVue from 'primevue/config';
 import { definePreset } from '@primevue/themes';
 import Aura from '@primevue/themes/aura';
 import { createPinia } from 'pinia';
 
-// PrimeFlex et Styles
+
 import 'primeflex/primeflex.css';
 import 'primeicons/primeicons.css';
 import './assets/style.css';
@@ -41,7 +41,7 @@ app.use(PrimeVue, {
     theme: {
         preset: MyPreset,
         options: {
-            darkModeSelector: '.my-app-dark' // Évite le switch auto en mode sombre pour l'instant
+            darkModeSelector: '.my-app-dark'
         }
     }
 });

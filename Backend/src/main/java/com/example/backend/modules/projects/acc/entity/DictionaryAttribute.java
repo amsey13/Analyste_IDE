@@ -13,12 +13,12 @@ public class DictionaryAttribute {
     private UUID id;
 
     @Column(nullable = false)
-    private String name; // ex: "email", "prixTTC"
+    private String name;
 
     @Column(nullable = false, name = "data_type")
-    private String dataType; // ex: "VARCHAR", "INT", "DATE"
+    private String dataType;
 
-    private String size; // ex: "255" pour un VARCHAR
+    private String size;
 
     @Column(name = "is_primary_key")
     private Boolean isPrimaryKey = false;

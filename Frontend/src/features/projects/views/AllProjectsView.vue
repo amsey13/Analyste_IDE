@@ -36,7 +36,7 @@ const searchQuery = ref('');
 const typeFilter = ref('');
 
 
-// Normalisation des données projet pour éviter les différences de structure
+
 const normalizeProject = (project) => {
   return {
     ...project,

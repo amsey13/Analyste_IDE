@@ -60,17 +60,15 @@ const highlightOrphanTasks = () => {
   const elementRegistry = bpmnModeler.get('elementRegistry');
   const canvas = bpmnModeler.get('canvas');
 
-  // On récupère uniquement les éléments qui sont des tâches (Task, UserTask, ServiceTask...)
   const tasks = elementRegistry.filter(element => element.type.includes('Task'));
 
   tasks.forEach(task => {
     const linkedUS = task.businessObject.get('custom:linkedUserStories');
 
-    // Si la propriété n'existe pas ou est vide = tâche orpheline
+
     if (!linkedUS || linkedUS.trim() === '') {
       canvas.addMarker(task.id, 'orphan-task');
     } else {
-      // Si elle a des US, on retire le marqueur au cas où il y était
       canvas.removeMarker(task.id, 'orphan-task');
     }
   });
@@ -82,34 +80,28 @@ onMounted(async () => {
   await bpmnModeler.importXML(xml);
   highlightOrphanTasks();
 
-  // --- ÉCOUTEUR D'ÉVÉNEMENTS BPMN ---
   const eventBus = bpmnModeler.get('eventBus');
 
-  // Quand on clique sur un élément du diagramme
+
   eventBus.on('element.click', (e) => {
     const element = e.element;
-
-    // On vérifie si l'élément est une tâche (Task, UserTask, ServiceTask, etc.)
     if (element.type.includes('Task')) {
       selectedTask.value = element;
 
       const existingLinks = element.businessObject.get('custom:linkedUserStories');
       linkedUsIds.value = existingLinks ? existingLinks.split(',') : [];
-
-      // On récupère les coordonnées de la souris pour placer le pop-over
       popoverPosition.value = {
         top: `${e.originalEvent.clientY}px`,
-        left: `${e.originalEvent.clientX + 20}px` // +20px pour décaler un peu à droite de la souris
+        left: `${e.originalEvent.clientX + 20}px`
       };
       showPopover.value = true;
     } else {
-      // Si on clique sur une piscine ou une flèche, on ferme le pop-over
       showPopover.value = false;
       selectedTask.value = null;
     }
   });
 
-  // Quand on clique dans le vide (sur le fond du canevas)
+
   eventBus.on('canvas.click', () => {
     showPopover.value = false;
     selectedTask.value = null;
@@ -125,17 +117,12 @@ onMounted(async () => {
 const startDrag = (event, actor) => {
   const elementFactory = bpmnModeler.get('elementFactory');
   const create = bpmnModeler.get('create');
-
-  // 1. On utilise la méthode spécifique de bpmn-js pour générer une vraie piscine complète
   const shape = elementFactory.createParticipantShape();
-
-  // 2. On injecte le nom de ton acteur pour qu'il s'affiche dans le bandeau de gauche
   shape.businessObject.name = actor.name;
-
-  // 3. On lance le drag & drop
   create.start(event, shape);
 };
-// --- LOGIQUE DE ZOOM ---
+
+
 const zoom = (step) => {
   bpmnModeler.get('canvas').zoom(bpmnModeler.get('canvas').zoom() + step);
 };
@@ -240,7 +227,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
-/* Masquer l'outil de création de piscine par défaut pour forcer l'usage des acteurs */
+
 .bpmn-icon-participant {
   display: none !important;
 }
@@ -249,16 +236,16 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 
-/* Style spécifique pour que les en-têtes de piscines soient bien visibles */
+
 .djs-visual rect {
   stroke-width: 2px !important;
 }
 
 .orphan-task .djs-visual rect {
-  stroke: #ef4444 !important; /* Rouge PrimeVue/Tailwind */
+  stroke: #ef4444 !important;
   stroke-width: 3px !important;
-  stroke-dasharray: 5, 5 !important; /* Effet pointillé */
-  fill: #fff5f5 !important; /* Fond légèrement rouge pour accentuer */
+  stroke-dasharray: 5, 5 !important;
+  fill: #fff5f5 !important;
   transition: all 0.3s ease;
 }
 

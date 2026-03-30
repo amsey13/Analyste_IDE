@@ -57,7 +57,7 @@ public class MfcParserStrategy implements ModelParserStrategy {
                     Object obj = ois.readObject();
                     allObjects.add(obj);
                 } catch (EOFException e) {
-                    break; // Fin du fichier atteinte
+                    break;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -187,7 +187,6 @@ public class MfcParserStrategy implements ModelParserStrategy {
      * and targetName obtained from the lien object.
      */
     private Flux mapToFlux(flux.Lien lien) {
-        // On utilise ta méthode getName pour récupérer proprement les noms des acteurs
         String sourceName = getName(lien.getEntite());
         String targetName = getName(lien.getEntitefils());
         String fluxMessage = lien.getNom();
@@ -212,21 +211,16 @@ public class MfcParserStrategy implements ModelParserStrategy {
         StringBuilder sb = new StringBuilder();
 
         sb.append("--- DÉTAILS DU MODÈLE MFC (Flux Conceptuels) ---\n");
-
-        // 1. Distinction des acteurs
         sb.append("[ACTEURS]\n");
         List<String> internes = new ArrayList<>();
         List<String> externes = new ArrayList<>();
-
-        // On réutilise la logique de tri
         for (Object o : allObjects) {
             processObjectForActors(o, internes, externes);
         }
-
         sb.append("- Internes : ").append(String.join(", ", internes)).append("\n");
         sb.append("- Externes : ").append(String.join(", ", externes)).append("\n\n");
 
-        // 2. Liste des flux (échanges)
+
         sb.append("[FLUX ET MESSAGES]\n");
         List<Flux> fluxList = extractFluxs(allObjects);
         if (fluxList.isEmpty()) {
