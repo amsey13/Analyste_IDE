@@ -158,14 +158,33 @@ const openProjectDrawer = async (project) => {
 
 
 
-const goToProject = () => {
-  if (!selectedProject.value?.idProject) return;
+const goToProject = async () => {
+  const project = selectedProject.value;
+  if (!project) return;
+
+  const id = project.idProject || project.id;
+  if (!id) {
+    console.error('ID du projet manquant');
+    return;
+  }
+
+  const type = project.project_type?.toLowerCase()?.trim();
 
   drawerVisible.value = false;
-  router.push({
-    name: 'project-dashboard',
-    params: { id: selectedProject.value.idProject }
-  });
+  overlayProjectName.value = project.name;
+  overlayVisible.value = true;
+
+  await new Promise(resolve => setTimeout(resolve, 4500));
+
+  overlayVisible.value = false;
+
+  if (type === 'audit') {
+    router.push({ name: 'audit', params: { id } });
+  } else if (type === 'accompagnement') {
+    router.push({ name: 'accompagnement', params: { id } });
+  } else {
+    console.warn('Type inconnu:', type);
+  }
 };
 
 const goBack = () => {
