@@ -41,10 +41,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) {
         try {
             http
-                    // Autoriser les requêtes du Front-End
+                    // Allow requests from the Front-End
                     .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                    // Sécuriser les requêtes d'altération de données (POST, PUT, DELETE)
+                    // Secure data modification requests (POST, PUT, DELETE)
                     .csrf(csrf -> csrf
                             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
@@ -52,12 +52,12 @@ public class SecurityConfig {
 
 
 
-                    //  Comportement API REST (401 au lieu de 302)
+                    // REST API behavior (401 instead of 302)
                     .exceptionHandling(customizer -> customizer
                             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                     )
 
-                    //  Règles d'accès aux routes
+                    // Route access rules
                     .authorizeHttpRequests(auth -> auth
 
 
@@ -68,7 +68,7 @@ public class SecurityConfig {
                             .anyRequest().authenticated()
                     )
 
-                    // 5. OAUTH2 / OIDC : Connexion et synchronisation
+                    // 5. OAUTH2 / OIDC: Authentication and synchronization
                     .oauth2Login(oauth2 -> oauth2
 
                             .authorizationEndpoint(authorization -> authorization
@@ -85,7 +85,7 @@ public class SecurityConfig {
                             )
                     )
 
-                    // Déconnexion locale et RP-Initiated (JumpCloud)
+                    // Local logout and RP-Initiated logout (JumpCloud)
                     .logout(logout -> logout
                             .logoutRequestMatcher(request -> "GET".equals(request.getMethod()) && request.getRequestURI().endsWith("/logout"))
                             .logoutSuccessUrl("http://localhost:5173")
@@ -102,7 +102,7 @@ public class SecurityConfig {
 
 
     /**
-     * Gère les autorisations CORS pour les requêtes inter-domaines.
+     * Handles CORS authorization for cross-origin requests.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
