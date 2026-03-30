@@ -48,10 +48,19 @@ export default{
         }
     },
 
+
+    
     async getReportById(reportId) {
         const response = await apiClient.get(`/audit/reports/${reportId}`);
         return response.data;
     },
+
+
+/**
+     * Fetches the most recent audit report generated for a specific project.
+     * * @param {string} projectId - The unique identifier of the project.
+     * @returns {Promise<Object|null>} The latest report data, or null if an error occurs.
+*/
 
     async getLatestReport(projectId) {
         try {

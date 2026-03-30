@@ -45,6 +45,13 @@ const updateLinkedUS = async () => {
 const isSaving = ref(false);
 let saveTimeout = null;
 
+
+/**
+ * Orchestrates an automated save mechanism with a debounce effect.
+ * Prevents multiple rapid API calls by waiting for a 1.5s pause in user activity.
+ * * @returns {void}
+ */
+
 const triggerAutoSave = () => {
   isSaving.value = true;
   if (saveTimeout) clearTimeout(saveTimeout);
@@ -53,6 +60,14 @@ const triggerAutoSave = () => {
     isSaving.value = false;
   }, 1500);
 };
+
+
+/**
+ * Analyzes the BPMN diagram to visually identify tasks not linked to any User Story.
+ * Adds or removes a CSS 'orphan-task' marker based on the presence of custom metadata.
+ * * @returns {void}
+ */
+
 
 const highlightOrphanTasks = () => {
   if (!bpmnModeler) return;
@@ -73,6 +88,17 @@ const highlightOrphanTasks = () => {
     }
   });
 };
+
+/**
+ * Lifecycle Hook: Initializes the BPMN Modeler and registers global event bus listeners.
+ * * This setup phase performs the following:
+ *  Mounts the modeler to the DOM and imports the initial XML diagram.
+ *  Monitors 'element.click' to toggle the Task-to-UserStory link popover.
+ *  Monitors 'canvas.click' to reset selection and hide the UI overlay.
+ *  Listens to 'commandStack.changed' to trigger real-time validation (orphan tasks) 
+ * and debounced auto-save on every diagram modification.
+ */
+
 onMounted(async () => {
   bpmnModeler = new Modeler({ container: container.value });
   let xml = props.initialXml || emptyBpmn;
@@ -113,7 +139,6 @@ onMounted(async () => {
   });
 });
 
-// --- DRAG & DROP : CRÉATION D'UNE VÉRITABLE PISCINE ---
 const startDrag = (event, actor) => {
   const elementFactory = bpmnModeler.get('elementFactory');
   const create = bpmnModeler.get('create');

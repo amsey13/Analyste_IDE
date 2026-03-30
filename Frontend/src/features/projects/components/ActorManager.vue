@@ -26,6 +26,13 @@ const confirm = useConfirm();
 const toast = useToast();
 
 
+/**
+ * Asynchronously adds a new actor to the project.
+ * Validates the input, handles the API request, updates the local state via emits,
+ * and provides visual feedback through toast notifications.
+ * * @returns {Promise<void>}
+ */
+
 const addActor = async () => {
   if (!newActorName.value.trim()) return;
   isAdding.value = true;
@@ -51,6 +58,14 @@ const cancelEdit = () => {
   editingActorId.value = null;
   editingName.value = '';
 };
+
+
+/**
+ * Asynchronously saves changes to an existing actor's details.
+ * Performs validation, updates the backend via service call, synchronizes 
+ * the local state using a functional mapping approach, and resets the UI.
+ * * @returns {Promise<void>}
+ */
 
 const saveEdit = async () => {
   if (!editingName.value.trim()) return;
