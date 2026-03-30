@@ -56,7 +56,7 @@ const saveRule = async () => {
   }
 };
 
-// L'ancienne fonction de suppression
+// Old delete function
 const deleteRule = async (id) => {
   try {
     await SupportFeatureService.deleteBusinessRule(id);
