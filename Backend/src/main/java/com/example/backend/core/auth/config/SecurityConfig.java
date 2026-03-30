@@ -41,18 +41,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) {
         try {
             http
-                    // Autoriser les requêtes du Front-End
+                    
                     .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                    // Sécuriser les requêtes d'altération de données (POST, PUT, DELETE)
                     .csrf(csrf -> csrf
                             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                     )
 
-
-
-                    //  Comportement API REST (401 au lieu de 302)
                     .exceptionHandling(customizer -> customizer
                             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                     )
@@ -67,8 +62,6 @@ public class SecurityConfig {
                             .requestMatchers("/api/kpi/**").permitAll()
                             .anyRequest().authenticated()
                     )
-
-                    // 5. OAUTH2 / OIDC : Connexion et synchronisation
                     .oauth2Login(oauth2 -> oauth2
 
                             .authorizationEndpoint(authorization -> authorization
@@ -85,7 +78,6 @@ public class SecurityConfig {
                             )
                     )
 
-                    // Déconnexion locale et RP-Initiated (JumpCloud)
                     .logout(logout -> logout
                             .logoutRequestMatcher(request -> "GET".equals(request.getMethod()) && request.getRequestURI().endsWith("/logout"))
                             .logoutSuccessUrl("http://localhost:5173")
@@ -102,7 +94,7 @@ public class SecurityConfig {
 
 
     /**
-     * Gère les autorisations CORS pour les requêtes inter-domaines.
+     * * Manages CORS (Cross-Origin Resource Sharing) permissions for cross-domain requests.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

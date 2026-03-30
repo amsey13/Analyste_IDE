@@ -71,7 +71,7 @@ public class PdfReportService {
      * @throws DocumentException if writing to document fails
      */
     private void addBrandHeader(Document document) throws DocumentException {
-        Paragraph header = new Paragraph("MamadyCorporation", corpFont);
+        Paragraph header = new Paragraph("AnalytiQ", corpFont);
         header.setAlignment(Element.ALIGN_RIGHT);
         document.add(header);
         document.add(new Paragraph(new Chunk(new LineSeparator(1, 100, PRIMARY_BLUE, Element.ALIGN_CENTER, -2))));

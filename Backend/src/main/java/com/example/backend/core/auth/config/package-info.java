@@ -1,8 +1,8 @@
 /**
- * Couche de configuration technique.
- * Ce package centralise les paramétrages du framework Spring Boot.
- * Responsabilités :
- * - Configuration de la sécurité OIDC avec JumpCloud.
- * - Définition des Beans globaux et de la documentation API (Swagger).
+ * Technical Configuration Layer.
+ * This package centralizes Spring Boot framework settings.
+ * * Responsibilities:
+ * - OIDC Security configuration integrated with JumpCloud.
+ * - Definition of global Beans and API documentation (Swagger/OpenAPI).
  */
 package com.example.backend.core.auth.config;
