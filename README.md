@@ -164,21 +164,40 @@ Vous devez copier le fichier d'exemple .env.example, le renommer en .env, et y r
 Pour cela, exécutez d'abord :
 
 ```bash
-cp .env.example .env
+cp Backend/.env.example .env          # Racine du projet (pour Docker)
+cp Backend/.env.example Backend/.env  # Dans Backend/ (pour Maven)
 ```
 
 Ouvrez ensuite le fichier .env fraîchement créé et collez/remplissez les valeurs suivantes
 
 ```bash
-JUMPCLOUD_CLIENT_ID=9c839027-42b2-4219-a0ec-664a896f9813
-JUMPCLOUD_CLIENT_SECRET=bJd8zDtWfETF1npFmXm8WoSYym
+JUMPCLOUD_CLIENT_ID=5e2c4004-513d-4347-ae95-60cc9e47b585
+JUMPCLOUD_CLIENT_SECRET=cL0Hds56kpaMI6VIVqFJxgwb8p
 ENCRYPTION_KEY=hgkauthkpnchirzg
 API_KEY_MISTRAL=df8d6CT9rG9nBJEdIUVaSGDeIIl5A4Bz
 ```
 
 Puis lancer :
 
+### Option A : La méthode "Tout-en-un" (Docker) 
+Idéal pour tester l'application sur n'importe quelle machine sans rien installer.
+À la racine du projet, lancez :
+
 ```bash
+docker-compose up --build
+```
+
+Cette commande télécharge PostgreSQL et compile/lance automatiquement le backend sur le port 8080.
+
+### Option B : La méthode "Développeur" (Maven
+Idéal pour modifier le code et voir les changements rapidement.
+
+Démarrer PostgreSQL : docker-compose up -d postgres
+
+Lancer le Back :
+
+```bash
+cd Backend
 mvn clean spring-boot:run
 ```
 
