@@ -1,11 +1,13 @@
 package com.example.backend.modules.projects.core.dao;
 
 import com.example.backend.core.auth.entity.User;
+import com.example.backend.modules.projects.acc.entity.StatusProject;
 import com.example.backend.modules.projects.core.entity.Project;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,6 +19,10 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     @Query("SELECT COALESCE(ROUND((SUM(CASE WHEN p.projectType = 'ACCOMPAGNEMENT' THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(p), 0), 2), 0.0) FROM Project p")
     Double getAccompagnementAdoptionRate();
+
+    @Query("SELECT COUNT(sp) FROM SupportProject sp WHERE sp.status = :status")
+    long countSupportProjectsByStatus(@Param("status") StatusProject status);
+
     Optional<Project> findByUserId(UUID userId);
     List<Project> findByUser(User user);
 }
