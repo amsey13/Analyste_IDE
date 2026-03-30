@@ -18,22 +18,19 @@ const props = defineProps({
 const emit = defineEmits(['update:userStories']);
 const confirm = useConfirm();
 const toast = useToast();
-
-// --- GESTION DE LA MODALE ---
 const showDialog = ref(false);
 const isEditing = ref(false);
 const isSaving = ref(false);
 
-// Modèle de données unifié
 const storyForm = ref({
   id: null,
   actorId: null,
-  description: '', // Bien corrigé ici (sans faute de frappe)
+  description: '',
   benefit: '',
   acceptanceCriteria: ''
 });
 
-// --- ACTIONS MODALE ---
+
 const openNew = () => {
   storyForm.value = { id: null, actorId: null, description: '', benefit: '', acceptanceCriteria: '' };
   isEditing.value = false;
@@ -44,7 +41,7 @@ const openEdit = (story) => {
   storyForm.value = {
     id: story.id,
     actorId: story.actor ? story.actor.id : story.actorId,
-    description: story.description || '', // Utilisation de description
+    description: story.description || '',
     benefit: story.benefit || '',
     acceptanceCriteria: story.acceptanceCriteria || ''
   };
@@ -56,7 +53,7 @@ const hideDialog = () => {
   showDialog.value = false;
 };
 
-// --- SAUVEGARDE  ---
+
 const saveStory = async () => {
   if (!storyForm.value.actorId || !storyForm.value.description.trim()) {
     toast.add({ severity: 'warn', summary: 'Attention', detail: 'L\'acteur et l\'action sont obligatoires.', life: 3000 });
@@ -66,8 +63,6 @@ const saveStory = async () => {
   isSaving.value = true;
 
   try {
-    // FIX 500 : On remet l'acteur dans le payload pour que le Backend puisse le lier lors du PUT !
-    // (Note: Si ton Backend attend "actorId" au lieu de "actor: {id}", adapte cette ligne)
     const payload = {
       description: storyForm.value.description.trim(),
       benefit: storyForm.value.benefit.trim(),
@@ -102,7 +97,8 @@ const saveStory = async () => {
     isSaving.value = false;
   }
 };
-// --- SUPPRESSION ---
+
+
 const confirmRemove = (storyId) => {
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer cette User Story ?',

@@ -44,7 +44,7 @@ public class McdParserStrategy implements ModelParserStrategy {
                     }
 
                 } catch (EOFException e) {
-                    break; // fin du fichier
+                    break;
                 }
             }
 
@@ -57,12 +57,8 @@ public class McdParserStrategy implements ModelParserStrategy {
 
 
 
-    // This code snippet is defining a method named `parse` that overrides a method from an interface
-    // (presumably `ModelParserStrategy`).
+
     @Override
-    // The `public String parse()` method in the `McdParserStrategy` class is responsible for parsing
-    // the loaded objects and generating a textual representation of the MCD (Merise Conceptual Data
-    // Model) details. Here's a breakdown of what the method does:
     public String parse() {
 
         List<Object> allObjects = loadObjects();

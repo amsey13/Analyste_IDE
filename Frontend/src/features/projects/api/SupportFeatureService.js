@@ -4,20 +4,19 @@ const BASE_URL = '/support';
 
 export const SupportFeatureService = {
 
-    // --- Gestion du BPMN ---
+
 
     async saveBpmnDiagram(projectId, bpmnXml) {
-        // Envoie le XML en texte brut (ou JSON selon comment tu as configuré ton Controller)
         const response = await apiClient.put(`${BASE_URL}/projects/${projectId}/bpmn`, bpmnXml, {
-            headers: { 'Content-Type': 'text/plain' } // Assure-toi que le Content-Type correspond
+            headers: { 'Content-Type': 'text/plain' }
         });
         return response.data;
     },
 
-    // --- Gestion des Acteurs ---
+
 
     async addActor(projectId, actorData) {
-        // actorData doit correspondre à ActorDTO { name: "..." }
+
         const response = await apiClient.post(`${BASE_URL}/projects/${projectId}/actors`, actorData);
         return response.data;
     },
@@ -32,10 +31,9 @@ export const SupportFeatureService = {
         return response.data;
     },
 
-    // --- Gestion des User Stories ---
+
 
     async addUserStory(projectId, actorId, userStoryData) {
-        // userStoryData doit correspondre à UserStoryDTO { identifier: "...", description: "..." }
         const response = await apiClient.post(`${BASE_URL}/projects/${projectId}/actors/${actorId}/user-stories`, userStoryData);
         return response.data;
     },
@@ -50,7 +48,6 @@ export const SupportFeatureService = {
         return response.data;
     },
 
-    // --- Gestion du Dictionnaire de Données ---
 
     async addDictionaryEntry(projectId, entryData) {
         const response = await apiClient.post(`/support/projects/${projectId}/dictionary-entries`, entryData);
@@ -104,7 +101,7 @@ export const SupportFeatureService = {
         await apiClient.delete(`/support/associations/${associationId}`);
     },
 
-    // --- RÈGLES DE GESTION ---
+
 
     async getBusinessRules(projectId) {
         const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/business-rules`);
@@ -137,9 +134,9 @@ export const SupportFeatureService = {
 
     async exportMcdFile(projectId) {
         const response = await apiClient.get(`${BASE_URL}/projects/${projectId}/export/mcd`, {
-            responseType: 'arraybuffer', // 🚨 CRUCIAL : On force le buffer binaire pur
+            responseType: 'arraybuffer',
             headers: {
-                'Accept': 'application/octet-stream' // 🚨 On interdit le JSON
+                'Accept': 'application/octet-stream'
             }
         });
         return response.data;

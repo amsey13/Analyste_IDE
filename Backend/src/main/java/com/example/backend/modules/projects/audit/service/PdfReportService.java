@@ -24,7 +24,7 @@ public class PdfReportService {
     private static final Color LIGHT_BG = new Color(248, 249, 250);
     private static final Color TEXT_GRAY = new Color(95, 111, 134);
 
-    // Polices changez selon le style que vous voulez critiqueurs
+
     private final Font corpFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, PRIMARY_BLUE);
     private final Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.BLACK);
     private final Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, PRIMARY_BLUE);

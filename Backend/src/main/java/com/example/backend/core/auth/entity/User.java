@@ -14,16 +14,16 @@ import com.example.backend.modules.projects.core.entity.Project;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Attention, c'est UUID ici, pas IDENTITY
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "full_name") // Fait le lien avec full_name en base
+    @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "external_id", unique = true) // Fait le lien avec external_id en base
+    @Column(name = "external_id", unique = true)
     private String externalId;
 
     @Column(name = "is_active")

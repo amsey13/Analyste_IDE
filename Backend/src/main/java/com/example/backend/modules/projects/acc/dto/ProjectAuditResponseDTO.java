@@ -3,9 +3,9 @@ package com.example.backend.modules.projects.acc.dto;
 import java.util.List;
 
 public class ProjectAuditResponseDTO {
-    private int score; // Score sur 100
-    private List<String> inconsistencies; // Les erreurs trouvées
-    private List<String> corrections; // Les conseils de Mistral
+    private int score;
+    private List<String> inconsistencies;
+    private List<String> corrections;
 
     public int getScore() { return score; }
     public void setScore(int score) { this.score = score; }

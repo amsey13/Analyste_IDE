@@ -13,8 +13,6 @@ import com.example.backend.modules.projects.acc.service.SupportFeatureService;
 import com.example.backend.modules.projects.core.dao.ProjectRepository;
 import com.example.backend.modules.projects.core.exception.UnauthorizedAccessException;
 import com.example.backend.modules.projects.acc.mapper.SupportProjectMapper;
-
-// Remplace ces imports par les vrais chemins de ton projet si nécessaire
 import com.example.backend.modules.analysis.exporter.MistralService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +36,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class SupportFeatureServiceTest {
 
-    // 1. Déclaration de TOUS les mocks nécessaires pour le constructeur du service
     @Mock private ActorRepository actorRepository;
     @Mock private UserStoryRepository userStoryRepository;
     @Mock private ProjectRepository projectRepository;
@@ -48,11 +45,8 @@ public class SupportFeatureServiceTest {
     @Mock private BusinessRuleRepository businessRuleRepository;
     @Mock private LogExecutionRepository logExecutionRepository;
     @Mock private MistralService mistralService;
-
-    // 2. Le service à tester (SANS @InjectMocks !)
     private SupportFeatureService supportService;
 
-    // 3. Initialisation manuelle pour garantir que le Mapper n'est pas null
     @BeforeEach
     void setUp() {
         SupportProjectMapper realMapper = new SupportProjectMapper();
@@ -73,10 +67,9 @@ public class SupportFeatureServiceTest {
         );
     }
 
-    // Helper pour créer un projet cohérent (qui génère bien un UUID unique à chaque fois)
     private SupportProject createMockProject(String ownerId) {
         SupportProject project = new SupportProject();
-        project.setIdProject(UUID.randomUUID()); // Génère un ID unique
+        project.setIdProject(UUID.randomUUID());
         User owner = new User();
         owner.setExternalId(ownerId);
         project.setUser(owner);
@@ -141,7 +134,6 @@ public class SupportFeatureServiceTest {
 
     @Test
     void testAddUserStoryActorProjectMismatch() {
-        // Grâce au helper, p1 et p2 auront automatiquement des UUID différents !
         SupportProject p1 = createMockProject("user1");
         UUID p1Id = p1.getIdProject();
 
@@ -150,14 +142,13 @@ public class SupportFeatureServiceTest {
 
         Actor actor = new Actor();
         actor.setId(aid);
-        actor.setProject(p2); // L'acteur appartient à P2, pas à P1
+        actor.setProject(p2);
 
         when(projectRepository.findById(p1Id)).thenReturn(Optional.of(p1));
         when(actorRepository.findById(aid)).thenReturn(Optional.of(actor));
 
         try (MockedStatic<SecurityContextHolder> ms = mockStatic(SecurityContextHolder.class)) {
             mockAuth(ms, "user1");
-            // Doit lever l'exception car aid appartient à p2 et on essaie d'ajouter dans p1
             assertThrows(UnauthorizedAccessException.class, () ->
                     supportService.addUserStory(p1Id, aid, "X","Y","Z")
             );
@@ -199,11 +190,9 @@ public class SupportFeatureServiceTest {
 
             msBpmn.when(() -> BpmnParserStrategy.extractLinkedUserStories(anyString()))
                     .thenReturn(Set.of(us1.getId().toString()));
-
-            // Act
             supportService.saveBpmnDiagram(pid, "<bpmn>test</bpmn>");
 
-            // Assert
+
             assertEquals("<bpmn>test</bpmn>", project.getBpmnXml(), "Le XML doit être sauvegardé");
             assertEquals(50.0, project.getCoverageScore(), "Le score doit être de 50.0% (1 US sur 2)");
             verify(projectRepository).save(project);

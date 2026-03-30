@@ -38,9 +38,6 @@ public class BpmnParserStrategy implements ModelParserStrategy {
 
     }
 
-    // Strategy methods implementation
-
-
 
     /**
      * Nettoie les noms extraits du XML pour éviter les sauts de ligne (&#10;)
@@ -48,7 +45,6 @@ public class BpmnParserStrategy implements ModelParserStrategy {
      */
     private String cleanXmlValue(String value) {
         if (value == null) return "";
-        // Remplace les sauts de ligne, tabulations et espaces multiples par un seul espace
         return value.replaceAll("[\\n\\r\\t]+", " ").replaceAll("\\s{2,}", " ").trim();
     }
 

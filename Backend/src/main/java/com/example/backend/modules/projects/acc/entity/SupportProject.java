@@ -39,7 +39,7 @@ public class SupportProject extends Project {
         this.coverageScore = coverageScore;
     }
 
-    // Design Pattern "Composition" : Le projet gère le cycle de vie de ses dépendances (CascadeType.ALL)
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Actor> actors = new ArrayList<>();
 

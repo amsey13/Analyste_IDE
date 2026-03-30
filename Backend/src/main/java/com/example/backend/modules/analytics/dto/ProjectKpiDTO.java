@@ -23,8 +23,6 @@ public class ProjectKpiDTO {
         this.failurePdfGenerationRate = failurePdfGenerationRate;
         this.avgGenerationTime = avgGenerationTime;
         this.totalAuditRun = totalAuditRun;
-
-        // Calcul automatique de la santé
         this.systemHealth = determineHealth();
     }
 

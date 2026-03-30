@@ -29,7 +29,6 @@ public class SupportFeatureController {
     private SupportFeatureService supportService;
 
 
-    // --- Gestion des Acteurs ---
 
     /**
      * Ajoute un acteur à un projet.
@@ -62,7 +61,6 @@ public class SupportFeatureController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- Gestion des User Stories ---
 
     /**
      * Ajoute une User Story liée à un acteur spécifique.
@@ -186,13 +184,12 @@ public class SupportFeatureController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- ROUTES RÈGLES DE GESTION ---
-    @GetMapping("/projects/{projectId}/business-rules") // <-- Ajout de /projects/
+    @GetMapping("/projects/{projectId}/business-rules")
     public ResponseEntity<List<BusinessRuleResponseDTO>> getBusinessRules(@PathVariable UUID projectId) {
         return ResponseEntity.ok(supportService.getBusinessRules(projectId));
     }
 
-    @PostMapping("/projects/{projectId}/business-rules") // <-- Ajout de /projects/
+    @PostMapping("/projects/{projectId}/business-rules")
     public ResponseEntity<BusinessRuleResponseDTO> addBusinessRule(
             @PathVariable UUID projectId,
             @Valid @RequestBody BusinessRuleRequestDTO request) {
@@ -222,13 +219,12 @@ public class SupportFeatureController {
         try {
             return ResponseEntity.ok(supportService.auditProject(projectId));
         } catch (IOException e) {
-            // NOUVEAU : On force l'affichage de l'erreur dans IntelliJ !
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    // Récupère simplement le dernier audit enregistré
+
     @GetMapping("/projects/{projectId}/audit")
     public ResponseEntity<ProjectAuditResponseDTO> getAudit(@PathVariable UUID projectId) {
         try {
@@ -236,19 +232,15 @@ public class SupportFeatureController {
             if (report != null) {
                 return ResponseEntity.ok(report);
             }
-            return ResponseEntity.noContent().build(); // Renvoie 204 si aucun audit n'existe
+            return ResponseEntity.noContent().build();
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @GetMapping("/projects/{projectId}/export/mcd") // Ajuste l'URL selon tes conventions
+    @GetMapping("/projects/{projectId}/export/mcd")
     public ResponseEntity<byte[]> exportProjectToMcd(@PathVariable UUID projectId) {
-
-        // On appelle la méthode qu'on vient de créer
         byte[] mcdFileBytes = supportService.generateMcdFile(projectId);
-
-        // On configure les en-têtes pour forcer le téléchargement du fichier binaire
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDispositionFormData("attachment", "Modele_JMerise.mcd");
