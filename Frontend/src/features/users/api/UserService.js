@@ -3,8 +3,8 @@ import apiClient from '../../../api/HttpClient.js';
 export const UserService = {
 
     /**
-     * Récupère le profil de l'utilisateur actuellement connecté
-     * @returns {Promise<Object>} Les données de l'utilisateur
+     * Retrieves the profile of the currently authenticated user
+     * @returns {Promise<Object>} The user data
      */
     async getCurrentUser() {
         try {
