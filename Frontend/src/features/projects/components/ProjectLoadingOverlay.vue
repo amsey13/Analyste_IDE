@@ -30,7 +30,7 @@ const messages = {
   ]
 };
 
-// Intervalle entre les messages selon le mode
+
 const messageIntervals = {
   open: 1500,
   create: 1500,
