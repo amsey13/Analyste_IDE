@@ -21,6 +21,12 @@ public class SupportProjectMapper implements ProjectMapper {
         return project instanceof SupportProject;
     }
 
+    /**
+     * Maps a SupportProject entity to a SupportProjectResponseDTO.
+     *
+     * @param project the project to map
+     * @return the mapped project DTO with its related data
+     */
     @Override
     public ProjectResponseDTO map(Project project) {
         SupportProject support = (SupportProject) project;
@@ -52,8 +58,15 @@ public class SupportProjectMapper implements ProjectMapper {
         return dto;
     }
 
+    /**
+     * Converts a DictionaryEntry entity to its DTO representation.
+     *
+     * @param entry the dictionary entry entity
+     * @return the corresponding DTO
+     */
     public DictionaryEntryResponseDTO toDictionaryEntryDTO(DictionaryEntry entry) {
-        if (entry == null) return null;
+        if (entry == null)
+            return null;
         DictionaryEntryResponseDTO dto = new DictionaryEntryResponseDTO();
         dto.setId(entry.getId());
         dto.setName(entry.getName());
@@ -67,8 +80,15 @@ public class SupportProjectMapper implements ProjectMapper {
         return dto;
     }
 
+    /**
+     * Converts a DictionaryAttribute entity to its DTO representation.
+     *
+     * @param attr the dictionary attribute entity
+     * @return the corresponding DTO
+     */
     public DictionaryAttributeResponseDTO toDictionaryAttributeDTO(DictionaryAttribute attr) {
-        if (attr == null) return null;
+        if (attr == null)
+            return null;
         DictionaryAttributeResponseDTO dto = new DictionaryAttributeResponseDTO();
         dto.setId(attr.getId());
         dto.setName(attr.getName());
@@ -80,8 +100,15 @@ public class SupportProjectMapper implements ProjectMapper {
         return dto;
     }
 
+    /**
+     * Converts a UserStory entity to its DTO representation.
+     *
+     * @param us the user story entity
+     * @return the corresponding DTO
+     */
     public UserStoryResponseDTO toUserStoryDTO(UserStory us) {
-        if (us == null) return null;
+        if (us == null)
+            return null;
         UserStoryResponseDTO dto = new UserStoryResponseDTO();
         dto.setId(us.getId());
         dto.setIdentifier(us.getIdentifier());
@@ -96,14 +123,27 @@ public class SupportProjectMapper implements ProjectMapper {
         return dto;
     }
 
+    /**
+     * Converts an Actor entity to its DTO representation.
+     *
+     * @param actor the actor entity
+     * @return the corresponding DTO
+     */
     public ActorResponseDTO toActorDTO(Actor actor) {
-        if (actor == null) return null;
+        if (actor == null)
+            return null;
         ActorResponseDTO dto = new ActorResponseDTO();
         dto.setId(actor.getId());
         dto.setName(actor.getName());
         return dto;
     }
 
+    /**
+     * Converts a DictionaryAssociation entity to its DTO representation.
+     *
+     * @param entity the association entity
+     * @return the corresponding DTO
+     */
     public DictionaryAssociationResponseDTO toDictionaryAssociationDTO(DictionaryAssociation entity) {
         if (entity == null) {
             return null;
@@ -133,8 +173,15 @@ public class SupportProjectMapper implements ProjectMapper {
         return dto;
     }
 
+    /**
+     * Converts a BusinessRule entity to its DTO representation.
+     *
+     * @param entity the business rule entity
+     * @return the corresponding DTO
+     */
     public BusinessRuleResponseDTO toBusinessRuleResponseDTO(BusinessRule entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
         BusinessRuleResponseDTO dto = new BusinessRuleResponseDTO();
         dto.setId(entity.getId());
         dto.setCode(entity.getCode());
