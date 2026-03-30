@@ -318,42 +318,59 @@ const goToLatestReport = () => {
     </div>
 
     <Drawer
-      v-model:visible="drawerVisible"
-      position="right"
-      class="project-drawer !w-full md:!w-28rem lg:!w-[30rem]"
-  >
-    <div v-if="selectedProject" class="project-drawer__content">
-      <h2 class="project-drawer__title">{{ selectedProject.name }}</h2>
-      <span class="badge" :class="getBadgeClass(selectedProject.project_type)">        {{ formatProjectType(selectedProject.project_type) }}
-      </span>
-      <p class="project-drawer__text">
-        {{ selectedProject.description || 'Pas de description' }}
-      </p>
+        v-model:visible="drawerVisible"
+        position="right"
+        class="project-drawer !w-full md:!w-28rem lg:!w-[30rem]"
+    >
+      <div v-if="selectedProject">
 
-      <div class="flex flex-column gap-3 mt-4">
-        <Button
-            label="Ouvrir ce projet"
-            icon="pi pi-arrow-right"
-            class="w-full"
-            @click="goToProject"
-        />
+        <div class="drawer__hero">
+          <span class="badge" :class="getBadgeClass(selectedProject.project_type)">
+          {{ formatProjectType(selectedProject.project_type) }}
+        </span>
+          <h2 class="drawer__hero-title">{{ selectedProject.name }}</h2>
+          <p class="drawer__hero-desc">{{ selectedProject.description || 'Pas de description' }}</p>
+        </div>
 
-        <Button
-            v-if="latestReport"
-            label="Voir le dernier audit"
-            icon="pi pi-history"
-            severity="secondary"
-            outlined
-            class="w-full"
-            @click="goToLatestReport"
-        />
-        
-        <small v-if="latestReport" class="text-center text-500 italic">
-          Dernière analyse : {{ latestReport.score }}% de cohérence
-        </small>
+        <div class="drawer__body">
+          <div v-if="latestReport">
+            <div class="drawer__score">
+              <div class="drawer__score-left">
+                <span class="drawer__score-label">Dernière analyse</span>
+                <span class="drawer__score-sub">de cohérence</span>
+              </div>
+              <div class="drawer__score-right">
+                <span class="drawer__score-value">{{ latestReport.score }}</span>
+                <span class="drawer__score-pct">%</span>
+              </div>
+            </div>
+            <div class="drawer__score-bar">
+              <div class="drawer__score-fill" :style="{ width: latestReport.score + '%' }"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer__actions">
+          <Button
+              label="Ouvrir ce projet"
+              icon="pi pi-arrow-right"
+              class="w-full"
+              style="background: #1f355e; border-color: #1f355e;"
+              @click="goToProject"
+          />
+          <Button
+              v-if="latestReport"
+              label="Voir le dernier audit"
+              icon="pi pi-history"
+              severity="secondary"
+              outlined
+              class="w-full"
+              @click="goToLatestReport"
+          />
+        </div>
+
       </div>
-    </div>
-  </Drawer>
+    </Drawer>
   </div>
 </template>
 
@@ -462,9 +479,72 @@ const goToLatestReport = () => {
 
 .projects-page__paginator { margin-top: 2rem; display: flex; justify-content: center; }
 
-.project-drawer__content { display: flex; flex-direction: column; gap: 1rem; }
-.project-drawer__title { font-size: 1.5rem; font-weight: 700; color: #1f355e; margin: 0; }
-.project-drawer__text { font-size: 0.95rem; line-height: 1.5; color: #374a67; margin: 0; }
+.drawer__hero {
+  background: #1f355e;
+  padding: 1.75rem 1.5rem 1.25rem;
+}
+
+.drawer__hero-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1.3;
+  margin: 0.6rem 0 0.5rem;
+}
+
+.drawer__hero-desc {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.drawer__body {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.drawer__score {
+  background: #eef2f7;
+  border-radius: 12px;
+  border: 1.5px solid #dde3ea;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer__score-left { display: flex; flex-direction: column; gap: 2px; }
+.drawer__score-label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.drawer__score-sub { font-size: 0.78rem; color: #94a3b8; }
+.drawer__score-right { display: flex; align-items: baseline; gap: 2px; }
+.drawer__score-value { font-size: 2.5rem; font-weight: 700; color: #1f355e; line-height: 1; }
+.drawer__score-pct { font-size: 1rem; color: #64748b; }
+
+.drawer__score-bar {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.drawer__score-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+.drawer__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1.5px solid #e8edf2;
+}
 
 @media (max-width: 1200px) { .projects-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 768px) { .projects-grid { grid-template-columns: 1fr; } .projects-page__header { flex-direction: column; } }
