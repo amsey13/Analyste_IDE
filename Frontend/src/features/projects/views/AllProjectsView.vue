@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { ProjectService } from '../api/ProjectService.js';
+import { useRoute } from 'vue-router';
 
 import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
@@ -16,6 +17,7 @@ const latestReport = ref(null);
 const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
+const route = useRoute();
 
 const projects = ref([]);
 const isLoading = ref(false);
@@ -27,6 +29,8 @@ const first = ref(0);
 const rows = ref(6);
 
 const searchQuery = ref('');
+const typeFilter = ref('');
+
 
 // Normalisation des données projet pour éviter les différences de structure
 const normalizeProject = (project) => {
@@ -51,13 +55,21 @@ const sortProjectsByLatestDate = (projects) => {
 };
 
 const filteredProjects = computed(() => {
-  if (!searchQuery.value) return projects.value;
+  let result = projects.value;
 
-  return projects.value.filter(project =>
-      (project.name || '')
-          .toLowerCase()
-          .includes(searchQuery.value.toLowerCase())
-  );
+  if (typeFilter.value) {
+    result = result.filter(p =>
+        (p.project_type || '').toLowerCase() === typeFilter.value.toLowerCase()
+    );
+  }
+
+  if (searchQuery.value) {
+    result = result.filter(p =>
+        (p.name || '').toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  }
+
+  return result;
 });
 
 const truncateDescription = (text, maxLength = 70) => {
@@ -72,6 +84,13 @@ onMounted(async () => {
   try {
     const data = await ProjectService.getProjects();
     projects.value = sortProjectsByLatestDate(data.map(normalizeProject));
+
+    if (route.query.type) {
+      console.log('Query type:', route.query.type);
+      console.log('Premier projet type:', projects.value[0]?.project_type);
+      console.log('Comparaison:', projects.value[0]?.project_type === route.query.type);
+      typeFilter.value = route.query.type;
+    }
   } catch (error) {
     console.error('Erreur lors du chargement des projets :', error);
     toast.add({
@@ -207,8 +226,8 @@ const goToLatestReport = () => {
   <div class="projects-page">
     <div class="projects-page__header">
       <div>
-        <h1 class="projects-page__title">Tous les projets</h1>
-        <p class="projects-page__subtitle">Liste complète des projets disponibles.</p>
+        <h1 class="projects-page__title">Vos projets</h1>
+        <p class="projects-page__subtitle">Voici la liste complète de vos projets disponibles.</p>
       </div>
 
       <div class="projects-page__actions">

@@ -36,6 +36,17 @@ const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
 };
 
+const modeDescriptions = {
+  accompagnement: 'Faites-vous accompagner pour votre analyse de A à Z avec cette fonctionnalité. Définissez vos acteurs, vos User-Stories,.. je suis fatigué LOL.',
+  audit: 'Analysez et auditez la qualité de vos modélisations fonctionnelles (BPMN, MCD, User Stories).'
+};
+
+const openMode = ref(null);
+
+const toggleMode = (mode) => {
+  openMode.value = openMode.value === mode ? null : mode;
+};
+
 // Déconnexion utilisateur
 const logout = () => {
   window.location.href = 'http://localhost:8080/logout';
@@ -81,27 +92,56 @@ const isActiveRoute = (path) => {
           Modes
         </div>
 
-        <!-- Mode Accompagnement : route fixe vers la liste -->
-        <router-link
-            to="/app/accompagnement"
-            class="sidebar__link"
-            :class="{ 'sidebar__link--active': route.path.startsWith('/app/accompagnement') }"
-            :title="isSidebarCollapsed ? 'Accompagnement' : ''"
-        >
-          <i class="pi pi-users sidebar__link-icon"></i>
-          <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accompagnement</span>
-        </router-link>
+        <!-- Mode Accompagnement -->
+        <div class="sidebar__mode-block">
+          <div
+              class="sidebar__link"
+              :class="{ 'sidebar__link--active': route.path.startsWith('/app/accompagnement') }"
+              @click="toggleMode('accompagnement')"
+          >
+            <i class="pi pi-users sidebar__link-icon"></i>
+            <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accompagnement</span>
+            <i
+                v-if="!isSidebarCollapsed"
+                :class="openMode === 'accompagnement' ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+                class="sidebar__link-chevron"
+            ></i>
+          </div>
+          <Transition name="slide-down">
+            <div v-if="openMode === 'accompagnement' && !isSidebarCollapsed" class="sidebar__mode-desc">
+              <p>{{ modeDescriptions.accompagnement }}</p>
+              <router-link to="/app/projects/all?type=accompagnement" class="sidebar__mode-link">
+                <i class="pi pi-arrow-right mr-1"></i> Voir mes projets d'accompagnement
+              </router-link>
+            </div>
+          </Transition>
+        </div>
 
-        <!-- Mode Audit : route fixe vers la liste -->
-        <router-link
-            to="/app/audit"
-            class="sidebar__link"
-            :class="{ 'sidebar__link--active': route.path.startsWith('/app/audit') }"
-            :title="isSidebarCollapsed ? 'Audit Qualité' : ''"
-        >
-          <i class="pi pi-check-circle sidebar__link-icon"></i>
-          <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Audit Qualité</span>
-        </router-link>
+        <!-- Mode Audit -->
+        <div class="sidebar__mode-block">
+          <div
+              class="sidebar__link"
+              :class="{ 'sidebar__link--active': route.path.startsWith('/app/audit') }"
+              @click="toggleMode('audit')"
+          >
+            <i class="pi pi-search sidebar__link-icon"></i>
+            <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Audit Qualité</span>
+            <i
+                v-if="!isSidebarCollapsed"
+                :class="openMode === 'audit' ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+                class="sidebar__link-chevron"
+            ></i>
+          </div>
+          <Transition name="slide-down">
+            <div v-if="openMode === 'audit' && !isSidebarCollapsed" class="sidebar__mode-desc">
+              <p>{{ modeDescriptions.audit }}</p>
+              <router-link to="/app/projects/all?type=audit" class="sidebar__mode-link">
+                <i class="pi pi-arrow-right mr-1"></i> Voir mes projets d'audit
+              </router-link>
+            </div>
+          </Transition>
+        </div>
+
       </nav>
 
       <!-- Pied du sidebar -->
@@ -218,6 +258,29 @@ const isActiveRoute = (path) => {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebar__link-wrapper {
+  position: relative;
+}
+
+.sidebar__link-wrapper[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1e293b;
+  color: white;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  white-space: normal;
+  width: 200px;
+  z-index: 999;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .sidebar__link {
@@ -347,4 +410,63 @@ const isActiveRoute = (path) => {
   padding: 1.35rem;
   overflow-y: auto;
 }
+
+.sidebar__mode-block {
+  margin-bottom: 0.315rem;
+}
+
+.sidebar__link-chevron {
+  margin-left: auto;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.sidebar__mode-desc {
+  margin: 0 0.5rem 0.5rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  border-left: 3px solid rgba(0, 184, 217, 0.5);
+}
+
+.sidebar__mode-desc p {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+  margin: 0 0 0.6rem;
+}
+
+.sidebar__mode-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #00b8d9;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.2s;
+}
+
+.sidebar__mode-link:hover {
+  opacity: 0.8;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-6px);
+}
+
+.slide-down-enter-to,
+.slide-down-leave-from {
+  opacity: 1;
+  max-height: 200px;
+}
+
 </style>
