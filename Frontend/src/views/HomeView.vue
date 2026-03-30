@@ -10,14 +10,12 @@ import { useToast } from 'primevue/usetoast';
 const router = useRouter();
 const toast = useToast();
 const loading = ref(false);
-const initialCheck = ref(true); // Pour éviter un flash visuel du bouton si déjà connecté
+const initialCheck = ref(true);
 
 onMounted(async () => {
   try {
 
     await UserService.getCurrentUser();
-
-
     router.push('/app/projects');
   } catch (error) {
 
@@ -34,8 +32,6 @@ onMounted(async () => {
           life: 5000
         });
       }, 100);
-
-      // Nettoyage de l'URL pour éviter que l'erreur boucle en cas de rafraîchissement
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }

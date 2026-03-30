@@ -35,5 +35,5 @@ public class SupportProjectRequestDTO extends BaseProjectRequestDTO {
     }
 
 
-    //Maybe one day they'll be something there ...
+
 }

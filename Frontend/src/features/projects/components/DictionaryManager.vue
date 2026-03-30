@@ -13,7 +13,8 @@ import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 
-// Props & Emits
+const confirm = useConfirm();
+const toast = useToast();
 const props = defineProps({
   projectId: {
     type: String,
@@ -25,45 +26,30 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['refresh']); // Permet de dire au parent de recharger les données après une modif
-
-// Services
-const confirm = useConfirm();
-const toast = useToast();
-
-// États pour le tableau
-const expandedRows = ref({}); // Gère quelles lignes sont dépliées
-
-// États pour la modale Entité
+const emit = defineEmits(['refresh']);
+const expandedRows = ref({});
 const entryDialog = ref(false);
 const isEditingEntry = ref(false);
 const currentEntry = ref({ name: '', description: '' });
-
-// États pour la modale Attribut
 const attributeDialog = ref(false);
 const isEditingAttribute = ref(false);
-const selectedEntryId = ref(null); // Savoir à quelle entité on ajoute l'attribut
+const selectedEntryId = ref(null);
 const currentAttribute = ref({
   name: '', dataType: 'VARCHAR', size: '', primaryKey: false, notNull: false, description: ''
 });
 
-// Options pour le Dropdown des types SQL
 const dataTypes = ref(['VARCHAR', 'INT', 'BOOLEAN', 'DATE', 'DATETIME', 'DECIMAL', 'TEXT']);
 const isSuggesting = ref(false);
 const suggestDialog = ref(false);
 const suggestions = ref([]);
 const selectedSuggestions = ref([]);
-
-// ==========================================
-// --- GESTION DES ENTITÉS ---
-// ==========================================
 const fetchSuggestions = async () => {
   isSuggesting.value = true;
   try {
     const data = await SupportFeatureService.suggestDictionary(props.projectId);
     if (data && data.length > 0) {
       suggestions.value = data;
-      selectedSuggestions.value = [...data]; // Tout est coché par défaut
+      selectedSuggestions.value = [...data];
       suggestDialog.value = true;
     } else {
       toast.add({ severity: 'info', summary: 'Information', detail: 'Aucune entité claire trouvée dans ces User Stories.', life: 3000 });
@@ -77,7 +63,6 @@ const fetchSuggestions = async () => {
 
 const applySuggestions = async () => {
   try {
-    // Sauvegarde séquentielle des entités et de leurs attributs
     for (const entry of selectedSuggestions.value) {
       const savedEntry = await SupportFeatureService.addDictionaryEntry(props.projectId, entry);
 
@@ -89,7 +74,7 @@ const applySuggestions = async () => {
     }
     toast.add({ severity: 'success', summary: 'Succès', detail: 'Dictionnaire généré !', life: 3000 });
     suggestDialog.value = false;
-    emit('refresh'); // Met à jour le tableau principal
+    emit('refresh');
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Problème lors de la sauvegarde.', life: 3000 });
   }
@@ -102,7 +87,7 @@ const openNewEntry = () => {
 };
 
 const editEntry = (entry) => {
-  currentEntry.value = { ...entry }; // Copie pour ne pas modifier direct
+  currentEntry.value = { ...entry };
   isEditingEntry.value = true;
   entryDialog.value = true;
 };
@@ -117,7 +102,7 @@ const saveEntry = async () => {
       toast.add({ severity: 'success', summary: 'Succès', detail: 'Entité créée', life: 3000 });
     }
     entryDialog.value = false;
-    emit('refresh'); // On demande au parent de recharger le projet
+    emit('refresh');
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la sauvegarde', life: 3000 });
   }
@@ -142,17 +127,13 @@ const confirmDeleteEntry = (entry) => {
   });
 };
 
-// ==========================================
-// --- GESTION DES ATTRIBUTS ---
-// ==========================================
-
 const openNewAttribute = (entry) => {
   selectedEntryId.value = entry.id;
   currentAttribute.value = { name: '', dataType: 'VARCHAR', size: '', primaryKey: false, notNull: false, description: '' };
   isEditingAttribute.value = false;
   attributeDialog.value = true;
 
-  // Ouvre automatiquement la ligne pour voir l'attribut ajouté
+
   if (!expandedRows.value[entry.id]) {
     expandedRows.value[entry.id] = true;
   }
@@ -383,9 +364,9 @@ const confirmDeleteAttribute = (attribute) => {
   background-color: #f8fafc;
 }
 
-/* Améliorations de l'espacement des modales */
+
 :deep(.custom-dialog) .p-dialog-content {
-  padding-top: 1rem !important; /* Décolle le formulaire du header */
+  padding-top: 1rem !important;
 }
 
 :deep(.custom-dialog) .p-dialog-header {

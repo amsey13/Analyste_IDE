@@ -1,47 +1,44 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { UserService } from '../features/users/api/UserService';
+import {ref, onMounted, watch} from 'vue';
+import {useRoute} from 'vue-router';
+import {UserService} from '../features/users/api/UserService';
 import Button from 'primevue/button';
 
 const user = ref(null);
 const route = useRoute();
 
-// État du sidebar : réduit ou étendu
+
 const isSidebarCollapsed = ref(false);
 
 onMounted(async () => {
   try {
-    // Récupération de l'utilisateur connecté
     user.value = await UserService.getCurrentUser();
   } catch (error) {
-    // En cas de session absente/invalide
     console.error('Session introuvable, retour à l’accueil');
   }
 
-  // Restauration de l'état du sidebar depuis le navigateur
+
   const savedSidebarState = localStorage.getItem('sidebar-collapsed');
   if (savedSidebarState !== null) {
     isSidebarCollapsed.value = savedSidebarState === 'true';
   }
 });
 
-// Sauvegarde automatique de l'état du sidebar
 watch(isSidebarCollapsed, (value) => {
   localStorage.setItem('sidebar-collapsed', String(value));
 });
 
-// Ouvre / réduit le sidebar
+
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
 };
 
-// Déconnexion utilisateur
+
 const logout = () => {
   window.location.href = 'http://localhost:8080/logout';
 };
 
-// Gestion simple de l'état actif des liens du menu
+
 const isActiveRoute = (path) => {
   if (path === '/app/projects') {
     return route.path === '/app/projects' || route.path === '/app/projects/all' || route.path === '/app/project/create';
@@ -65,7 +62,7 @@ const isActiveRoute = (path) => {
 
       <!-- Navigation -->
       <nav class="sidebar__nav">
-        <!-- Accueil conservé -->
+
         <router-link
             to="/app/projects"
             class="sidebar__link"
@@ -76,12 +73,12 @@ const isActiveRoute = (path) => {
           <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accueil</span>
         </router-link>
 
-        <!-- Section Modes -->
+
         <div v-if="!isSidebarCollapsed" class="sidebar__section-title">
           Modes
         </div>
 
-        <!-- Mode Accompagnement : route fixe vers la liste -->
+
         <router-link
             to="/app/accompagnement"
             class="sidebar__link"
@@ -92,7 +89,7 @@ const isActiveRoute = (path) => {
           <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accompagnement</span>
         </router-link>
 
-        <!-- Mode Audit : route fixe vers la liste -->
+
         <router-link
             to="/app/audit"
             class="sidebar__link"
@@ -104,7 +101,7 @@ const isActiveRoute = (path) => {
         </router-link>
       </nav>
 
-      <!-- Pied du sidebar -->
+
       <div class="sidebar__footer">
         <Button
             :label="isSidebarCollapsed ? '' : 'Déconnexion'"
@@ -118,11 +115,11 @@ const isActiveRoute = (path) => {
       </div>
     </aside>
 
-    <!-- Zone de contenu principale -->
+
     <div class="content-area">
       <header class="topbar">
         <div class="topbar__left">
-          <!-- Bouton hamburger -->
+
           <Button
               icon="pi pi-bars"
               text
@@ -134,7 +131,7 @@ const isActiveRoute = (path) => {
           <span class="topbar__title">IDE d'Analyse Fonctionnelle - AnalytiQ</span>
         </div>
 
-        <!-- Infos utilisateur -->
+
         <div v-if="user" class="topbar__user">
           <span class="topbar__user-name">{{ user.fullName }}</span>
           <div class="topbar__avatar">

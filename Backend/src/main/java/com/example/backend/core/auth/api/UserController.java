@@ -25,9 +25,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // --- LA CORRECTION ANTI-BLOCAGE FRONT-END ---
-        // On récupère le jeton CSRF dans la requête et on appelle .getToken()
-        // Cela force Spring à l'instancier et à l'envoyer dans le cookie "XSRF-TOKEN"
         CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
         if (csrfToken != null) {
             csrfToken.getToken();

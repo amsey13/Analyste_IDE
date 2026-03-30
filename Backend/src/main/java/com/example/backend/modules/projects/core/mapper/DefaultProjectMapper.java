@@ -7,12 +7,12 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(Ordered.LOWEST_PRECEDENCE) // Il s'exécute en dernier si aucun autre mapper ne "supporte" le projet
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class DefaultProjectMapper implements ProjectMapper {
 
     @Override
     public boolean supports(Project project) {
-        // Il accepte tout ce qui est au moins un "Project"
+
         return true;
     }
 

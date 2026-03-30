@@ -110,7 +110,7 @@ const formatProjectType = (type) => {
 const openProjectDrawer = async (project) => {
   selectedProject.value = project;
   drawerVisible.value = true;
-  latestReport.value = null; // Reset
+  latestReport.value = null;
 
   const id = project.idProject || project.id;
   
@@ -203,7 +203,7 @@ const goToLatestReport = () => {
   if (!selectedProject.value || !latestReport.value) return;
   drawerVisible.value = false;
   router.push({
-    name: 'AuditReport', // Vérifie que ce nom correspond à ta route dans router/index.js
+    name: 'AuditReport',
     params: { 
       id: selectedProject.value.idProject || selectedProject.value.id,
       reportId: latestReport.value.id 

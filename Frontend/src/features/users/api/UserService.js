@@ -1,6 +1,5 @@
 import apiClient from '../../../api/HttpClient.js';
 
-// Ce service a l'unique responsabilité de gérer les données Utilisateur
 export const UserService = {
 
     /**
@@ -24,11 +23,9 @@ export const UserService = {
             } else if (error.response.status === 500) {
                 console.error('[UserService] Raison : Crash interne du Backend (Vérifier les logs Java).');
             } else if (error.request) {
-                // La requête a été faite mais aucune réponse n'a été reçue (ex: ECONNREFUSED)
                 console.error('[UserService] Aucune réponse du serveur. Le Backend est-il lancé sur le port 8080 ?');
                 console.error('[UserService] Détails techniques de la requête :', error.request);
             } else {
-                // Erreur lors de la configuration de la requête
                 console.error('[UserService] Erreur de configuration Axios :', error.message);
             }
             throw error;
