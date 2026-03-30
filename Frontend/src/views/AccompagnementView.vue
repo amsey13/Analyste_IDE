@@ -12,6 +12,7 @@ import DictionaryManager from '../features/projects/components/DictionaryManager
 import McdManager from '../features/projects/components/McdManager.vue';
 import BusinessRulesManager from '../features/projects/components/BusinessRulesManager.vue';
 import { SupportFeatureService } from '../features/projects/api/SupportFeatureService.js';
+import ProjectLoadingOverlay from '../features/projects/components/ProjectLoadingOverlay.vue';
 
 
 import Tabs from 'primevue/tabs';
@@ -60,18 +61,20 @@ const loadProject = async () => {
 
 
 const isAuditing = ref(false);
+const overlayVisible = ref(false);
 
 const runAudit = async () => {
   isAuditing.value = true;
-  try {
-    toast.add({ severity: 'info', summary: 'Analyse en cours', detail: 'Mistral IA génère votre rapport...', life: 5000 });
+  overlayVisible.value = true;
 
+  try {
     await SupportFeatureService.generateAudit(projectId);
 
     router.push(`/project/${projectId}/audit-result`);
 
   } catch (error) {
     console.error("Erreur lors de l'audit", error);
+    overlayVisible.value = false;
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'L\'audit a échoué.', life: 4000 });
   } finally {
     isAuditing.value = false;
@@ -100,6 +103,12 @@ onMounted(() => {
 </script>
 
 <template>
+  <ProjectLoadingOverlay
+      :visible="overlayVisible"
+      :projectName="project?.name || ''"
+      mode="iaCalling"
+  />
+
   <div class="flex flex-column h-screen p-4 surface-ground">
 
     <div v-if="project" class="flex justify-content-between align-items-center mb-4 surface-0 p-4 border-round-xl shadow-1">

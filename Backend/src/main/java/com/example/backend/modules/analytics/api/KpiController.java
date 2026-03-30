@@ -31,7 +31,7 @@ public class KpiController {
         Map<String, Object> stats = new HashMap<>();
         stats.put("accompagnementRate", kpiService.getGlobalAccompagnementRate());
         stats.put("averageIaTimeSeconds", kpiService.getAverageIaTime() / 1000.0);
-
+        stats.put("globalCompletionRate", kpiService.getGlobalCompletionRate());
         return ResponseEntity.ok(stats);
     }
 

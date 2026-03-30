@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { SupportFeatureService } from '../api/SupportFeatureService.js';
 import { useToast } from 'primevue/usetoast';
-import { useConfirm } from 'primevue/useconfirm'; // <-- Nouvel import pour la pop-up
+import { useConfirm } from 'primevue/useconfirm';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -158,17 +158,6 @@ onMounted(loadRules);
               <i class="pi pi-list text-primary text-2xl"></i>
               <span class="text-xl font-bold">Référentiel des Règles de Gestion</span>
             </div>
-
-            <Button
-                v-if="rules.length > 0"
-                icon="pi pi-sparkles"
-                label="Générer Dictionnaire & MCD (IA)"
-                severity="help"
-                class="shadow-2 font-bold"
-                :loading="generatingAi"
-                @click="generateMcdAi"
-                title="Analyse vos règles avec Mistral AI pour construire la base de données"
-            />
           </div>
         </template>
         <template #content>
