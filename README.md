@@ -265,3 +265,9 @@ Ce projet vise à créer une **synergie entre** :
 - Glauriel Fosther BADJILA WANDJA
 
 ---
+
+
+### Identifiants de connexion à JumpCloud
+
+Email : `kalembachristian@gmail.com`
+Password : `PépéMémé1020`
