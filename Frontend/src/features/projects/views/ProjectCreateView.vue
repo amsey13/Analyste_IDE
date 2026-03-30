@@ -8,6 +8,7 @@ import {computed, ref, watch} from 'vue';
   import Password from 'primevue/password';
   import ToggleSwitch from 'primevue/toggleswitch';
   import RadioButton from 'primevue/radiobutton';
+  import ProjectLoadingOverlay from '../components/ProjectLoadingOverlay.vue';
 
 
   const router = useRouter();
@@ -15,6 +16,8 @@ import {computed, ref, watch} from 'vue';
   const taigaEnabled = ref(false);
   const nameTouched = ref(false);
   const featureTouched = ref(false);
+  const overlayVisible = ref(false);
+  const overlayProjectName = ref('');
   const nameIsValid = computed(() => {
     return /^[a-zA-ZÀ-ÿ\s]+$/.test(project.value.name.trim())
   })
@@ -66,7 +69,10 @@ import {computed, ref, watch} from 'vue';
       const newProjectId = response.idProject;
       const targetRouteName = ROUTES_BY_TYPE[payload.project_type];
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      overlayProjectName.value = payload.name;
+      overlayVisible.value = true;
+
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       if (targetRouteName) {
         await router.push({
@@ -91,6 +97,12 @@ import {computed, ref, watch} from 'vue';
 
 
 <template>
+
+  <ProjectLoadingOverlay
+      :visible="overlayVisible"
+      :projectName="overlayProjectName"
+      mode="create"
+  />
   <div class="create-page">
 
     <div class="create-page__header">

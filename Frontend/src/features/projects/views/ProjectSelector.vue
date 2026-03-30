@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { ProjectService } from '../api/ProjectService.js';
+import ProjectLoadingOverlay from '../components/ProjectLoadingOverlay.vue';
 
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -25,6 +26,8 @@ const selectedProject = ref(null);
 const latestReport = ref(null);
 
 const searchQuery = ref('');
+const overlayVisible = ref(false);
+const overlayProjectName = ref('');
 
 const normalizeProject = (project) => {
   return {
@@ -134,37 +137,30 @@ const openProjectDrawer = async (project) => {
   }
 };
 
-const goToProject = () => {
+const goToProject = async () => {
   const project = selectedProject.value;
-
-  console.log('PROJECT:', project);
-
   if (!project) return;
 
   const id = project.idProject || project.id;
-
   if (!id) {
-    console.error('ID du projet manquant ');
+    console.error('ID du projet manquant');
     return;
   }
 
   const type = project.project_type?.toLowerCase()?.trim();
 
-  console.log('TYPE:', type);
-  console.log('ID:', id);
-
   drawerVisible.value = false;
+  overlayProjectName.value = project.name;
+  overlayVisible.value = true;
+
+  await new Promise(resolve => setTimeout(resolve, 4500));
+
+  overlayVisible.value = false;
 
   if (type === 'audit') {
-    router.push({
-      name: 'audit',
-      params: { id }
-    });
+    router.push({ name: 'audit', params: { id } });
   } else if (type === 'accompagnement') {
-    router.push({
-      name: 'accompagnement',
-      params: { id }
-    });
+    router.push({ name: 'accompagnement', params: { id } });
   } else {
     console.warn('Type inconnu:', type);
   }
@@ -224,6 +220,11 @@ const goToLatestReport = () => {
 <template>
   <Toast />
   <ConfirmDialog />
+  <ProjectLoadingOverlay
+      :visible="overlayVisible"
+      :projectName="overlayProjectName"
+      mode="open"
+  />
 
   <div class="projects-page">
     <div class="projects-page__header">

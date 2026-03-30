@@ -5,6 +5,8 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { ProjectService } from '../api/ProjectService.js';
 import { useRoute } from 'vue-router';
+import ProjectLoadingOverlay from '../components/ProjectLoadingOverlay.vue';
+
 
 import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
@@ -21,6 +23,8 @@ const route = useRoute();
 
 const projects = ref([]);
 const isLoading = ref(false);
+const overlayVisible = ref(false);
+const overlayProjectName = ref('');
 
 const drawerVisible = ref(false);
 const selectedProject = ref(null);
@@ -222,6 +226,11 @@ const goToLatestReport = () => {
 <template>
   <Toast />
   <ConfirmDialog />
+  <ProjectLoadingOverlay
+      :visible="overlayVisible"
+      :projectName="overlayProjectName"
+      mode="open"
+  />
 
   <div class="projects-page">
     <div class="projects-page__header">
