@@ -19,25 +19,25 @@ public class DictionaryAssociation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // L'entité de départ (ex: Client)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_entry_id", nullable = false)
     private DictionaryEntry source;
 
-    // L'entité d'arrivée (ex: Commande)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_entry_id", nullable = false)
     private DictionaryEntry target;
 
-    // Le verbe de l'association (ex: "Passe", "Contient")
+
     @Column(nullable = false)
     private String name;
 
-    // Cardinalité côté source (ex: "0..N", "1..1")
+
     @Column(nullable = false, length = 10)
     private String sourceMultiplicity;
 
-    // Cardinalité côté cible (ex: "1..1", "1..N")
+
     @Column(nullable = false, length = 10)
     private String targetMultiplicity;
 

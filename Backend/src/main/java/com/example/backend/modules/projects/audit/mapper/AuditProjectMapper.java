@@ -22,17 +22,10 @@ public class AuditProjectMapper implements ProjectMapper {
     public ProjectResponseDTO map(Project project) {
         AuditProject audit = (AuditProject) project;
         AuditProjectResponseDTO dto = new AuditProjectResponseDTO();
-
-        // Mapping des champs communs (ID, Name, Desc, Dates)
         mapBaseFields(audit, dto);
         dto.setProjectType("audit");
-
-        // Mapping spécifique à l'Audit
         dto.setProjectSlug(audit.getProjectSlug());
-
-        // On indique si Taiga est configuré sans exposer le token
         dto.setTaigaLinked(audit.getTaigaToken() != null && !audit.getTaigaToken().isEmpty());
-
         return dto;
     }
 }
