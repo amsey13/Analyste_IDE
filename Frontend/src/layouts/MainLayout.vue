@@ -1,58 +1,53 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { UserService } from '../features/users/api/UserService';
+import {ref, onMounted, watch} from 'vue';
+import {useRoute} from 'vue-router';
+import {UserService} from '../features/users/api/UserService';
 import Button from 'primevue/button';
 
 const user = ref(null);
 const route = useRoute();
 
-// État du sidebar : réduit ou étendu
+
 const isSidebarCollapsed = ref(false);
 
 onMounted(async () => {
   try {
-    // Récupération de l'utilisateur connecté
     user.value = await UserService.getCurrentUser();
   } catch (error) {
-    // En cas de session absente/invalide
     console.error('Session introuvable, retour à l’accueil');
   }
 
-  // Restauration de l'état du sidebar depuis le navigateur
+
   const savedSidebarState = localStorage.getItem('sidebar-collapsed');
   if (savedSidebarState !== null) {
     isSidebarCollapsed.value = savedSidebarState === 'true';
   }
 });
 
-// Sauvegarde automatique de l'état du sidebar
 watch(isSidebarCollapsed, (value) => {
   localStorage.setItem('sidebar-collapsed', String(value));
 });
 
-// Ouvre / réduit le sidebar
+
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
+
+  // Si la barre latérale s'ouvre OU se ferme -> réinitialiser le sous-menu
+  if (!isSidebarCollapsed.value) {
+    openMode.value = null;
+  }
 };
 
 const modeDescriptions = {
-  accompagnement: 'Faites-vous accompagner pour votre analyse de A à Z avec cette fonctionnalité. Définissez vos acteurs, vos User-Stories, modélisez vos processus, et générez un rapport sécurisé de bout en bout à la fin.',
+  accompagnement: 'Faites-vous accompagner pour votre analyse de A à Z avec cette fonctionnalité. Définissez vos acteurs, vos User-Stories,..',
   audit: 'Analysez et auditez la qualité de vos modélisations fonctionnelles (BPMN, MCD, User Stories).'
 };
 
-const openMode = ref(null);
-
-const toggleMode = (mode) => {
-  openMode.value = openMode.value === mode ? null : mode;
-};
-
-// Déconnexion utilisateur
 const logout = () => {
   window.location.href = 'http://localhost:8080/logout';
 };
 
-// Gestion simple de l'état actif des liens du menu
+
 const isActiveRoute = (path) => {
   if (path === '/app/projects') {
     return route.path === '/app/projects' || route.path === '/app/projects/all' || route.path === '/app/project/create';
@@ -76,7 +71,7 @@ const isActiveRoute = (path) => {
 
       <!-- Navigation -->
       <nav class="sidebar__nav">
-        <!-- Accueil conservé -->
+
         <router-link
             to="/app/projects"
             class="sidebar__link"
@@ -87,64 +82,35 @@ const isActiveRoute = (path) => {
           <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accueil</span>
         </router-link>
 
-        <!-- Section Modes -->
+
         <div v-if="!isSidebarCollapsed" class="sidebar__section-title">
           Modes
         </div>
 
-        <!-- Mode Accompagnement -->
-        <div class="sidebar__mode-block">
-          <div
-              class="sidebar__link"
-              :class="{ 'sidebar__link--active': route.path.startsWith('/app/accompagnement') }"
-              @click="toggleMode('accompagnement')"
-          >
-            <i class="pi pi-users sidebar__link-icon"></i>
-            <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accompagnement</span>
-            <i
-                v-if="!isSidebarCollapsed"
-                :class="openMode === 'accompagnement' ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-                class="sidebar__link-chevron"
-            ></i>
-          </div>
-          <Transition name="slide-down">
-            <div v-if="openMode === 'accompagnement' && !isSidebarCollapsed" class="sidebar__mode-desc">
-              <p>{{ modeDescriptions.accompagnement }}</p>
-              <router-link to="/app/projects/all?type=accompagnement" class="sidebar__mode-link">
-                <i class="pi pi-arrow-right mr-1"></i> Voir mes projets d'accompagnement
-              </router-link>
-            </div>
-          </Transition>
-        </div>
 
-        <!-- Mode Audit -->
-        <div class="sidebar__mode-block">
-          <div
-              class="sidebar__link"
-              :class="{ 'sidebar__link--active': route.path.startsWith('/app/audit') }"
-              @click="toggleMode('audit')"
-          >
-            <i class="pi pi-search sidebar__link-icon"></i>
-            <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Audit Qualité</span>
-            <i
-                v-if="!isSidebarCollapsed"
-                :class="openMode === 'audit' ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-                class="sidebar__link-chevron"
-            ></i>
-          </div>
-          <Transition name="slide-down">
-            <div v-if="openMode === 'audit' && !isSidebarCollapsed" class="sidebar__mode-desc">
-              <p>{{ modeDescriptions.audit }}</p>
-              <router-link to="/app/projects/all?type=audit" class="sidebar__mode-link">
-                <i class="pi pi-arrow-right mr-1"></i> Voir mes projets d'audit
-              </router-link>
-            </div>
-          </Transition>
-        </div>
+        <router-link
+            to="/app/accompagnement"
+            class="sidebar__link"
+            :class="{ 'sidebar__link--active': route.path.startsWith('/app/accompagnement') }"
+            :title="isSidebarCollapsed ? 'Accompagnement' : ''"
+        >
+          <i class="pi pi-users sidebar__link-icon"></i>
+          <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Accompagnement</span>
+        </router-link>
 
+
+        <router-link
+            to="/app/audit"
+            class="sidebar__link"
+            :class="{ 'sidebar__link--active': route.path.startsWith('/app/audit') }"
+            :title="isSidebarCollapsed ? 'Audit Qualité' : ''"
+        >
+          <i class="pi pi-check-circle sidebar__link-icon"></i>
+          <span v-if="!isSidebarCollapsed" class="sidebar__link-text">Audit Qualité</span>
+        </router-link>
       </nav>
 
-      <!-- Pied du sidebar -->
+
       <div class="sidebar__footer">
         <Button
             :label="isSidebarCollapsed ? '' : 'Déconnexion'"
@@ -158,11 +124,11 @@ const isActiveRoute = (path) => {
       </div>
     </aside>
 
-    <!-- Zone de contenu principale -->
+
     <div class="content-area">
       <header class="topbar">
         <div class="topbar__left">
-          <!-- Bouton hamburger -->
+
           <Button
               icon="pi pi-bars"
               text
@@ -174,7 +140,7 @@ const isActiveRoute = (path) => {
           <span class="topbar__title">IDE d'Analyse Fonctionnelle - AnalytiQ</span>
         </div>
 
-        <!-- Infos utilisateur -->
+
         <div v-if="user" class="topbar__user">
           <span class="topbar__user-name">{{ user.fullName }}</span>
           <div class="topbar__avatar">
@@ -258,29 +224,6 @@ const isActiveRoute = (path) => {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.6);
-}
-
-.sidebar__link-wrapper {
-  position: relative;
-}
-
-.sidebar__link-wrapper[title]:hover::after {
-  content: attr(title);
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%);
-  background: #1e293b;
-  color: white;
-  font-size: 0.78rem;
-  line-height: 1.5;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  white-space: normal;
-  width: 200px;
-  z-index: 999;
-  pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .sidebar__link {
@@ -410,63 +353,4 @@ const isActiveRoute = (path) => {
   padding: 1.35rem;
   overflow-y: auto;
 }
-
-.sidebar__mode-block {
-  margin-bottom: 0.315rem;
-}
-
-.sidebar__link-chevron {
-  margin-left: auto;
-  font-size: 0.75rem;
-  opacity: 0.7;
-}
-
-.sidebar__mode-desc {
-  margin: 0 0.5rem 0.5rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  border-left: 3px solid rgba(0, 184, 217, 0.5);
-}
-
-.sidebar__mode-desc p {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 1.5;
-  margin: 0 0 0.6rem;
-}
-
-.sidebar__mode-link {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #00b8d9;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  transition: opacity 0.2s;
-}
-
-.sidebar__mode-link:hover {
-  opacity: 0.8;
-}
-
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.25s ease;
-  overflow: hidden;
-}
-
-.slide-down-enter-from,
-.slide-down-leave-to {
-  opacity: 0;
-  max-height: 0;
-  transform: translateY(-6px);
-}
-
-.slide-down-enter-to,
-.slide-down-leave-from {
-  opacity: 1;
-  max-height: 200px;
-}
-
 </style>

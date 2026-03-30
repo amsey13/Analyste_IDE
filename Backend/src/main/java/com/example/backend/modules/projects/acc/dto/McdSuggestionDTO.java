@@ -13,17 +13,17 @@ public class McdSuggestionDTO {
     public List<AiAssociationDTO> getAssociations() { return associations; }
     public void setAssociations(List<AiAssociationDTO> associations) { this.associations = associations; }
 
-    // Sous-classe statique pour récupérer les relations textuelles de l'IA
+
     public static class AiAssociationDTO {
         private String sourceName;
         private String targetName;
-        private String name; // Le verbe (ex: "passe")
-        private String sourceMultiplicity; // ex: "0..N"
-        private String targetMultiplicity; // ex: "1..1"
-        private String ruleCode; // ex: "RG-01"
+        private String name;
+        private String sourceMultiplicity;
+        private String targetMultiplicity;
+        private String ruleCode;
         private List<DictionaryAttributeRequestDTO> attributes;
 
-        // Getters et Setters
+
         public String getSourceName() { return sourceName; }
         public void setSourceName(String sourceName) { this.sourceName = sourceName; }
 

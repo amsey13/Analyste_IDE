@@ -6,7 +6,7 @@ import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 
-// 1. Nouvel import pour utiliser le Toast
+
 import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
@@ -23,29 +23,25 @@ const editingName = ref('');
 const isUpdating = ref(false);
 
 const confirm = useConfirm();
-const toast = useToast(); // 2. Instanciation du Toast
+const toast = useToast();
 
-// --- AJOUT ---
+
 const addActor = async () => {
   if (!newActorName.value.trim()) return;
   isAdding.value = true;
   try {
     const addedActor = await SupportFeatureService.addActor(props.projectId, { name: newActorName.value.trim() });
     emit('update:actors', [...(props.actors || []), addedActor]);
-
-    // 3. Déclenchement du Toast de Succès
     toast.add({ severity: 'success', summary: 'Succès', detail: 'Acteur ajouté avec succès', life: 3000 });
-
     newActorName.value = '';
   } catch (error) {
-    // 4. Déclenchement du Toast d'Erreur
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'ajouter l\'acteur', life: 3000 });
   } finally {
     isAdding.value = false;
   }
 };
 
-// --- MODIFICATION ---
+
 const startEdit = (actor) => {
   editingActorId.value = actor.id;
   editingName.value = actor.name;
@@ -64,8 +60,6 @@ const saveEdit = async () => {
     const updatedList = props.actors.map(a => a.id === editingActorId.value ? updatedActor : a);
     emit('update:actors', updatedList);
     cancelEdit();
-
-    // Toast de Succès
     toast.add({ severity: 'success', summary: 'Modifié', detail: 'Acteur mis à jour', life: 3000 });
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la modification', life: 3000 });
@@ -74,7 +68,7 @@ const saveEdit = async () => {
   }
 };
 
-// --- SUPPRESSION ---
+
 const confirmRemove = (actorId) => {
   confirm.require({
     message: 'En supprimant cet acteur vous supprimez toutes les US qui lui sont associées.\nÊtes-vous sûr de vouloir supprimer cet acteur ?',
@@ -87,8 +81,6 @@ const confirmRemove = (actorId) => {
         await SupportFeatureService.deleteActor(actorId);
         emit('update:actors', props.actors.filter(a => a.id !== actorId));
         emit('update:userStories', props.userStories.filter(us => us.actorId !== actorId));
-
-        // Toast de Succès
         toast.add({ severity: 'info', summary: 'Supprimé', detail: 'Acteur retiré du projet', life: 3000 });
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer l\'acteur', life: 3000 });

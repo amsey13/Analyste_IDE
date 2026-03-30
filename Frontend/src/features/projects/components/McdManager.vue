@@ -13,7 +13,7 @@ import Checkbox from 'primevue/checkbox';
 
 const props = defineProps({
   projectId: { type: String, required: true },
-  entries: { type: Array, default: () => [] } // Liste des entités du dictionnaire
+  entries: { type: Array, default: () => [] }
 });
 
 const toast = useToast();
@@ -21,9 +21,9 @@ const associations = ref([]);
 const rules = ref([]);
 const loading = ref(false);
 
-// Formulaire pour une nouvelle association (ou modification)
+
 const newAssoc = ref({
-  id: null, // NOUVEAU: Permet de savoir si on est en mode édition
+  id: null,
   sourceId: null,
   targetId: null,
   name: '',
@@ -33,7 +33,7 @@ const newAssoc = ref({
   isCif: false,
   isInheritance: false,
   ruleId: null,
-  attributes: [] // NOUVEAU: Liste des données portées
+  attributes: []
 });
 
 const multiplicities = [
@@ -49,7 +49,7 @@ mermaid.initialize({
   themeVariables: { primaryColor: '#6366f1', edgeLabelBackground:'#ffffff' }
 });
 
-// On charge les associations ET les règles
+
 const loadInitialData = async () => {
   try {
     const [assocsData, rulesData] = await Promise.all([
@@ -64,7 +64,7 @@ const loadInitialData = async () => {
   }
 };
 
-// --- NOUVEAU : Gestion des attributs dans le formulaire ---
+
 const addAttributeToAssoc = () => {
   newAssoc.value.attributes.push({ name: '', dataType: 'VARCHAR', size: '255', primaryKey: false, notNull: false });
 };
@@ -73,15 +73,15 @@ const removeAttributeFromAssoc = (index) => {
   newAssoc.value.attributes.splice(index, 1);
 };
 
-// --- NOUVEAU : Préparer le formulaire pour la modification ---
+
 const editAssociation = (assoc) => {
   newAssoc.value = {
     ...assoc,
-    attributes: assoc.attributes ? JSON.parse(JSON.stringify(assoc.attributes)) : [] // Deep copy pour éviter de modifier la table en direct
+    attributes: assoc.attributes ? JSON.parse(JSON.stringify(assoc.attributes)) : []
   };
 };
 
-// --- NOUVEAU : Réinitialiser le formulaire ---
+
 const resetForm = () => {
   newAssoc.value = { id: null, sourceId: null, targetId: null, name: '', sourceMultiplicity: '0..N', targetMultiplicity: '1..1', isRelative: false, isCif: false, isInheritance: false, ruleId: null, attributes: [] };
 };
@@ -100,18 +100,16 @@ const saveAssociation = async () => {
   loading.value = true;
   try {
     if (newAssoc.value.id) {
-      // MODE MODIFICATION (Assure-toi d'avoir cette méthode dans ton Service côté JS)
       await SupportFeatureService.updateAssociation(newAssoc.value.id, newAssoc.value);
       toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation modifiée avec succès',life: 3000 });
     } else {
-      // MODE CRÉATION
       await SupportFeatureService.addAssociation(props.projectId, newAssoc.value);
       toast.add({ severity: 'success', summary: 'Succès', detail: 'Relation ajoutée avec succès',life: 3000 });
     }
 
     resetForm();
 
-    // On recharge juste les associations
+
     associations.value = await SupportFeatureService.getAssociations(props.projectId);
     renderMcd();
 
@@ -125,7 +123,6 @@ const saveAssociation = async () => {
 
 const deleteAssoc = async (id) => {
   await SupportFeatureService.deleteAssociation(id);
-  //  On recharge juste les associations
   associations.value = await SupportFeatureService.getAssociations(props.projectId);
   renderMcd();
 };
@@ -141,13 +138,13 @@ const renderMcd = async () => {
   code += "  classDef cifClass fill:#fff,stroke:#d946ef,stroke-width:3px,color:#d946ef;\n";
   code += "  classDef inheritClass fill:#fef08a,stroke:#ca8a04,stroke-width:2px,color:#854d0e;\n";
 
-  // Dessiner les Entités
+
   props.entries.forEach(e => {
     const entityNodeId = `ent_${e.name.replace(/\s+/g, '_')}`;
     code += `  ${entityNodeId}[${e.name}]:::entityClass;\n`;
   });
 
-  // Dessiner les Associations
+
   associations.value.forEach(a => {
     const srcNodeId = `ent_${a.sourceName.replace(/\s+/g, '_')}`;
     const tgtNodeId = `ent_${a.targetName.replace(/\s+/g, '_')}`;

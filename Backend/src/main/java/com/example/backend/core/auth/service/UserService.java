@@ -20,16 +20,15 @@ public class UserService {
     public void syncWithIdp(String email, String fullName, String externalId) {
 
         userRepository.findByExternalId(externalId).ifPresentOrElse(
-                // 1. SI L'UTILISATEUR EXISTE (Bloc Update)
+
                 existingUser -> {
-                    // On vérifie si JumpCloud a des données plus récentes
                     if (!fullName.equals(existingUser.getFullName()) || !email.equals(existingUser.getEmail())) {
                         existingUser.setFullName(fullName);
                         existingUser.setEmail(email);
-                        userRepository.save(existingUser); // On ne sauvegarde QUE s'il y a un changement
+                        userRepository.save(existingUser);
                     }
                 },
-                // 2. SI L'UTILISATEUR N'EXISTE PAS (Bloc Create)
+
                 () -> {
                     User newUser = new User();
                     newUser.setExternalId(externalId);

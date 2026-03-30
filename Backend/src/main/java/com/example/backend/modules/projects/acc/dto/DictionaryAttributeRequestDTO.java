@@ -3,7 +3,7 @@ package com.example.backend.modules.projects.acc.dto;
 import java.util.UUID;
 
 public class DictionaryAttributeRequestDTO {
-    private UUID id; // Utile si on fait une mise à jour d'un attribut existant
+    private UUID id;
     private String name;
     private String dataType;
     private String size;

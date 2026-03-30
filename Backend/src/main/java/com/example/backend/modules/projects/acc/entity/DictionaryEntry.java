@@ -17,17 +17,17 @@ public class DictionaryEntry {
     private UUID id;
 
     @Column(nullable = false)
-    private String name; // ex: "Utilisateur", "Commande"
+    private String name;
 
     @Column(columnDefinition = "TEXT")
-    private String description; // Description métier de l'entité
+    private String description;
 
-    // Lien vers le projet parent
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private SupportProject project;
 
-    // Lien vers les attributs de cette entité
+
     @OneToMany(mappedBy = "dictionaryEntry", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DictionaryAttribute> attributes = new ArrayList<>();
 

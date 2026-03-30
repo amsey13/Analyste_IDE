@@ -13,7 +13,7 @@ import java.util.UUID;
 @Repository
 public interface LogExecutionRepository extends JpaRepository<LogExecution, UUID> {
 
-    // Récupère les audits d'un projet par ordre chronologique (du plus vieux au plus récent)
+
     @Query("SELECT COALESCE(AVG(l.durationMs), 0) FROM LogExecution l WHERE l.operation = 'AUDIT_IA' AND l.status = 'SUCCESS'")
     Double getAverageIaDuration();
 

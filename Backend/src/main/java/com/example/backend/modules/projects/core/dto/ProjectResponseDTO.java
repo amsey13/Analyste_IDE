@@ -14,7 +14,7 @@ public class ProjectResponseDTO {
     @JsonProperty("projectType")
     private String projectType;
 
-    // --- Identification ---
+
     public UUID getIdProject() {
         return id;
     }
@@ -23,7 +23,7 @@ public class ProjectResponseDTO {
         this.id = id;
     }
 
-    // --- Infos de base ---
+
     public String getName() {
         return name;
     }
@@ -40,7 +40,7 @@ public class ProjectResponseDTO {
         this.description = description;
     }
 
-    // --- Dates (Noms alignés sur le Mapper) ---
+
     public LocalDateTime getCreationDate() {
         return creationDate;
     }
@@ -57,7 +57,7 @@ public class ProjectResponseDTO {
         this.updateDate = updateDate;
     }
 
-    // --- Type (Pour le Front) ---
+
     @JsonProperty("projectType")
     public String getProjectType() {
         return projectType;

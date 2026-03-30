@@ -60,7 +60,6 @@ public class ProjectServiceTest {
         when(projectMapper.map(any())).thenReturn(dto);
     }
 
-    // --- CRÉATION ---
 
     @Test
     void testCreateProjectSuccess() throws Exception {
@@ -116,7 +115,6 @@ public class ProjectServiceTest {
         }
     }
 
-    // --- RÉCUPÉRATION ---
 
     @Test
     void testGetProjectsSuccess() {
@@ -141,7 +139,6 @@ public class ProjectServiceTest {
         }
     }
 
-    // --- SUPPRESSION ---
 
     @Test
     void testDeleteSuccess() throws Exception {

@@ -9,7 +9,7 @@ const chartData = ref();
 const chartOptions = ref();
 
 onMounted(async () => {
-  // 1. Récupération des données utilisateur pour personnalisation
+
   try {
     user.value = await UserService.getCurrentUser();
   } catch (e) {
