@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
@@ -90,9 +90,6 @@ onMounted(async () => {
     projects.value = sortProjectsByLatestDate(data.map(normalizeProject));
 
     if (route.query.type) {
-      console.log('Query type:', route.query.type);
-      console.log('Premier projet type:', projects.value[0]?.project_type);
-      console.log('Comparaison:', projects.value[0]?.project_type === route.query.type);
       typeFilter.value = route.query.type;
     }
   } catch (error) {
@@ -106,6 +103,15 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+watch(
+    () => route.query.type,
+    (newType) => {
+      typeFilter.value = newType || '';
+      first.value = 0; // reset paginator to first page
+    },
+    { immediate: false }
+);
 
 const paginatedProjects = computed(() => {
   const start = first.value;
@@ -306,7 +312,7 @@ const goToLatestReport = () => {
         </div>
       </div>
 
-      <div v-if="projects.length > rows" class="projects-page__paginator">
+      <div v-if="filteredProjects.length > rows" class="projects-page__paginator">
         <Paginator
             :first="first"
             :rows="rows"
