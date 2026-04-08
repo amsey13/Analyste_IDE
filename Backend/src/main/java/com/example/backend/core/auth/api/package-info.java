@@ -1,8 +1,8 @@
 /**
- * Couche de présentation REST (API).
- * Ce package contient les contrôleurs qui exposent les points d'accès (endpoints) de l'IDE.
- * Responsabilités :
- * - Réception des requêtes HTTP et validation de surface des données (JSON).
- * - Orchestration des appels vers la couche Service.
+ * REST Presentation Layer (API).
+ * This package contains the controllers that expose the IDE's endpoints.
+ * * Responsibilities:
+ * - Handling HTTP requests and performing surface-level data validation (JSON).
+ * - Orchestrating calls to the Service layer.
  */
 package com.example.backend.core.auth.api;

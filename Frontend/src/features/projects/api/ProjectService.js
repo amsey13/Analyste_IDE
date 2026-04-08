@@ -1,6 +1,11 @@
 import apiClient from '../../../api/HttpClient.js';
 
+const ENDPOINTS_BY_TYPE = {
+    'audit': '/projects/audit',
+    'accompagnement': '/projects/support',
+};
 
+const DEFAULT_ENDPOINT = '/projects';
 export const ProjectService = {
 
     async getProjects(){
@@ -9,28 +14,33 @@ export const ProjectService = {
     },
 
 
-
+    async getProjectById(projectId) {
+        const response = await apiClient.get(`/projects/${projectId}`);
+        return response.data;
+    },
 
 
     /**
      * 
-     * @param {Object} projetData data to send to the backend to create a new projet
+     * @param {Object} projectData data to send to the backend to create a new project
      * @returns 
      */
-    async createProjet(projetData) {
-        if (projetData.project_type === 'audit' || projetData.project_type === 'AUDIT') {
-            const response = await apiClient.post('/projects/audit', projetData);
-            return response.data;
-        } else {
-            const response = await apiClient.post('/projects', projetData);
-            return response.data;
-        }
+    async createProject(projectData) {
+        const type = projectData.project_type?.toLowerCase();
+        const endpoint = ENDPOINTS_BY_TYPE[type] || DEFAULT_ENDPOINT;
+        const response = await apiClient.post(endpoint, projectData);
+        return response.data;
     },
 
 
-    async deleteProjet(projetId) {
+    async deleteProject(idProject) {
+
+        if (!idProject) {
+            console.error("projectId est undefined !")
+            return
+        }
         
-        return await apiClient.delete(`/projects/${projetId}`);
+        return await apiClient.delete(`/projects/${idProject}`);
     }
 
 }

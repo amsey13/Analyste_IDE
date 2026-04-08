@@ -1,32 +1,25 @@
 package com.example.backend.modules.projects.core.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ProjectResponseDTO {
     private UUID id;
-
     private String name;
-
     private String description;
     private LocalDateTime creationDate;
     private LocalDateTime updateDate;
 
+    @JsonProperty("projectType")
+    private String projectType;
 
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public UUID getIdProjet() {
+    public UUID getIdProject() {
         return id;
     }
 
-    public void setIdProjet(UUID id) {
+    public void setIdProject(UUID id) {
         this.id = id;
     }
 
@@ -39,19 +32,39 @@ public class ProjectResponseDTO {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
     public void setCreationDate(LocalDateTime creationDate) {
         this.creationDate = creationDate;
     }
 
-    public LocalDateTime getModificationDate() {
+    public LocalDateTime getUpdateDate() {
         return updateDate;
     }
 
-    public void setUpdateDateDate(LocalDateTime modificationDate) {
-        this.updateDate = modificationDate;
+    public void setUpdateDate(LocalDateTime updateDate) {
+        this.updateDate = updateDate;
     }
 
-    public LocalDateTime getCreationDate() {
-        return creationDate;
+
+    @JsonProperty("projectType")
+    public String getProjectType() {
+        return projectType;
+    }
+
+    @JsonProperty("projectType")
+    public void setProjectType(String projectType) {
+        this.projectType = projectType;
     }
 }

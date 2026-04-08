@@ -1,0 +1,1 @@
+ALTER TABLE dictionary_associations ADD COLUMN is_inheritance BOOLEAN DEFAULT FALSE NOT NULL;

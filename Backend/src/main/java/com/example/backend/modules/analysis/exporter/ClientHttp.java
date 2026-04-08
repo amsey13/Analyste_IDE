@@ -1,5 +1,7 @@
 package com.example.backend.modules.analysis.exporter;
 
+import org.springframework.stereotype.Component;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -7,13 +9,16 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-
+@Component
 public class ClientHttp {
 
     private final String method;
     private Map<String, String> headers;
     private String body;
     private final int timeout;
+
+
+
 
 
 
@@ -24,14 +29,11 @@ public class ClientHttp {
         this.timeout = timeout;
     }
 
-
-    public ClientHttp(String method,Map<String,String> headers,String body ){
-        this.method = method;
-        this.headers = headers;
-        this.body = body;
-        this.timeout = 120000;
-
+    public ClientHttp() {
+        this.timeout = 60000;
+        this.method = "POST";
     }
+
 
     public String getMethod() {
         return method;
@@ -45,6 +47,16 @@ public class ClientHttp {
         return headers;
     }
 
+    /**
+     * The `execute` function sends an HTTP request to a specified URL with configurable method,
+     * headers, and body, and returns the response status code, headers, and body.
+     * 
+     * @param cible The `cible` parameter in the `execute` method is a string representing the target
+     * URL to which the HTTP request will be sent. It is used to create a URL object for the target
+     * endpoint.
+     * @return An `HttpResponse` object is being returned, which contains the HTTP status code,
+     * response headers, and response body from the HTTP request.
+     */
     public HttpResponse execute(String cible) throws IOException {
 
         URL url = URI.create(cible).toURL();
@@ -52,7 +64,7 @@ public class ClientHttp {
 
         // Time configuration a little bit longer cause the request is heavy
         conn.setRequestMethod(this.method);
-        conn.setConnectTimeout(10000);
+        conn.setConnectTimeout(15000);
         conn.setReadTimeout(this.timeout);
 
 

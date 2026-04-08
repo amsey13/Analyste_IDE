@@ -14,23 +14,23 @@ import com.example.backend.modules.projects.core.entity.Project;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Attention, c'est UUID ici, pas IDENTITY
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "full_name") // Fait le lien avec full_name en base
+    @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "external_id", unique = true) // Fait le lien avec external_id en base
+    @Column(name = "external_id", unique = true)
     private String externalId;
 
     @Column(name = "is_active")
     private boolean isActive = true;
 
     @OneToMany(mappedBy = "user")
-    private List<Project> projets;
+    private List<Project> projects;
 
     public String getEmail() {
         return email;
@@ -72,11 +72,11 @@ public class User {
         isActive = active;
     }
 
-    public List<Project> getProjets() {
-        return projets;
+    public List<Project> getProjects() {
+        return projects;
     }
 
-    public void setProjets(List<Project> projets) {
-        this.projets = projets;
+    public void setProjects(List<Project> projets) {
+        this.projects = projets;
     }
 }

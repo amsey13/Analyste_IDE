@@ -7,16 +7,22 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static java.util.Arrays.stream;
 
 public class BpmnParserStrategy implements ModelParserStrategy {
 
@@ -25,34 +31,80 @@ public class BpmnParserStrategy implements ModelParserStrategy {
 
 
     public BpmnParserStrategy(InputStream input) throws ParserConfigurationException, IOException, SAXException {
-        this.document = DocumentBuilderFactory
-                .newInstance()
-                .newDocumentBuilder()
-                .parse(input);
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(false);
+        this.document = factory.newDocumentBuilder().parse(input);
         this.xpath = XPathFactory.newInstance().newXPath();
 
     }
 
-    // Strategy methods implementation
 
-
-    @Override
-    public List<Actor> findActors() {
-       try{
-           return findBpmnActors(document,xpath);
-       } catch (XPathExpressionException e) {
-           throw new RuntimeException(e);
-       }
+    /**
+     * Nettoie les noms extraits du XML pour éviter les sauts de ligne (&#10;)
+     * qui cassent le JSON de l'IA plus tard.
+     */
+    private String cleanXmlValue(String value) {
+        if (value == null) return "";
+        return value.replaceAll("[\\n\\r\\t]+", " ").replaceAll("\\s{2,}", " ").trim();
     }
 
-    @Override
-    public List<Flux> findFluxs() {
-        try{
 
-            return findBpmnFlux(document,xpath);
-        }catch (XPathExpressionException e){
-            throw new RuntimeException(e);
+   /**
+    * This Java function parses BPMN model details including actors, tasks, and message flows and
+    * generates a summary report.
+    * 
+    * @return The `parse()` method returns a formatted string containing details about the BPMN
+    * (Business Process Model and Notation) model. The string includes information about actors/pools,
+    * activities and tasks, and interactions/message flows between pools. If any errors occur during
+    * the extraction of BPMN data, an error message is also included in the returned string.
+    */
+    @Override
+    public String parse() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- DÉTAILS DU MODÈLE BPMN (Processus Métier) ---\n");
+
+        try {
+
+            sb.append("[ACTEURS / POOLS]\n");
+            List<Actor> actors = findBpmnActors(document, xpath);
+            if (actors.isEmpty()) {
+                sb.append("- Aucun participant défini (Processus global)\n");
+            } else {
+                for (Actor a : actors) {
+                    sb.append("- ").append(cleanXmlValue(a.getName())).append("\n");
+                }
+            }
+
+
+            sb.append("\n[ACTIVITÉS ET TÂCHES]\n");
+            List<String> tasks = findTasks(document, xpath);
+            if (tasks.isEmpty()) {
+                sb.append("- Aucune tâche détectée.\n");
+            } else {
+                for (String t : tasks) {
+                    sb.append("- Tâche : ").append(cleanXmlValue(t)).append("\n");
+                }
+            }
+
+
+            sb.append("\n[INTERACTIONS / FLUX DE MESSAGES]\n");
+            List<Flux> messageFlows = findBpmnFlux(document, xpath);
+            if (messageFlows.isEmpty()) {
+                sb.append("- Aucun flux de message entre pools.\n");
+            } else {
+                for (Flux f : messageFlows) {
+                    sb.append(String.format("- Message \"%s\" envoyé par [%s] à [%s]\n",
+                            cleanXmlValue(f.getName()),
+                            cleanXmlValue(f.getSender()),
+                            cleanXmlValue(f.getRecipient())));
+                }
+            }
+
+        } catch (XPathExpressionException e) {
+            sb.append("Erreur lors de l'extraction des données BPMN : ").append(e.getMessage());
         }
+
+        return sb.toString();
     }
 
     public Document getDocument() {
@@ -107,7 +159,11 @@ public class BpmnParserStrategy implements ModelParserStrategy {
      */
     public static List<String> findTasks(Document doc, XPath xpath) throws XPathExpressionException {
         List<String> tasks = new ArrayList<>();
-        NodeList taskNode = (NodeList) xpath.evaluate("//*[contains(local-name(),'Task') or local-name()='callActivity']", doc, XPathConstants.NODESET);
+        String query = "//*[substring(local-name(), string-length(local-name()) - 3) = 'Task' " +
+                "or local-name()='task' " +
+                "or local-name()='callActivity']";
+
+        NodeList taskNode = (NodeList) xpath.evaluate(query, doc, XPathConstants.NODESET);
 
         for (int i = 0; i < taskNode.getLength(); i++) {
 
@@ -224,6 +280,37 @@ public class BpmnParserStrategy implements ModelParserStrategy {
         return "Inconnu";
     }
 
+    public static Set<String> extractLinkedUserStories(String bpmnXml) {
+        Set<String> linkedUsIds = new java.util.HashSet<>();
+
+        if (bpmnXml == null || bpmnXml.trim().isEmpty()) {
+            return linkedUsIds;
+        }
+
+        try {
+            javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new java.io.ByteArrayInputStream(bpmnXml.getBytes("UTF-8")));
+
+            NodeList nodeList = doc.getElementsByTagName("*");
+
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Element element = (Element) nodeList.item(i);
+                String linkedAttr = element.getAttribute("custom:linkedUserStories");
+
+                if (linkedAttr != null && !linkedAttr.isEmpty()) {
+                            stream(linkedAttr.split(","))
+                            .map(String::trim)
+                            .filter(id -> !id.isEmpty())
+                            .forEach(linkedUsIds::add);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur de parsing BPMN pour les User Stories : " + e.getMessage());
+        }
+
+        return linkedUsIds;
+    }
 
 }
 

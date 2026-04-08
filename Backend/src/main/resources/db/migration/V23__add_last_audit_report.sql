@@ -1,0 +1,1 @@
+ALTER TABLE support_project ADD COLUMN last_audit_report TEXT;

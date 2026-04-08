@@ -9,6 +9,8 @@ const DashboardView = () => import('../views/DashboardView.vue')
 const AccompagnementView = () => import('../views/AccompagnementView.vue')
 const AllProjectsView = () => import('../features/projects/views/AllProjectsView.vue')
 const AuditView = () => import('../views/AuditView.vue')
+const SupportProjectAuditResultView = () => import('../views/ProjectAuditResultView.vue')
+const AuditReportView = () => import('../views/AuditReportView.vue')
 
 const routes = [
     {
@@ -21,41 +23,54 @@ const routes = [
         component: MainLayout,
         children: [
             {
-                path: 'projets',
-                name: 'projets-lite',
+                path: 'projects',
+                name: 'projects-lite',
                 component: ProjetSelector,
                 meta: { requiresAuth: true }
             },
             {
-                path: 'projets/all',
+                path: 'projects/all',
                 name: 'all-projects',
                 component: AllProjectsView,
                 meta: { requiresAuth: true }
             },
             {
-                path: 'projet/create',
-                name: 'projet-create',
+                path: 'project/create',
+                name: 'project-create',
                 component: ProjetCreateView,
                 meta: { requiresAuth: true }
             },
             {
-                path: 'projet/:id',
-                name: 'projet-dashboard',
+                path: 'project/:id',
+                name: 'project-dashboard',
                 component: DashboardView,
                 meta: { requiresAuth: true }
             },
             {
-            path: 'accompagnement',
+            path: 'accompagnement/:id',
             name: 'accompagnement',
             component: AccompagnementView,
+            props: true,
             meta: { requiresAuth: true }
             },
             {
-            path: 'audit',
+            path: 'audit/:id',
             name: 'audit',
             component: AuditView,
+            props: true,
             meta: { requiresAuth: true }
-            }
+            },
+            {
+                path: '/project/:id/audit-result',
+                name: 'ProjectAuditResult',
+                component: SupportProjectAuditResultView,
+                meta: { requiresAuth: true }
+            },
+            {
+            path: 'project/:id/audit-result/:reportId', 
+            name: 'AuditReport',
+            component: AuditReportView
+            },
         ]
     }
 ]

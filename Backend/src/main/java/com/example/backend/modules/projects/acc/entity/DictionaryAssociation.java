@@ -1,0 +1,144 @@
+package com.example.backend.modules.projects.acc.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "dictionary_associations")
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DictionaryAssociation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_entry_id", nullable = false)
+    private DictionaryEntry source;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_entry_id", nullable = false)
+    private DictionaryEntry target;
+
+
+    @Column(nullable = false)
+    private String name;
+
+
+    @Column(nullable = false, length = 10)
+    private String sourceMultiplicity;
+
+
+    @Column(nullable = false, length = 10)
+    private String targetMultiplicity;
+
+    @Column(name = "is_relative", nullable = false)
+    private Boolean isRelative = false;
+
+    @Column(name = "is_cif", nullable = false)
+    private Boolean isCif = false;
+
+    @Column(name = "is_inheritance", nullable = false)
+    private Boolean isInheritance = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rule_id", nullable = true)
+    private BusinessRule businessRule;
+
+    @OneToMany(mappedBy = "dictionaryAssociation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DictionaryAttribute> attributes = new ArrayList<>();
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public DictionaryEntry getSource() {
+        return source;
+    }
+
+    public void setSource(DictionaryEntry source) {
+        this.source = source;
+    }
+
+    public DictionaryEntry getTarget() {
+        return target;
+    }
+
+    public void setTarget(DictionaryEntry target) {
+        this.target = target;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSourceMultiplicity() {
+        return sourceMultiplicity;
+    }
+
+    public void setSourceMultiplicity(String sourceMultiplicity) {
+        this.sourceMultiplicity = sourceMultiplicity;
+    }
+
+    public String getTargetMultiplicity() {
+        return targetMultiplicity;
+    }
+
+    public void setTargetMultiplicity(String targetMultiplicity) {
+        this.targetMultiplicity = targetMultiplicity;
+    }
+
+    public Boolean getRelative() {
+        return isRelative;
+    }
+
+    public void setRelative(Boolean relative) {
+        isRelative = relative;
+    }
+
+    public Boolean getCif() {
+        return isCif;
+    }
+
+    public void setCif(Boolean cif) {
+        isCif = cif;
+    }
+    public Boolean getIsInheritance() {
+        return isInheritance;
+    }
+    public void setIsInheritance(Boolean isInheritance) {
+        this.isInheritance = isInheritance;
+    }
+
+    public BusinessRule getBusinessRule() {
+        return businessRule;
+    }
+    public void setBusinessRule(BusinessRule businessRule) {
+        this.businessRule = businessRule;
+    }
+
+    public List<DictionaryAttribute> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<DictionaryAttribute> attributes) {
+        this.attributes = attributes;
+    }
+}
