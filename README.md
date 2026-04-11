@@ -138,7 +138,7 @@ Avant installation, assure-toi d’avoir :
 ### Cloner le projet
 
 ```bash
-git clone [https://gitlab-etu.fil.univ-lille.fr/glauriel-fosther.badjila-wandja-legara.etu/projet-si.git](https://gitlab-etu.fil.univ-lille.fr/glauriel-fosther.badjila-wandja-legara.etu/projet-si.git)
+git clone https://github.com/amsey13/Analyste_IDE
 cd projet-si
 ```
 
